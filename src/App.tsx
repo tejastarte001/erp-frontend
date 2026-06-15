@@ -8,9 +8,7 @@ import DashboardPage from "./pages/DashboardPage";
 // import SalesPage from "./pages/SalesPage";
 // import PurchasePage from "./pages/PurchasePage";
 // import InventoryPage from "./pages/InventoryPage";
-// import ProductionPage from "./pages/ProductionPage";
-// import ReportsPage from "./pages/ReportsPage";
-// import SettingsPage from "./pages/SettingsPage";
+
 
 function App() {
   return (
