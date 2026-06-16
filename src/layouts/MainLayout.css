@@ -19,6 +19,10 @@
   padding: 24px;
   background: #f9fafb;
 }
+.page-content:has(.sef-shell) {
+  padding: 0;
+  background: #fff;
+}
 
 /* Scrollbar styling */
 .page-content::-webkit-scrollbar {
