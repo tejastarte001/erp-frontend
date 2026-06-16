@@ -23,7 +23,7 @@ export default function Sidebar() {
             <div className="logo-text">Manufacturing <span className="logo-highlight">ERP</span></div>
           </div>
         </div>
-        <div className="logo-subtitle">ERPNext</div>
+        {/* <div className="logo-subtitle">ERPNext</div> */}
       </div>
 
       {/* Search + Notification */}
@@ -112,7 +112,7 @@ export default function Sidebar() {
           </div>
           {isSetupOpen && (
             <div className="nav-items">
-              <NavLink to="/item" className="nav-link">
+              <NavLink to="/item-list" className="nav-link">
                 <ItemIcon /> <span>Item</span>
               </NavLink>
               <NavLink to="/item-group" className="nav-link">
