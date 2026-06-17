@@ -1,0 +1,184 @@
+/* ItemList.css */
+.itl-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Topbar */
+.itl-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  min-height: 52px;
+  flex-shrink: 0;
+}
+.itl-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.itl-bc-sep { color: #d1d5db; }
+.itl-bc-link { color: #6b7280; cursor: pointer; }
+.itl-bc-link:hover { color: #374151; }
+.itl-bc-current { font-size: 18px; font-weight: 600; color: #111827; }
+
+.itl-topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.itl-btn-outline {
+  display: flex; align-items: center; gap: 5px;
+  height: 32px; padding: 0 12px;
+  border: 1px solid #e5e7eb; border-radius: 6px;
+  background: white; font-size: 13px; color: #374151;
+  cursor: pointer; transition: background 0.15s;
+}
+.itl-btn-outline:hover { background: #f9fafb; }
+
+.itl-btn-icon {
+  width: 32px; height: 32px;
+  border: 1px solid #e5e7eb; border-radius: 6px;
+  background: white;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #6b7280; transition: background 0.15s;
+}
+.itl-btn-icon:hover { background: #f9fafb; }
+
+.itl-btn-primary {
+  display: flex; align-items: center; gap: 5px;
+  height: 32px; padding: 0 14px;
+  border: none; border-radius: 6px;
+  background: #111827; color: white;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: background 0.15s;
+}
+.itl-btn-primary:hover { background: #1f2937; }
+
+/* Filter bar */
+.itl-filter-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  min-height: 44px; flex-shrink: 0;
+  flex-wrap: wrap; gap: 8px;
+}
+.itl-filter-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.itl-filter-tag {
+  display: flex; align-items: center; gap: 4px;
+  height: 28px; padding: 0 10px;
+  border: 1px solid #e5e7eb; border-radius: 6px;
+  background: white; font-size: 12.5px; color: #374151;
+}
+.itl-tag-label { font-weight: 500; }
+.itl-tag-op { color: #9ca3af; }
+.itl-tag-active { border-color: #d1d5db; background: #f9fafb; }
+
+.itl-filter-active-count {
+  display: flex; align-items: center; gap: 5px;
+  height: 28px; padding: 0 10px;
+  border: 1px solid #2563eb; border-radius: 6px;
+  background: #eff6ff; font-size: 12.5px; color: #1d4ed8; font-weight: 500;
+}
+.itl-tag-clear {
+  background: none; border: none; cursor: pointer;
+  color: #9ca3af; font-size: 14px; line-height: 1; padding: 0; margin-left: 2px;
+}
+.itl-tag-clear:hover { color: #374151; }
+
+.itl-filter-right { display: flex; align-items: center; gap: 6px; }
+.itl-sort-btn {
+  display: flex; align-items: center; gap: 5px;
+  height: 28px; padding: 0 10px;
+  border: 1px solid #e5e7eb; border-radius: 6px;
+  background: white; font-size: 12.5px; color: #374151;
+  cursor: pointer; transition: background 0.15s;
+}
+.itl-sort-btn:hover { background: #f9fafb; }
+
+/* Has Variants */
+.itl-has-variants {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+.itl-has-variants-label { font-size: 13px; color: #374151; cursor: pointer; }
+
+/* Table */
+.itl-table-wrap { flex: 1; overflow: auto; }
+.itl-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+.itl-table-wrap::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 3px; }
+
+.itl-table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 800px; }
+
+.itl-th-check { width: 40px; padding: 0 0 0 18px; }
+.itl-th {
+  padding: 10px 14px; text-align: left;
+  font-size: 12.5px; font-weight: 500; color: #6b7280;
+  background: #f9fafb; border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+.itl-th-right {
+  padding: 10px 20px 10px 14px; text-align: right;
+  font-size: 12.5px; font-weight: 500; color: #6b7280;
+  background: #f9fafb; border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+.itl-count-label { font-size: 12px; color: #9ca3af; margin-right: 6px; }
+
+.itl-tr { cursor: pointer; transition: background 0.1s; }
+.itl-tr:hover { background: #f9fafb; }
+.itl-tr-selected { background: #f0f7ff; }
+.itl-tr-selected:hover { background: #e8f0fe; }
+.itl-tr + .itl-tr td { border-top: 1px solid #f3f4f6; }
+
+.itl-td-check { width: 40px; padding: 0 0 0 18px; vertical-align: middle; }
+.itl-td { padding: 11px 14px; color: #374151; vertical-align: middle; white-space: nowrap; }
+.itl-td-name { font-weight: 600; color: #111827; }
+.itl-td-meta { text-align: right; padding-right: 20px; }
+
+.itl-status-badge {
+  display: inline-flex; align-items: center;
+  height: 22px; padding: 0 8px;
+  border-radius: 99px; font-size: 12px; font-weight: 500;
+}
+.itl-status-enabled { color: #2563eb; background: #eff6ff; }
+.itl-status-disabled { color: #6b7280; background: #f3f4f6; }
+
+.itl-ago { font-size: 12px; color: #9ca3af; margin-right: 6px; }
+.itl-comment-btn, .itl-like-btn {
+  background: none; border: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 3px;
+  color: #9ca3af; font-size: 12px; padding: 2px 4px;
+  border-radius: 4px; transition: color 0.15s;
+}
+.itl-comment-btn:hover, .itl-like-btn:hover { color: #374151; }
+.itl-dot { color: #d1d5db; margin: 0 2px; font-size: 12px; }
+
+.itl-checkbox {
+  width: 14px; height: 14px; border-radius: 3px;
+  cursor: pointer; accent-color: #2563eb;
+}
+
+/* Pagination */
+.itl-pagination {
+  display: flex; align-items: center; gap: 4px;
+  padding: 10px 18px;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0; background: white;
+}
+.itl-page-btn {
+  height: 28px; min-width: 42px; padding: 0 10px;
+  border: 1px solid #e5e7eb; border-radius: 6px;
+  background: white; font-size: 12.5px; color: #374151;
+  cursor: pointer; transition: background 0.15s;
+}
+.itl-page-btn:hover { background: #f3f4f6; }
+.itl-page-btn-active { background: #111827; color: white; border-color: #111827; }
+.itl-page-btn-active:hover { background: #1f2937; }
