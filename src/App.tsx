@@ -21,6 +21,15 @@ import Settings from "./pages/Settings";
 
 
 
+import StockEntry from "./pages/Stockentry";
+
+import StockentryForm from "./pages/StockentryForm";
+import BOMPage from "./pages/BOMPage";
+import NewBOMPage from "./pages/Newbompage";
+
+import StockentryForm from "./pages/Stockentryform";
+
+
 function App() {
   return (
     <AdminThemeProvider> {/* Wrap everything with AdminThemeProvider */}
@@ -65,6 +74,9 @@ function App() {
             <Route path="/uom" element={<UOMList />} />
             <Route path="/uom/new" element={<UOMForm />} />
             <Route path="/uom/:id" element={<UOMForm />} />
+            
+               <Route path="/bom" element={<BOMPage />} />
+          <Route path="/bom/new" element={<NewBOMPage />} />
 
 
             <Route path="/settings" element={<Settings />} />
