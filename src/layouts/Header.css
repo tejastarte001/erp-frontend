@@ -1,7 +1,7 @@
 .header {
   height: 52px;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--card-bg, #ffffff);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -16,14 +16,14 @@
 }
 
 .breadcrumb-sep {
-  color: #d1d5db;
+  color: var(--text-secondary, #d1d5db);
   font-size: 16px;
 }
 
 .breadcrumb-title {
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary, #111827);
 }
 
 .header-right {
@@ -45,5 +45,10 @@
   transition: background 0.15s;
 }
 
-.header-icon-btn:hover { background: #f3f4f6; }
- 
+.header-icon-btn:hover {
+  background: var(--nav-hover, #f3f4f6);
+}
+
+.header-icon-btn svg {
+  stroke: var(--text-secondary, #6B7280);
+}

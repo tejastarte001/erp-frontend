@@ -1,0 +1,533 @@
+/* ItemAttributeForm.css - Remove sidebar styles */
+
+/* ── Content ─────────────────────────── */
+.iaf-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: white;
+  overflow: hidden;
+}
+
+/* Topbar */
+.iaf-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  min-height: 52px;
+  flex-shrink: 0;
+  background: white;
+}
+
+.iaf-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.iaf-bc-sep {
+  color: #d1d5db;
+}
+
+.iaf-bc-link {
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.iaf-bc-link:hover {
+  color: #374151;
+}
+
+.iaf-bc-current {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.iaf-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iaf-btn-outline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  transition: background 0.15s;
+  color: #6b7280;
+}
+
+.iaf-btn-outline:hover {
+  background: #f9fafb;
+}
+
+.iaf-btn-save {
+  height: 32px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 6px;
+  background: #111827;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.iaf-btn-save:hover {
+  background: #1f2937;
+}
+
+/* Body */
+.iaf-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.iaf-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px;
+}
+
+.iaf-main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.iaf-main::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 3px;
+}
+
+/* ── Form Sections ─────────────────────────── */
+.iaf-section {
+  margin-bottom: 8px;
+}
+
+.iaf-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.iaf-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  text-align: left;
+}
+
+.iaf-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 24px 0;
+}
+
+/* ── Fields ─────────────────────────── */
+.iaf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 18px;
+  align-items: flex-start;
+}
+
+.iaf-label {
+  font-size: 12.5px;
+  color: #6b7280;
+  font-weight: 500;
+  text-align: left;
+}
+
+.iaf-req {
+  color: #ef4444;
+}
+
+.iaf-input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: #111827;
+  background: #f9fafb;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+  max-width: 400px;
+}
+
+.iaf-input:focus {
+  border-color: #2563eb;
+  background: white;
+}
+
+/* ── Checkboxes ─────────────────────────── */
+.iaf-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.iaf-checkbox {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+
+.iaf-check-label {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* ── Table ─────────────────────────── */
+.iaf-table-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.iaf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.iaf-th {
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 500;
+  color: #6b7280;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.iaf-th-check {
+  width: 36px;
+}
+
+.iaf-th-no {
+  width: 44px;
+}
+
+.iaf-th-act {
+  width: 40px;
+  text-align: center;
+}
+
+.iaf-tr {
+  border-top: 1px solid #f3f4f6;
+  transition: background 0.1s;
+}
+
+.iaf-tr:hover {
+  background: #fafafa;
+}
+
+.iaf-tr-editing {
+  background: #f0f7ff;
+}
+
+.iaf-td {
+  padding: 6px 10px;
+  color: #374151;
+  vertical-align: middle;
+  text-align: left;
+}
+
+.iaf-td-check {
+  text-align: center;
+}
+
+.iaf-td-no {
+  color: #9ca3af;
+  font-size: 12px;
+  text-align: center;
+}
+
+.iaf-td-act {
+  text-align: center;
+}
+
+.iaf-cell-input {
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #111827;
+  background: transparent;
+  outline: none;
+  text-align: left;
+}
+
+.iaf-cell-input:focus {
+  border-color: #2563eb;
+  background: white;
+}
+
+.iaf-cell-input::placeholder {
+  color: #9ca3af;
+}
+
+.iaf-remove-row {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 16px;
+  padding: 2px 4px;
+}
+
+.iaf-remove-row:hover {
+  color: #ef4444;
+}
+
+.iaf-add-row-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.iaf-add-row-btn:hover {
+  text-decoration: underline;
+}
+
+/* ── Comments ─────────────────────────── */
+.iaf-comment-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iaf-comment-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fde68a;
+  color: #92400e;
+  font-weight: 600;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iaf-comment-input {
+  flex: 1;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #374151;
+  background: #f9fafb;
+  outline: none;
+  text-align: left;
+}
+
+.iaf-comment-input:focus {
+  border-color: #2563eb;
+  background: white;
+}
+
+.iaf-comment-input::placeholder {
+  color: #9ca3af;
+}
+
+/* ── Activity ─────────────────────────── */
+.iaf-section-activity {
+  position: relative;
+  padding-bottom: 24px;
+}
+
+.iaf-activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.iaf-new-email-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.iaf-new-email-btn:hover {
+  text-decoration: underline;
+}
+
+.iaf-activity-list {
+  list-style: disc;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.iaf-activity-list li {
+  font-size: 13px;
+  color: #374151;
+  text-align: left;
+}
+
+.iaf-activity-time {
+  color: #9ca3af;
+}
+
+.iaf-activity-collapse {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.iaf-activity-collapse:hover {
+  background: #f9fafb;
+}
+
+/* ── Right Sidebar ─────────────────────────── */
+.iaf-sidebar-right {
+  width: 220px;
+  border-left: 1px solid #e5e7eb;
+  padding: 20px 16px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  background: white;
+}
+
+.iaf-sidebar-right::-webkit-scrollbar {
+  width: 4px;
+}
+
+.iaf-sidebar-right::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 2px;
+}
+
+.iaf-doc-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 22px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+}
+
+.iaf-doc-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  text-align: center;
+  word-break: break-word;
+}
+
+.iaf-doc-id {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.iaf-sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.iaf-sidebar-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.iaf-sidebar-action:hover {
+  background: #f3f4f6;
+}
+
+.iaf-sidebar-plus {
+  margin-left: auto;
+  color: #9ca3af;
+  font-size: 16px;
+}
+
+.iaf-sidebar-meta {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 14px;
+}
+
+.iaf-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.iaf-meta-label {
+  font-size: 11.5px;
+  color: #9ca3af;
+}
+
+.iaf-meta-val {
+  font-size: 12.5px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.iaf-meta-time {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+  text-align: right;
+}
