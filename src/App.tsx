@@ -13,6 +13,11 @@ import Itemlist from "./pages/Setup/Itemlist";
 
 
 import StockEntry from "./pages/Stockentry";
+
+import StockentryForm from "./pages/StockentryForm";
+import BOMPage from "./pages/BOMPage";
+import NewBOMPage from "./pages/Newbompage";
+
 import StockentryForm from "./pages/Stockentryform";
 
 
@@ -43,6 +48,11 @@ function App() {
 
           <Route path="/stock-entry" element={<StockEntry />} />
           <Route path="/stock-entry/new" element={<StockentryForm />} />
+
+          <Route path="/bom" element={<BOMPage />} />
+          <Route path="/bom/new" element={<NewBOMPage />} />
+
+
 
         </Route>
       </Routes>
