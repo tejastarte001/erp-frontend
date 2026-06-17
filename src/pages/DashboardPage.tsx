@@ -1,8 +1,11 @@
 import "./DashboardPage.css";
+import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 
 export default function DashboardPage() {
+  const { theme } = useAdminTheme();
+
   return (
-    <div className="dashboard">
+    <div className={`dashboard ${theme}`}>
       <div className="dashboard-header">
         <h1>Your Shortcuts</h1>
       </div>
