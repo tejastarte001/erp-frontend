@@ -4,6 +4,7 @@ import { AdminThemeProvider } from './admin-theme/AdminThemeContext'; // Add thi
 import LoginPage from "./pages/LoginPage";
 import MainLayout from "./layouts/MainLayout";
 import DashboardPage from "./pages/DashboardPage";
+
 import ItemGroupForm from "./pages/Setup/Itemgroupform";
 import ItemGroupList from "./pages/Setup/Itemgrouplist";
 import Itemlist from "./pages/Setup/Itemlist";
@@ -17,9 +18,8 @@ import BrandList from "./pages/Setup/BrandList";
 import UOMForm from "./pages/Setup/UOMForm";
 import UOMList from "./pages/Setup/UOMList";
 import Settings from "./pages/Settings";
-// import SalesPage from "./pages/SalesPage";
-// import PurchasePage from "./pages/PurchasePage";
-// import InventoryPage from "./pages/InventoryPage";
+
+
 
 function App() {
   return (
@@ -27,6 +27,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LoginPage />} />
+
 
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
@@ -71,6 +72,8 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AdminThemeProvider>
+
+
   );
 }
 

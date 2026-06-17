@@ -38,6 +38,10 @@
 .page-content div:not(.settings-card):not(.settings-card-header):not(.settings-card-body) {
   color: var(--text-secondary, #6b7280);
 }
+.page-content:has(.sef-shell) {
+  padding: 0;
+  background: #fff;
+}
 
 /* Scrollbar styling */
 .page-content::-webkit-scrollbar {
