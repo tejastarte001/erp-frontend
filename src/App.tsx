@@ -4,7 +4,6 @@ import { AdminThemeProvider } from './admin-theme/AdminThemeContext'; // Add thi
 import LoginPage from "./pages/LoginPage";
 import MainLayout from "./layouts/MainLayout";
 import DashboardPage from "./pages/DashboardPage";
-
 import ItemGroupForm from "./pages/Setup/Itemgroupform";
 import ItemGroupList from "./pages/Setup/Itemgrouplist";
 import Itemlist from "./pages/Setup/Itemlist";
@@ -18,16 +17,9 @@ import BrandList from "./pages/Setup/BrandList";
 import UOMForm from "./pages/Setup/UOMForm";
 import UOMList from "./pages/Setup/UOMList";
 import Settings from "./pages/Settings";
-
-
-
-import StockEntry from "./pages/Stockentry";
-
-import StockentryForm from "./pages/StockentryForm";
 import BOMPage from "./pages/BOMPage";
 import NewBOMPage from "./pages/Newbompage";
 
-import StockentryForm from "./pages/Stockentryform";
 
 
 function App() {
