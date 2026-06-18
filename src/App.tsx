@@ -21,6 +21,8 @@ import BOMPage from "./pages/BOMPage";
 import NewBOMPage from "./pages/Newbompage";
 import JobCardManagement from "./pages/JobCardManagement";
 import JobCardForm from "./pages/JobCardForm";
+import Stockentry from "./pages/Stockentry";
+import StockentryForm from "./pages/StockentryForm";
 
 
 
@@ -45,7 +47,8 @@ function App() {
             {/* Item Group Routes */}
             <Route path="/item-group" element={<ItemGroupList />} />
             <Route path="/item-group/:id" element={<ItemGroupForm />} />
-            
+            <Route path="/stock-entry" element={<Stockentry />} />
+            <Route path="/stock-entry/new" element={<StockentryForm />} />
             {/* Item Routes */}
             <Route path="/item-list" element={<Itemlist />} />
             <Route path="/item/:id" element={<ItemForm />} />
