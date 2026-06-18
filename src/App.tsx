@@ -19,6 +19,8 @@ import UOMList from "./pages/Setup/UOMList";
 import Settings from "./pages/Settings";
 import BOMPage from "./pages/BOMPage";
 import NewBOMPage from "./pages/Newbompage";
+import JobCardManagement from "./pages/JobCardManagement";
+import JobCardForm from "./pages/JobCardForm";
 
 
 
@@ -38,7 +40,8 @@ function App() {
             <Route path="/production" element={<ProductionPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} /> */}
-
+            <Route path="/job-card" element={<JobCardManagement />} />
+            <Route path="/job-cards/new" element={<JobCardForm />} />
             {/* Item Group Routes */}
             <Route path="/item-group" element={<ItemGroupList />} />
             <Route path="/item-group/:id" element={<ItemGroupForm />} />
@@ -67,8 +70,8 @@ function App() {
             <Route path="/uom/new" element={<UOMForm />} />
             <Route path="/uom/:id" element={<UOMForm />} />
             
-               <Route path="/bom" element={<BOMPage />} />
-          <Route path="/bom/new" element={<NewBOMPage />} />
+            <Route path="/bom" element={<BOMPage />} />
+            <Route path="/bom/new" element={<NewBOMPage />} />
 
 
             <Route path="/settings" element={<Settings />} />
