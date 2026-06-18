@@ -3,11 +3,27 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaSave,
+  FaSpinner,
+  FaExclamationTriangle,
+  FaInfoCircle,
+  FaTimesCircle,
   FaPlus,
   FaEdit,
+  FaTag,
+  FaFolder,
+  FaList,
+  FaBoxes,
+  FaDollarSign,
+  FaCube,
+  FaTruck,
+  FaShoppingCart,
+  FaIndustry,
+  FaClipboardCheck,
+  FaLink,
 } from 'react-icons/fa';
 import "./ItemForm.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
+import toast from "react-hot-toast";
 
 type Tab =
   | "Details"
@@ -33,6 +49,13 @@ function makeRow(fields: string[]): TableRow {
   const row: TableRow = { id: Date.now().toString() + Math.random() };
   fields.forEach((f) => (row[f] = ""));
   return row;
+}
+
+interface ValidationError {
+  field: string;
+  label: string;
+  message: string;
+  tabIndex: number;
 }
 
 /* ── Shared sub-components ─────────────────────────── */
@@ -779,9 +802,27 @@ export default function ItemForm() {
   const { theme } = useAdminTheme();
   const isNew = id === "new";
   const itemId = isNew ? "" : decodeURIComponent(id ?? "");
+  const isEditMode = !isNew;
 
-  const [activeTab, setActiveTab] = useState<Tab>("Details");
+  const [activeTab, setActiveTab] = useState<number>(0);
   const [isDirty, setIsDirty] = useState(isNew);
+  const [submitting, setSubmitting] = useState(false);
+  const [showValidationSummary, setShowValidationSummary] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+
+  const tabs = [
+    { id: 0, name: 'Details', icon: <FaTag size={14} /> },
+    { id: 1, name: 'Accounting', icon: <FaDollarSign size={14} /> },
+    { id: 2, name: 'UOM', icon: <FaCube size={14} /> },
+    { id: 3, name: 'Tax', icon: <FaList size={14} /> },
+    { id: 4, name: 'Inventory', icon: <FaBoxes size={14} /> },
+    { id: 5, name: 'Purchasing', icon: <FaTruck size={14} /> },
+    { id: 6, name: 'Sales', icon: <FaShoppingCart size={14} /> },
+    { id: 7, name: 'Manufacturing', icon: <FaIndustry size={14} /> },
+    { id: 8, name: 'Quality', icon: <FaClipboardCheck size={14} /> },
+    { id: 9, name: 'Pricing', icon: <FaDollarSign size={14} /> },
+    { id: 10, name: 'Connections', icon: <FaLink size={14} /> },
+  ];
 
   const [form, setFormRaw] = useState({
     itemName: isNew ? "" : itemId,
@@ -809,24 +850,120 @@ export default function ItemForm() {
 
   const tabProps = { form, setForm };
 
+  // ─── Validation ──────────────────────────────────────
+  const getAllValidationErrors = (): ValidationError[] => {
+    const allErrors: ValidationError[] = [];
+
+    // Tab 0 — Details
+    if (!form.itemName.trim())
+      allErrors.push({ field: 'itemName', label: 'Item Name', message: 'Item name is required', tabIndex: 0 });
+    if (!form.itemGroup.trim())
+      allErrors.push({ field: 'itemGroup', label: 'Item Group', message: 'Item group is required', tabIndex: 0 });
+    if (!form.hsnSac.trim())
+      allErrors.push({ field: 'hsnSac', label: 'HSN/SAC', message: 'HSN/SAC code is required', tabIndex: 0 });
+    if (!form.defaultUOM.trim())
+      allErrors.push({ field: 'defaultUOM', label: 'Default UOM', message: 'Default unit of measure is required', tabIndex: 0 });
+
+    return allErrors;
+  };
+
+  const getTabErrorCount = (tabId: number): number => {
+    return getAllValidationErrors().filter(e => e.tabIndex === tabId).length;
+  };
+
+  const jumpToTab = (tabIndex: number) => {
+    setActiveTab(tabIndex);
+    setShowValidationSummary(false);
+  };
+
   const renderTab = () => {
     switch (activeTab) {
-      case "Details":      return <DetailsTab {...tabProps} />;
-      case "Accounting":   return <AccountingTab {...tabProps} />;
-      case "UOM":          return <UOMTab />;
-      case "Tax":          return <TaxTab {...tabProps} />;
-      case "Inventory":    return <InventoryTab {...tabProps} />;
-      case "Purchasing":   return <PurchasingTab {...tabProps} />;
-      case "Sales":        return <SalesTab {...tabProps} />;
-      case "Manufacturing":return <ManufacturingTab {...tabProps} />;
-      case "Quality":      return <QualityTab />;
-      case "Pricing":      return <PricingTab />;
-      case "Connections":  return <ConnectionsTab />;
+      case 0: return <DetailsTab {...tabProps} />;
+      case 1: return <AccountingTab {...tabProps} />;
+      case 2: return <UOMTab />;
+      case 3: return <TaxTab {...tabProps} />;
+      case 4: return <InventoryTab {...tabProps} />;
+      case 5: return <PurchasingTab {...tabProps} />;
+      case 6: return <SalesTab {...tabProps} />;
+      case 7: return <ManufacturingTab {...tabProps} />;
+      case 8: return <QualityTab />;
+      case 9: return <PricingTab />;
+      case 10: return <ConnectionsTab />;
     }
   };
 
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const allErrors = getAllValidationErrors();
+    if (allErrors.length > 0) {
+      setValidationErrors(allErrors);
+      setShowValidationSummary(true);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsDirty(false);
+      toast.success(isEditMode ? 'Item updated successfully!' : 'Item created successfully!');
+      navigate('/item-list');
+    } catch (err) {
+      toast.error('Failed to save item');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const allValidationErrors = getAllValidationErrors();
+  const hasAnyErrors = allValidationErrors.length > 0;
+
   return (
     <div className={`itf-page ${theme}`}>
+      {/* Validation Summary Modal */}
+      {showValidationSummary && validationErrors.length > 0 && (
+        <div className="modal-overlay" onClick={() => setShowValidationSummary(false)}>
+          <div className="validation-summary-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottomColor: '#fbbf24' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontSize: '18px', fontWeight: 700, margin: 0 }}>
+                <FaExclamationTriangle /> Missing Required Fields
+              </h2>
+              <button className="modal-close" onClick={() => setShowValidationSummary(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ marginBottom: '16px', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                Please fill in the following required fields before submitting:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {validationErrors.map((error, idx) => (
+                  <div
+                    key={idx}
+                    className="validation-error-item"
+                    onClick={() => jumpToTab(error.tabIndex)}
+                  >
+                    <div className="error-header">
+                      <FaTimesCircle style={{ color: '#ef4444', flexShrink: 0 }} />
+                      <strong style={{ color: 'var(--text-primary)', fontSize: '13px' }}>{error.label}</strong>
+                      <span className="error-tab">
+                        Tab {error.tabIndex + 1}: {tabs[error.tabIndex].name}
+                      </span>
+                    </div>
+                    <div className="error-message">{error.message}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: '16px', padding: '10px 12px', background: '#fef3c7', borderRadius: '8px', fontSize: '11px', color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FaInfoCircle style={{ flexShrink: 0 }} />
+                Click on any error to jump to that section
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={() => setShowValidationSummary(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top bar */}
       <div className="itf-topbar">
         <div className="itf-breadcrumb">
@@ -840,6 +977,13 @@ export default function ItemForm() {
           <span className="itf-bc-sep">/</span>
           <span className="itf-bc-current">{isNew ? "New Item" : form.itemName}</span>
           {!isNew && <span className="itf-status-pill enabled">Enabled</span>}
+
+          {hasAnyErrors && (
+            <div className="itf-error-badge">
+              <FaExclamationTriangle size={11} />
+              {allValidationErrors.length} missing field(s)
+            </div>
+          )}
         </div>
         <div className="itf-topbar-right">
           {!isNew && (
@@ -861,26 +1005,41 @@ export default function ItemForm() {
               </button>
             </>
           )}
-          <button className="itf-btn-save" onClick={() => setIsDirty(false)}>
+          <button className="itf-btn-save" onClick={handleSave} disabled={submitting}>
+            {submitting && <FaSpinner className="spinning" />}
             <FaSave size={12} /> Save
           </button>
         </div>
       </div>
 
-      {/* Tab bar */}
+      {/* Tab bar - styled like NewReservation */}
       <div className="itf-tab-bar">
-        <div className="itf-tabs">
-          {TABS.map((t) => (
-            <button
-              key={t}
-              className={`itf-tab ${activeTab === t ? "itf-tab-active" : ""}`}
-              onClick={() => setActiveTab(t)}
-            >
-              {t}
-            </button>
-          ))}
+        <div className="itf-tabs-container">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const errorCount = getTabErrorCount(tab.id);
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                className={`itf-tab ${isActive ? 'itf-tab-active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <div className="itf-tab-content">
+                  <div className={`itf-tab-icon ${isActive ? 'itf-tab-icon-active' : ''}`}>
+                    {tab.icon}
+                    {errorCount > 0 && !isActive && (
+                      <span className="itf-tab-error-badge">{errorCount}</span>
+                    )}
+                  </div>
+                  <span className="itf-tab-label">{tab.name}</span>
+                </div>
+                {isActive && <div className="itf-tab-indicator" />}
+              </button>
+            );
+          })}
         </div>
-        {/* Right sidebar icons */}
         <div className="itf-tab-bar-actions">
           <button className="itf-btn-icon" title="Edit"><FaEdit size={12} /></button>
           <button className="itf-btn-icon" title="Print">
@@ -894,12 +1053,11 @@ export default function ItemForm() {
 
       {/* Body */}
       <div className="itf-body">
-        {/* Main scroll */}
         <div className="itf-main">
           {renderTab()}
         </div>
 
-        {/* Right sidebar */}
+        {/* Right sidebar - only for existing items */}
         {!isNew && (
           <aside className="itf-sidebar">
             <div className="itf-doc-avatar">{form.itemName.charAt(0).toUpperCase()}</div>
