@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  FaArrowLeft,
+  FaSave,
+  FaPlus,
+  FaEdit,
+} from 'react-icons/fa';
 import "./ItemForm.css";
+import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
 
 type Tab =
   | "Details"
@@ -147,12 +154,12 @@ function InlineTable({
           </tbody>
         </table>
       </div>
-      <button className="itf-add-row" onClick={onAddRow}>Add row</button>
+      <button className="itf-add-row" onClick={onAddRow}><FaPlus size={10} /> Add row</button>
     </>
   );
 }
 
-function CommentsActivity({ itemName }: { itemName: string }) {
+function CommentsActivity() {
   const [comment, setComment] = useState("");
   return (
     <>
@@ -180,7 +187,7 @@ function CommentsActivity({ itemName }: { itemName: string }) {
           <li>You last edited this · <span className="itf-activity-time">5 hours ago</span></li>
         </ul>
         <button className="itf-activity-collapse">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
         </button>
       </section>
     </>
@@ -189,7 +196,7 @@ function CommentsActivity({ itemName }: { itemName: string }) {
 
 function SettingsIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
@@ -204,9 +211,8 @@ function DetailsTab({ form, setForm }: { form: any; setForm: (f: any) => void })
     <>
       <section className="itf-section">
         <div className="itf-two-col">
-          {/* Left */}
           <div className="itf-col">
-            <Field label="Item Name">
+            <Field label="Item Name" required>
               <TextInput value={form.itemName} onChange={(v) => s("itemName", v)} />
             </Field>
             <Field label="Item Group" required>
@@ -219,13 +225,12 @@ function DetailsTab({ form, setForm }: { form: any; setForm: (f: any) => void })
               <TextInput value={form.defaultUOM} onChange={(v) => s("defaultUOM", v)} />
             </Field>
           </div>
-          {/* Right */}
           <div className="itf-col">
             <CheckField id="disabled" checked={form.disabled} onChange={(v) => s("disabled", v)} label="Disabled" />
             <CheckField
               id="maintainStock" checked={form.maintainStock} onChange={(v) => s("maintainStock", v)}
               label="Maintain Stock"
-              hint="ERPNext will make a stock ledger entry for each transaction of this item. Keep unchecked for non-stock or service items."
+              hint="ERPNext will make a stock ledger entry for each transaction of this item."
             />
             <CheckField
               id="isFixedAsset" checked={form.isFixedAsset} onChange={(v) => s("isFixedAsset", v)}
@@ -258,33 +263,19 @@ function DetailsTab({ form, setForm }: { form: any; setForm: (f: any) => void })
       <section className="itf-section">
         <div className="itf-two-col">
           <div className="itf-col">
-            <Field
-              label="Over Delivery/Receipt Allowance (%)"
-              hint="Percentage by which over-delivery or over-receipt is allowed against a Sales/Purchase Order for this item. If not set, value from Stock Settings will be used."
-            >
+            <Field label="Over Delivery/Receipt Allowance (%)" hint="Percentage by which over-delivery or over-receipt is allowed.">
               <TextInput value={form.overDelivery} onChange={(v) => s("overDelivery", v)} />
             </Field>
           </div>
           <div className="itf-col">
-            <Field
-              label="Over Billing Allowance (%)"
-              hint="Percentage by which over-billing is allowed against a Sales/Purchase Order for this item. If not set, value from Accounts Settings will be used."
-            >
+            <Field label="Over Billing Allowance (%)" hint="Percentage by which over-billing is allowed.">
               <TextInput value={form.overBilling} onChange={(v) => s("overBilling", v)} />
             </Field>
           </div>
         </div>
       </section>
 
-      <div className="itf-divider" />
-      <section className="itf-section">
-        <button className="itf-collapsible-section">
-          <span className="itf-section-title" style={{ margin: 0 }}>Description</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </section>
-
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
@@ -321,25 +312,25 @@ function AccountingTab({ form, setForm }: { form: any; setForm: (f: any) => void
             <CheckField
               id="deferredExpense" checked={form.deferredExpense ?? false}
               onChange={(v) => s("deferredExpense", v)} label="Enable Deferred Expense"
-              hint="Income from this item will be recognized over a period of months instead of all at once. Eg: annual subscription paid upfront."
+              hint="Income from this item will be recognized over a period of months."
             />
           </div>
           <div className="itf-col">
             <CheckField
               id="deferredRevenue" checked={form.deferredRevenue ?? false}
               onChange={(v) => s("deferredRevenue", v)} label="Enable Deferred Revenue"
-              hint="Expense for this item will be recognized over a period of months. Eg: prepaid insurance or annual software license"
+              hint="Expense for this item will be recognized over a period of months."
             />
           </div>
         </div>
       </section>
 
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
 
-function UOMTab({ form }: { form: any }) {
+function UOMTab() {
   const [rows, setRows] = useState<TableRow[]>([
     { id: "1", uom: "Nos", conversionFactor: "1" },
   ]);
@@ -349,8 +340,8 @@ function UOMTab({ form }: { form: any }) {
       <section className="itf-section">
         <SectionTitle>UOM Conversion Details</SectionTitle>
         <p className="itf-hint" style={{ marginBottom: 14 }}>
-          Define alternate units for this item. Eg: 1 Box = 12 Nos, set conversion factor as 12. (Will also apply for variants){" "}
-          <a href="#" className="itf-link">Learn more →</a>
+          Define alternate units for this item. Eg: 1 Box = 12 Nos, set conversion factor as 12.
+          <a href="#" className="itf-link"> Learn more →</a>
         </p>
         <InlineTable
           columns={[
@@ -365,7 +356,7 @@ function UOMTab({ form }: { form: any }) {
           )}
         />
       </section>
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
@@ -396,9 +387,7 @@ function TaxTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
             rows={taxes}
             onAddRow={() => setTaxes([...taxes, makeRow(["itemTaxTemplate","taxCategory","validFrom","minNetRate","maxNetRate"])])}
             onRemoveRow={(id) => setTaxes(taxes.filter((r) => r.id !== id))}
-            renderCell={(row, col) => (
-              <input className="itf-cell-input" defaultValue={row[col]} />
-            )}
+            renderCell={(row, col) => <input className="itf-cell-input" defaultValue={row[col]} />}
           />
         </div>
       </section>
@@ -420,7 +409,7 @@ function TaxTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
         </div>
       </section>
 
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
@@ -480,7 +469,7 @@ function InventoryTab({ form, setForm }: { form: any; setForm: (f: any) => void 
             <CheckField
               id="allowNegStock" checked={form.allowNegStock ?? false}
               onChange={(v) => s("allowNegStock", v)} label="Allow Negative Stock"
-              hint="Allow stock to go below zero for this item, even if negative stock is disabled in Stock Settings."
+              hint="Allow stock to go below zero for this item."
             />
           </div>
         </div>
@@ -505,25 +494,7 @@ function InventoryTab({ form, setForm }: { form: any; setForm: (f: any) => void 
         </Field>
       </section>
 
-      <div className="itf-divider" />
-
-      <section className="itf-section">
-        <button className="itf-collapsible-section">
-          <span className="itf-section-title" style={{ margin: 0 }}>Auto re-order</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </section>
-
-      <div className="itf-divider" />
-
-      <section className="itf-section">
-        <button className="itf-collapsible-section">
-          <span className="itf-section-title" style={{ margin: 0 }}>Serial Nos / Batches</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </section>
-
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
@@ -543,10 +514,7 @@ function PurchasingTab({ form, setForm }: { form: any; setForm: (f: any) => void
             <Field label="Minimum Order Qty" hint="Minimum quantity should be as per Stock UOM">
               <TextInput value={form.minOrderQty ?? "0.000"} onChange={(v) => s("minOrderQty", v)} />
             </Field>
-            <Field
-              label="Safety Stock"
-              hint="Minimum stock level to maintain as a buffer. Used to calculate recommended reorder level: Reorder Level = Safety Stock + (Average Daily Consumption × Lead Time)."
-            >
+            <Field label="Safety Stock" hint="Minimum stock level to maintain as a buffer.">
               <TextInput value={form.safetyStock ?? "0.000"} onChange={(v) => s("safetyStock", v)} />
             </Field>
           </div>
@@ -554,7 +522,7 @@ function PurchasingTab({ form, setForm }: { form: any; setForm: (f: any) => void
             <Field label="Lead Time in days" hint="Average time taken by the supplier to deliver">
               <TextInput value={form.leadTime ?? "0"} onChange={(v) => s("leadTime", v)} />
             </Field>
-            <Field label="Last Purchase Rate" hint="The rate at which this item was last purchased via a Purchase Invoice. Auto-updated by the system.">
+            <Field label="Last Purchase Rate" hint="The rate at which this item was last purchased.">
               <TextInput value={form.lastPurchaseRate ?? "0"} onChange={(v) => s("lastPurchaseRate", v)} />
             </Field>
           </div>
@@ -568,7 +536,7 @@ function PurchasingTab({ form, setForm }: { form: any; setForm: (f: any) => void
         <CheckField
           id="dropShip" checked={form.dropShip ?? false}
           onChange={(v) => s("dropShip", v)} label="Delivered by Supplier (Drop Ship)"
-          hint="Enable for drop shipping - supplier delivers directly to the customer without passing through your warehouse."
+          hint="Enable for drop shipping - supplier delivers directly to the customer."
         />
         <div style={{ marginTop: 16 }}>
           <Field label="Item Supplier">
@@ -586,16 +554,7 @@ function PurchasingTab({ form, setForm }: { form: any; setForm: (f: any) => void
         </div>
       </section>
 
-      <div className="itf-divider" />
-
-      <section className="itf-section">
-        <button className="itf-collapsible-section">
-          <span className="itf-section-title" style={{ margin: 0 }}>Foreign Trade Details</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </section>
-
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
@@ -618,10 +577,7 @@ function SalesTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
             />
           </div>
           <div className="itf-col">
-            <Field
-              label="Max Discount (%)"
-              hint="Maximum discount % allowed when selling this item. Eg: if set to 20%, a discount greater than 20% cannot be applied in sales transactions."
-            >
+            <Field label="Max Discount (%)" hint="Maximum discount % allowed when selling this item.">
               <TextInput value={form.maxDiscount ?? "0.000"} onChange={(v) => s("maxDiscount", v)} />
             </Field>
           </div>
@@ -647,7 +603,7 @@ function SalesTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
         </Field>
       </section>
 
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
@@ -662,12 +618,12 @@ function ManufacturingTab({ form, setForm }: { form: any; setForm: (f: any) => v
             <CheckField
               id="includeInMfg" checked={form.includeInMfg ?? true}
               onChange={(v) => s("includeInMfg", v)} label="Include Item In Manufacturing"
-              hint="Enable for raw material items used in BOM. Uncheck for additional services like 'washing' used in manufacturing."
+              hint="Enable for raw material items used in BOM."
             />
             <CheckField
               id="isSubcontracted" checked={form.isSubcontracted ?? false}
               onChange={(v) => s("isSubcontracted", v)} label="Is Subcontracted Item"
-              hint="Enable if a vendor manufactures this item for you. You can choose to provide them raw materials using the default BOM."
+              hint="Enable if a vendor manufactures this item for you."
             />
           </div>
           <div className="itf-col">
@@ -677,24 +633,24 @@ function ManufacturingTab({ form, setForm }: { form: any; setForm: (f: any) => v
           </div>
         </div>
       </section>
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
 
-function QualityTab({ form }: { form: any }) {
+function QualityTab() {
   return (
     <>
       <section className="itf-section">
         <SectionTitle>Quality</SectionTitle>
         <div className="itf-empty-state">No quality inspection templates configured.</div>
       </section>
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
 
-function PricingTab({ form }: { form: any }) {
+function PricingTab() {
   return (
     <>
       <section className="itf-section">
@@ -705,12 +661,12 @@ function PricingTab({ form }: { form: any }) {
           <button className="itf-add-price-btn">+ Add Price</button>
         </div>
       </section>
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
 
-function ConnectionsTab({ form }: { form: any }) {
+function ConnectionsTab() {
   const groups = [
     { label: "Groups", items: ["BOM", "Product Bundle", "Item Alternative"] },
     { label: "Pricing", items: ["Item Price", "Pricing Rule"] },
@@ -729,7 +685,7 @@ function ConnectionsTab({ form }: { form: any }) {
       <section className="itf-section">
         <div className="itf-conn-activity-header">
           <span className="itf-section-title" style={{ margin: 0 }}>Activity</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
         </div>
         <div className="itf-heatmap">
           {["JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR","APR","MAY","JUN"].map((m) => (
@@ -810,7 +766,7 @@ function ConnectionsTab({ form }: { form: any }) {
         </div>
       </section>
 
-      <CommentsActivity itemName={form.itemName} />
+      <CommentsActivity />
     </>
   );
 }
@@ -820,6 +776,7 @@ function ConnectionsTab({ form }: { form: any }) {
 export default function ItemForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { theme } = useAdminTheme();
   const isNew = id === "new";
   const itemId = isNew ? "" : decodeURIComponent(id ?? "");
 
@@ -856,26 +813,26 @@ export default function ItemForm() {
     switch (activeTab) {
       case "Details":      return <DetailsTab {...tabProps} />;
       case "Accounting":   return <AccountingTab {...tabProps} />;
-      case "UOM":          return <UOMTab {...tabProps} />;
+      case "UOM":          return <UOMTab />;
       case "Tax":          return <TaxTab {...tabProps} />;
       case "Inventory":    return <InventoryTab {...tabProps} />;
       case "Purchasing":   return <PurchasingTab {...tabProps} />;
       case "Sales":        return <SalesTab {...tabProps} />;
       case "Manufacturing":return <ManufacturingTab {...tabProps} />;
-      case "Quality":      return <QualityTab {...tabProps} />;
-      case "Pricing":      return <PricingTab {...tabProps} />;
-      case "Connections":  return <ConnectionsTab {...tabProps} />;
+      case "Quality":      return <QualityTab />;
+      case "Pricing":      return <PricingTab />;
+      case "Connections":  return <ConnectionsTab />;
     }
   };
 
   return (
-    <div className="itf-page">
+    <div className={`itf-page ${theme}`}>
       {/* Top bar */}
       <div className="itf-topbar">
         <div className="itf-breadcrumb">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-          </svg>
+          <button onClick={() => navigate('/item-list')} className="itf-back-btn">
+            <FaArrowLeft size={12} /> Back
+          </button>
           <span className="itf-bc-sep">/</span>
           <span className="itf-bc-link" onClick={() => navigate("/item-list")}>Stock</span>
           <span className="itf-bc-sep">/</span>
@@ -904,7 +861,9 @@ export default function ItemForm() {
               </button>
             </>
           )}
-          <button className="itf-btn-save" onClick={() => setIsDirty(false)}>Save</button>
+          <button className="itf-btn-save" onClick={() => setIsDirty(false)}>
+            <FaSave size={12} /> Save
+          </button>
         </div>
       </div>
 
@@ -923,9 +882,13 @@ export default function ItemForm() {
         </div>
         {/* Right sidebar icons */}
         <div className="itf-tab-bar-actions">
-          <button className="itf-btn-icon" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-          <button className="itf-btn-icon" title="Print"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></button>
-          <button className="itf-btn-icon" title="Favourite"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+          <button className="itf-btn-icon" title="Edit"><FaEdit size={12} /></button>
+          <button className="itf-btn-icon" title="Print">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          </button>
+          <button className="itf-btn-icon" title="Favourite">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </button>
         </div>
       </div>
 
@@ -944,18 +907,26 @@ export default function ItemForm() {
             <div className="itf-doc-id">{form.itemCode}</div>
 
             <div className="itf-sidebar-actions">
-              {[
-                { icon: "assign", label: "Assign" },
-                { icon: "attach", label: "Attachments" },
-                { icon: "tag", label: "Tags" },
-                { icon: "share", label: "Share" },
-              ].map(({ label }) => (
-                <button key={label} className="itf-sidebar-action">
-                  <SidebarIcon label={label} />
-                  {label}
-                  <span className="itf-sidebar-plus">+</span>
-                </button>
-              ))}
+              <button className="itf-sidebar-action">
+                <SidebarIcon label="Assign" />
+                Assign
+                <span className="itf-sidebar-plus">+</span>
+              </button>
+              <button className="itf-sidebar-action">
+                <SidebarIcon label="Attachments" />
+                Attachments
+                <span className="itf-sidebar-plus">+</span>
+              </button>
+              <button className="itf-sidebar-action">
+                <SidebarIcon label="Tags" />
+                Tags
+                <span className="itf-sidebar-plus">+</span>
+              </button>
+              <button className="itf-sidebar-action">
+                <SidebarIcon label="Share" />
+                Share
+                <span className="itf-sidebar-plus">+</span>
+              </button>
             </div>
 
             <div className="itf-sidebar-meta">
