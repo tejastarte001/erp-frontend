@@ -9,7 +9,6 @@ import {
   FaInfoCircle,
   FaTimesCircle,
   FaPlus,
-  FaTrash,
   FaTag,
 } from 'react-icons/fa';
 import "./ItemAttributeForm.css";
@@ -49,10 +48,10 @@ export default function ItemAttributeForm() {
     { id: "5", value: "White", abbreviation: "WHI" },
   ]);
 
-  const [editingRow, setEditingRow] = useState<string | null>(null);
+  // const [editingRow, setEditingRow] = useState<string | null>(null);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, ] = useState<{ [key: string]: string }>({});
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 

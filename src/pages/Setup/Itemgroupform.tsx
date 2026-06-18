@@ -3,23 +3,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   FaArrowLeft,
   FaSave,
-  FaTimes,
   FaSpinner,
   FaExclamationCircle,
   FaExclamationTriangle,
   FaInfoCircle,
   FaTimesCircle,
-  FaCheck,
   FaPlus,
-  FaTrash,
   FaFolder,
   FaTag,
   FaList,
-  FaBuilding,
-  FaMoneyBillWave,
-  FaCalendarAlt,
-  FaUser,
-  FaClock,
 } from 'react-icons/fa';
 import "./ItemGroupForm.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
@@ -95,9 +87,9 @@ export default function ItemGroupForm() {
   const [defaults, setDefaults] = useState<DefaultRow[]>(existing?.defaults ?? []);
   const [taxes, setTaxes] = useState<TaxRow[]>(existing?.taxes ?? []);
   const [commentText, setCommentText] = useState("");
-  const [isDirty, setIsDirty] = useState(isNew);
+  const [, setIsDirty] = useState(isNew);
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, ] = useState<{ [key: string]: string }>({});
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 

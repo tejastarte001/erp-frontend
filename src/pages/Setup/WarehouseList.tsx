@@ -102,7 +102,7 @@ export default function WarehouseList() {
   const totalEnabled = warehouses.filter(item => item.status === 'Enabled').length;
   const totalDisabled = warehouses.filter(item => item.status === 'Disabled').length;
   const totalCompanies = [...new Set(warehouses.map(item => item.company))].length;
-  const totalGroups = warehouses.filter(item => item.isGroup).length;
+  // const totalGroups = warehouses.filter(item => item.isGroup).length;
 
   const stats = [
     { title: 'Total Warehouses', value: warehouses.length, icon: <FaWarehouse />, color: '#6366f1' },

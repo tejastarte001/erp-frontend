@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink,  } from 'react-router-dom';
 import './Sidebar.css';
-import { useAdminTheme } from '../admin-theme/AdminThemeContext';
+// import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -16,8 +16,8 @@ export default function Sidebar({
   isMinimized = false,
   onToggleMinimize
 }: SidebarProps) {
-  const location = useLocation();
-  const { theme } = useAdminTheme();
+  // const location = useLocation();
+  // const { theme } = useAdminTheme();
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
     const saved = localStorage.getItem('expandedCategories');
     return saved ? JSON.parse(saved) : {
