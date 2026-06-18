@@ -1,234 +1,183 @@
-/* UOMForm.css */
-
-/* ── Content ─────────────────────────── */
-.uomf-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: white;
-  overflow: hidden;
+/* ─── Container ───────────────────────────────────────────────────────── */
+.uomf-page {
+  padding: 0 20px 40px;
+  background: var(--layout-bg);
+  min-height: 100vh;
 }
 
-/* Topbar */
-.uomf-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  min-height: 52px;
-  flex-shrink: 0;
-  background: white;
+.uomf-inner {
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
-.uomf-breadcrumb {
+/* ─── Header ──────────────────────────────────────────────────────────── */
+.uomf-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 12px;
+  padding-top: 4px;
+  padding-bottom: 18px;
 }
 
-.uomf-bc-sep {
-  color: #d1d5db;
-}
-
-.uomf-bc-link {
-  color: #6b7280;
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 30px;
+  color: var(--text-secondary);
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
 }
 
-.uomf-bc-link:hover {
-  color: #374151;
+.back-btn:hover {
+  background: color-mix(in srgb, var(--primary-color) 8%, var(--card-bg));
+  border-color: color-mix(in srgb, var(--primary-color) 40%, var(--border-color));
+  color: var(--primary-color);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-color) 12%, transparent);
 }
 
-.uomf-bc-current {
-  font-size: 16px;
-  font-weight: 600;
-  color: #111827;
+.back-btn:active {
+  transform: scale(0.97);
 }
 
-.uomf-topbar-right {
+.header-title {
+  flex: 1;
+}
+
+.header-title h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.error-badge {
   display: flex;
   align-items: center;
   gap: 8px;
+  background: #fef3c7;
+  padding: 6px 12px;
+  border-radius: 30px;
+  font-size: 11px;
+  color: #92400e;
+  flex-shrink: 0;
 }
 
-.uomf-btn-outline {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: white;
-  font-size: 13px;
-  color: #374151;
-  cursor: pointer;
-  transition: background 0.15s;
-  white-space: nowrap;
-}
-
-.uomf-btn-outline:hover {
-  background: #f9fafb;
-}
-
-.uomf-btn-save {
-  height: 32px;
-  padding: 0 18px;
-  border: none;
-  border-radius: 6px;
-  background: #111827;
-  color: white;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.uomf-btn-save:hover {
-  background: #1f2937;
-}
-
-/* Body */
-.uomf-body {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.uomf-main {
-  flex: 1;
-  overflow-y: auto;
+/* ─── Form Card ───────────────────────────────────────────────────────── */
+.uomf-card {
+  background: var(--card-bg);
+  border-radius: 14px;
   padding: 28px 32px;
+  box-shadow: 0 1px 4px var(--shadow-color);
+  border: 1px solid var(--border-color);
 }
 
-.uomf-main::-webkit-scrollbar {
-  width: 6px;
-}
-
-.uomf-main::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
-  border-radius: 3px;
-}
-
-/* ── Sections ─────────────────────────── */
-.uomf-section {
-  margin-bottom: 8px;
-}
-
+/* ─── Section Title ──────────────────────────────────────────────────── */
 .uomf-section-title {
-  font-size: 15px;
+  font-size: 11px;
   font-weight: 600;
-  color: #111827;
-  margin: 0 0 18px;
-  text-align: left;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  display: block;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.uomf-divider {
-  height: 1px;
-  background: #e5e7eb;
-  margin: 24px 0;
-}
-
-/* ── Fields ─────────────────────────── */
+/* ─── Form Fields ────────────────────────────────────────────────────── */
 .uomf-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: flex-start;
+  margin-bottom: 18px;
 }
 
 .uomf-label {
-  font-size: 13px;
-  color: #374151;
-  font-weight: 500;
-  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.uomf-req {
-  color: #ef4444;
+.uomf-label-icon {
+  margin-right: 4px;
 }
 
-.uomf-hint {
-  font-size: 12px;
-  color: #9ca3af;
-  line-height: 1.45;
-  margin-top: 3px;
-  text-align: left;
+.uomf-required {
+  color: var(--danger-color);
 }
 
-.uomf-input {
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 13.5px;
-  color: #111827;
-  background: #f9fafb;
-  outline: none;
-  transition: border-color 0.15s, background 0.15s;
+.form-field {
   width: 100%;
-  max-width: 500px;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 13px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
-.uomf-input:focus {
-  border-color: #2563eb;
-  background: white;
+.form-field:hover {
+  border-color: color-mix(in srgb, var(--primary-color) 50%, var(--border-color));
+  background: color-mix(in srgb, var(--primary-color) 2%, var(--card-bg));
 }
 
-.uomf-input:disabled {
-  background: #f3f4f6;
-  color: #6b7280;
-  cursor: not-allowed;
+.form-field:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 15%, transparent);
+  background: color-mix(in srgb, var(--primary-color) 3%, var(--card-bg));
+}
+
+.form-field.field-error {
+  border-color: var(--danger-color);
+}
+
+.form-field.field-error:hover,
+.form-field.field-error:focus {
+  border-color: var(--danger-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger-color) 12%, transparent);
+  background: color-mix(in srgb, var(--danger-color) 2%, var(--card-bg));
+}
+
+.uomf-error-msg {
+  font-size: 11px;
+  color: var(--danger-color);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .uomf-textarea {
-  width: 100%;
-  max-width: 500px;
-  padding: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 13.5px;
-  color: #111827;
-  background: #f9fafb;
-  outline: none;
-  transition: border-color 0.15s, background 0.15s;
   resize: vertical;
+  min-height: 60px;
   font-family: inherit;
 }
 
-.uomf-textarea:focus {
-  border-color: #2563eb;
-  background: white;
+/* ─── Grid Layouts ───────────────────────────────────────────────────── */
+.uomf-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
 }
 
-.uomf-select {
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 13.5px;
-  color: #111827;
-  background: #f9fafb;
-  outline: none;
-  transition: border-color 0.15s, background 0.15s;
-  width: 100%;
-  max-width: 500px;
-  cursor: pointer;
-}
-
-.uomf-select:focus {
-  border-color: #2563eb;
-  background: white;
-}
-
-/* ── Checkboxes ─────────────────────────── */
-.uomf-check-row {
+/* ─── Checkbox Field ────────────────────────────────────────────────── */
+.uomf-field-check {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
 
 .uomf-checkbox {
@@ -236,24 +185,44 @@
   height: 14px;
   border-radius: 3px;
   cursor: pointer;
-  accent-color: #2563eb;
+  accent-color: var(--primary-color);
   margin-top: 2px;
   flex-shrink: 0;
 }
 
 .uomf-check-label {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
-  color: #111827;
+  color: var(--text-primary);
   cursor: pointer;
-  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* ── Comments ─────────────────────────── */
-.uomf-comment-row {
+.uomf-check-icon {
+  font-size: 12px;
+}
+
+.uomf-check-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* ─── Divider ────────────────────────────────────────────────────────── */
+.uomf-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 18px 0;
+}
+
+/* ─── Comments ────────────────────────────────────────────────────────── */
+.uomf-comment-input-row {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 12px;
 }
 
 .uomf-comment-avatar {
@@ -274,30 +243,25 @@
   flex: 1;
   height: 34px;
   padding: 0 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 13px;
-  color: #374151;
-  background: #f9fafb;
+  color: var(--text-primary);
+  background: var(--card-bg);
   outline: none;
-  text-align: left;
+  transition: border-color 0.15s;
 }
 
 .uomf-comment-input:focus {
-  border-color: #2563eb;
-  background: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 12%, transparent);
 }
 
 .uomf-comment-input::placeholder {
-  color: #9ca3af;
+  color: var(--text-secondary);
 }
 
-/* ── Activity ─────────────────────────── */
-.uomf-section-activity {
-  position: relative;
-  padding-bottom: 24px;
-}
-
+/* ─── Activity ────────────────────────────────────────────────────────── */
 .uomf-activity-header {
   display: flex;
   align-items: center;
@@ -305,161 +269,339 @@
   margin-bottom: 14px;
 }
 
+.uomf-activity-title {
+  margin: 0 !important;
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+}
+
 .uomf-new-email-btn {
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--primary-color);
   font-size: 13px;
   cursor: pointer;
+  font-weight: 500;
+  transition: color 0.15s;
 }
 
 .uomf-new-email-btn:hover {
+  color: var(--primary-hover);
   text-decoration: underline;
 }
 
 .uomf-activity-list {
-  list-style: disc;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-.uomf-activity-list li {
+.uomf-activity-item {
   font-size: 13px;
-  color: #374151;
-  text-align: left;
+  color: var(--text-primary);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.uomf-activity-item:last-child {
+  border-bottom: none;
 }
 
 .uomf-activity-time {
-  color: #9ca3af;
+  color: var(--text-secondary);
 }
 
-.uomf-activity-collapse {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 28px;
-  height: 28px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: white;
+/* ─── Footer ──────────────────────────────────────────────────────────── */
+.uomf-footer {
+  margin-top: 14px;
   display: flex;
+  justify-content: flex-end;
   align-items: center;
-  justify-content: center;
+  gap: 12px;
+}
+
+.cancel-btn {
+  padding: 8px 24px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: 30px;
   cursor: pointer;
-  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
 }
 
-.uomf-activity-collapse:hover {
-  background: #f9fafb;
+.cancel-btn:hover {
+  background: color-mix(in srgb, var(--danger-color) 6%, var(--card-bg));
+  border-color: color-mix(in srgb, var(--danger-color) 30%, var(--border-color));
+  color: var(--danger-color);
 }
 
-/* ── Right Sidebar ─────────────────────────── */
-.uomf-sidebar-right {
-  width: 220px;
-  border-left: 1px solid #e5e7eb;
-  padding: 20px 16px;
-  overflow-y: auto;
-  flex-shrink: 0;
-  background: white;
-}
-
-.uomf-sidebar-right::-webkit-scrollbar {
-  width: 4px;
-}
-
-.uomf-sidebar-right::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
-  border-radius: 2px;
-}
-
-.uomf-doc-avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  background: #e5e7eb;
-  color: #374151;
-  font-size: 22px;
+.submit-btn {
+  padding: 8px 32px;
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 12px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin: 0 auto 8px;
+  gap: 7px;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary-color) 25%, transparent);
+  transition: opacity 0.2s, box-shadow 0.18s, transform 0.1s;
 }
 
-.uomf-doc-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #111827;
-  text-align: center;
-  word-break: break-word;
+.submit-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--primary-color) 40%, transparent);
+  transform: translateY(-1px);
 }
 
-.uomf-doc-id {
-  font-size: 12px;
-  color: #9ca3af;
-  text-align: center;
-  margin-bottom: 14px;
+.submit-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
 }
 
-.uomf-sidebar-actions {
+.submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ─── Validation Summary Modal ──────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 16px;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
 }
 
-.uomf-sidebar-action {
+.validation-summary-modal {
+  background: var(--card-bg);
+  border-radius: 16px;
+  max-width: 550px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px var(--shadow-color);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  background: var(--card-bg);
+  z-index: 10;
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 34px;
-  padding: 0 8px;
+  color: #f59e0b;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   border: none;
-  border-radius: 6px;
-  background: transparent;
-  font-size: 13px;
-  color: #374151;
+  background: var(--layout-bg);
+  font-size: 20px;
   cursor: pointer;
+  color: var(--text-secondary);
   transition: background 0.15s;
 }
 
-.uomf-sidebar-action:hover {
-  background: #f3f4f6;
+.modal-close:hover {
+  background: color-mix(in srgb, var(--text-secondary) 15%, var(--layout-bg));
 }
 
-.uomf-sidebar-plus {
-  margin-left: auto;
-  color: #9ca3af;
-  font-size: 16px;
+.modal-body {
+  padding: 24px;
 }
 
-.uomf-sidebar-meta {
-  border-top: 1px solid #e5e7eb;
-  padding-top: 14px;
+.modal-description {
+  margin-bottom: 16px;
+  color: var(--text-secondary);
 }
 
-.uomf-meta-row {
+.validation-errors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.validation-error-item {
+  padding: 12px;
+  background: var(--layout-bg);
+  border-radius: 10px;
+  border-left: 3px solid #ef4444;
+  cursor: default;
+}
+
+.error-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 
-.uomf-meta-label {
-  font-size: 11.5px;
-  color: #9ca3af;
+.error-header strong {
+  color: var(--text-primary);
+  font-size: 13px;
 }
 
-.uomf-meta-val {
-  font-size: 12.5px;
-  color: #374151;
-  font-weight: 500;
+.error-icon {
+  color: #ef4444;
+  flex-shrink: 0;
 }
 
-.uomf-meta-time {
+.error-message {
+  font-size: 11px;
+  color: #ef4444;
+  margin-left: 26px;
+}
+
+.validation-tip {
+  margin-top: 20px;
+  padding: 12px;
+  background: #fef3c7;
+  border-radius: 8px;
   font-size: 12px;
-  color: #9ca3af;
-  margin-top: 2px;
-  text-align: right;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tip-icon {
+  display: inline;
+  margin-right: 6px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-cancel {
+  padding: 8px 20px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-cancel:hover {
+  background: var(--layout-bg);
+  color: var(--text-primary);
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────── */
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .uomf-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .uomf-card {
+    padding: 16px;
+  }
+
+  .uomf-header {
+    flex-wrap: wrap;
+  }
+
+  .error-badge {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .uomf-footer {
+    flex-direction: column-reverse;
+    width: 100%;
+  }
+
+  .uomf-footer button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .error-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .error-message {
+    margin-left: 0;
+  }
+
+  .uomf-activity-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 520px) {
+  .uomf-page {
+    padding: 0 12px 20px;
+  }
+
+  .uomf-card {
+    padding: 12px;
+  }
+
+  .header-title h1 {
+    font-size: 16px;
+  }
 }

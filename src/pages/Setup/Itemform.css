@@ -55,6 +55,18 @@
 .itf-bc-link:hover { text-decoration: underline; }
 .itf-bc-current { font-size: 16px; font-weight: 600; color: var(--text-primary, #111827); }
 
+.itf-error-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef3c7;
+  padding: 4px 10px;
+  border-radius: 30px;
+  font-size: 10px;
+  color: #92400e;
+  margin-left: 8px;
+}
+
 .itf-status-pill {
   padding: 2px 10px;
   border-radius: 99px;
@@ -99,56 +111,128 @@
   align-items: center;
   gap: 6px;
   height: 30px; padding: 0 18px;
-  border: none; border-radius: 6px;
+  border: none;
+  border-radius: 6px;
   background: var(--primary-color, #111827);
   color: white;
-  font-size: 13px; font-weight: 500;
-  cursor: pointer; transition: background 0.15s;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
 }
 
-.itf-btn-save:hover { background: var(--primary-hover, #1f2937); }
+.itf-btn-save:hover:not(:disabled) { background: var(--primary-hover, #1f2937); }
+.itf-btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Tab bar ─────────────────────────── */
 .itf-tab-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   border-bottom: 1px solid var(--border-color, #e5e7eb);
   flex-shrink: 0;
   background: var(--card-bg, white);
   padding: 0 20px;
   overflow-x: auto;
+  gap: 12px;
 }
 
-.itf-tab-bar::-webkit-scrollbar { height: 0; }
-
-.itf-tabs {
+.itf-tabs-container {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 4px;
   flex: 1;
+  overflow-x: auto;
 }
+
+.itf-tabs-container::-webkit-scrollbar { height: 0; }
 
 .itf-tab {
-  height: 44px;
-  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
   border: none;
   background: transparent;
-  font-size: 13.5px;
-  color: var(--text-secondary, #6b7280);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  white-space: nowrap;
-  transition: color 0.15s, border-color 0.15s;
+  position: relative;
+  transition: all 0.2s;
+  border-radius: 8px;
+  flex-shrink: 0;
 }
 
-.itf-tab:hover { color: var(--text-primary, #111827); }
-.itf-tab-active { color: var(--text-primary, #111827); font-weight: 500; border-bottom-color: var(--primary-color, #111827); }
+.itf-tab:hover {
+  background: var(--nav-hover, #f3f4f6);
+}
+
+.itf-tab-active {
+  background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+}
+
+.itf-tab-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.itf-tab-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #6b7280);
+  position: relative;
+  transition: all 0.2s;
+}
+
+.itf-tab-icon-active {
+  color: var(--primary-color, #6366f1);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+}
+
+.itf-tab-error-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: #ef4444;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
+}
+
+.itf-tab-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.itf-tab-active .itf-tab-label {
+  color: var(--text-primary, #111827);
+}
+
+.itf-tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--primary-color, #6366f1);
+  border-radius: 2px 2px 0 0;
+}
 
 .itf-tab-bar-actions {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-left: 12px;
   flex-shrink: 0;
 }
 
@@ -162,7 +246,7 @@
 .itf-main {
   flex: 1;
   overflow-y: auto;
-  padding: 28px 32px;
+  padding: 24px 32px;
 }
 
 .itf-main::-webkit-scrollbar { width: 6px; }
@@ -545,6 +629,113 @@
 
 .itf-conn-add:hover { background: var(--nav-hover, #f3f4f6); color: var(--text-primary, #111827); }
 
+/* ── Validation Summary Modal ─────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.validation-summary-modal {
+  background: var(--card-bg);
+  border-radius: 16px;
+  max-width: 550px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px var(--shadow-color);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  background: var(--card-bg);
+  z-index: 10;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: var(--layout-bg);
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.modal-close:hover { background: color-mix(in srgb, var(--text-secondary) 15%, var(--layout-bg)); }
+
+.modal-body { padding: 24px; }
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-cancel {
+  padding: 8px 20px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.btn-cancel:hover { background: var(--layout-bg); color: var(--text-primary); }
+
+.validation-error-item {
+  padding: 12px;
+  background: var(--layout-bg);
+  border-radius: 10px;
+  border-left: 3px solid #ef4444;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.validation-error-item:hover {
+  transform: translateX(4px);
+  background: color-mix(in srgb, var(--primary-color) 5%, var(--layout-bg));
+}
+
+.error-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.error-tab {
+  font-size: 10px;
+  padding: 2px 8px;
+  background: color-mix(in srgb, var(--primary-color) 15%, transparent);
+  color: var(--primary-color);
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.error-message { font-size: 11px; color: #ef4444; margin-left: 26px; }
+
 /* ── Dark Theme Overrides ─────────────────────────── */
 .dark-theme .itf-btn-outline,
 .dark-theme .itf-btn-icon,
@@ -634,6 +825,51 @@
   color: var(--text-primary, #f8fafc);
 }
 
+.dark-theme .itf-tab-active {
+  background: color-mix(in srgb, var(--primary-color) 15%, transparent);
+}
+
+.dark-theme .itf-tab-error-badge {
+  background: #ef4444;
+}
+
+.dark-theme .itf-error-badge {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.dark-theme .validation-summary-modal {
+  background: var(--card-bg, #1e293b);
+}
+
+.dark-theme .validation-error-item {
+  background: var(--layout-bg, #0f172a);
+}
+
+.dark-theme .modal-header {
+  background: var(--card-bg, #1e293b);
+}
+
+.dark-theme .btn-cancel {
+  background: var(--card-bg, #1e293b);
+  border-color: var(--border-color, #334155);
+  color: var(--text-secondary, #94a3b8);
+}
+
+/* ── Animations ─────────────────────────── */
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Responsive ─────────────────────────── */
 @media (max-width: 768px) {
   .itf-two-col {
@@ -662,8 +898,16 @@
     flex-wrap: wrap;
   }
 
-  .itf-tabs {
+  .itf-tabs-container {
     overflow-x: auto;
+  }
+
+  .itf-tab {
+    padding: 6px 10px;
+  }
+
+  .itf-tab-label {
+    font-size: 11px;
   }
 
   .itf-heatmap {
@@ -677,6 +921,15 @@
   .itf-inline-table {
     min-width: 600px;
   }
+
+  .itf-breadcrumb {
+    flex-wrap: wrap;
+  }
+
+  .itf-error-badge {
+    font-size: 9px;
+    padding: 2px 8px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -689,7 +942,16 @@
   }
 
   .itf-tab {
-    padding: 0 10px;
+    padding: 4px 8px;
+  }
+
+  .itf-tab-label {
+    font-size: 10px;
+  }
+
+  .itf-tab-icon {
+    width: 24px;
+    height: 24px;
     font-size: 12px;
   }
 
@@ -699,5 +961,10 @@
 
   .itf-bc-current {
     font-size: 14px;
+  }
+
+  .itf-back-btn {
+    font-size: 11px;
+    padding: 3px 10px;
   }
 }
