@@ -67,8 +67,8 @@ function App() {
             <Route path="/uom/new" element={<UOMForm />} />
             <Route path="/uom/:id" element={<UOMForm />} />
             
-               <Route path="/bom" element={<BOMPage />} />
-          <Route path="/bom/new" element={<NewBOMPage />} />
+            <Route path="/bom" element={<BOMPage />} />
+            <Route path="/bom/new" element={<NewBOMPage />} />
 
 
             <Route path="/settings" element={<Settings />} />

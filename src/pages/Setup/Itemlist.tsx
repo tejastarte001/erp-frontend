@@ -1,7 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  FaSearch,
+  FaFilter,
+  FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
+  FaAngleDoubleLeft,
+  FaAngleDoubleRight,
+  FaEye,
+  FaEdit,
+  FaTrash,
+  FaBoxes,
+  FaTags,
+  FaList,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaBox,
+} from 'react-icons/fa';
 import ItemQuickAdd from "./Itemquickadd";
 import "./ItemList.css";
+import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
 
 interface Item {
   id: string;
@@ -27,16 +46,51 @@ const MOCK_ITEMS: Item[] = [
 
 export default function ItemList() {
   const navigate = useNavigate();
-  const [items] = useState<Item[]>(MOCK_ITEMS);
+  const { theme } = useAdminTheme();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [allChecked, setAllChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [pageSize, setPageSize] = useState(20);
   const [hasVariants, setHasVariants] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const items = MOCK_ITEMS;
+
+  // Filter data based on search and status
+  const filteredData = items.filter(item => {
+    const matchesSearch = item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'enabled' && item.status === 'Enabled') ||
+                         (statusFilter === 'disabled' && item.status === 'Disabled');
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalItems = filteredData.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Stats
+  const totalEnabled = items.filter(item => item.status === 'Enabled').length;
+  const totalDisabled = items.filter(item => item.status === 'Disabled').length;
+  const totalGroups = [...new Set(items.map(item => item.itemGroup))].length;
+
+  const stats = [
+    { title: 'Total Items', value: items.length, icon: <FaBoxes />, color: '#6366f1' },
+    { title: 'Enabled', value: totalEnabled, icon: <FaCheckCircle />, color: '#10b981' },
+    { title: 'Disabled', value: totalDisabled, icon: <FaTimesCircle />, color: '#ef4444' },
+    { title: 'Item Groups', value: totalGroups, icon: <FaTags />, color: '#f59e0b' },
+  ];
 
   const toggleAll = () => {
     if (allChecked) { setSelected(new Set()); }
-    else { setSelected(new Set(items.map((r) => r.id))); }
+    else { setSelected(new Set(paginatedData.map((r) => r.id))); }
     setAllChecked(!allChecked);
   };
 
@@ -44,45 +98,92 @@ export default function ItemList() {
     const next = new Set(selected);
     next.has(id) ? next.delete(id) : next.add(id);
     setSelected(next);
-    setAllChecked(next.size === items.length);
+    setAllChecked(next.size === paginatedData.length);
+  };
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(totalPages);
+  const goToNextPage = () => goToPage(currentPage + 1);
+  const goToPrevPage = () => goToPage(currentPage - 1);
+
+  const handlePageSizeChange = (newSize: number) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1);
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    if (endPage - startPage + 1 < maxVisible) startPage = Math.max(1, endPage - maxVisible + 1);
+    for (let i = startPage; i <= endPage; i++) pages.push(i);
+    return pages;
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
   };
 
   return (
-    <div className="itl-page">
-      {/* Topbar */}
-      <div className="itl-topbar">
-        <div className="itl-breadcrumb">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-          </svg>
-          <span className="itl-bc-sep">/</span>
-          <span className="itl-bc-link">Manufacturing</span>
-          <span className="itl-bc-sep">/</span>
-          <span className="itl-bc-current">Item</span>
+    <div className={`itl-page ${theme}`}>
+      {/* Stats Cards */}
+      <div className="itl-stats-container">
+        {stats.map((stat, index) => (
+          <div key={index} className="itl-stat-card" style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}cc 100%)` }}>
+            <div className="itl-stat-icon">{stat.icon}</div>
+            <div className="itl-stat-content">
+              <p className="itl-stat-title">{stat.title}</p>
+              <p className="itl-stat-value">{stat.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div className="itl-filter-bar">
+        <div className="itl-filter-left">
+          <div className="itl-search-wrapper">
+            <FaSearch className="itl-search-icon" />
+            <input
+              type="text"
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="itl-search-input"
+            />
+            {searchTerm && (
+              <button className="itl-search-clear" onClick={() => setSearchTerm('')}>
+                <FaTimes size={12} />
+              </button>
+            )}
+          </div>
         </div>
-        <div className="itl-topbar-right">
-          <button className="itl-btn-outline">
+        <div className="itl-filter-right">
+          <select 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="itl-filter-select"
+          >
+            <option value="all">All Status</option>
+            <option value="enabled">Enabled</option>
+            <option value="disabled">Disabled</option>
+          </select>
+          <button className="itl-filter-btn">
+            <FaFilter size={12} />
+            Filter
+          </button>
+          <button className="itl-sort-btn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/>
             </svg>
-            List View
+            Created On
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-          <button className="itl-btn-outline">
-            Saved Filters
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-          <button className="itl-btn-icon" title="Refresh">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-          </button>
-          <button className="itl-btn-icon" title="More">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
-            </svg>
           </button>
           <button className="itl-btn-primary" onClick={() => setShowModal(true)}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -93,31 +194,29 @@ export default function ItemList() {
         </div>
       </div>
 
-      {/* Filter bar */}
-      <div className="itl-filter-bar">
-        <div className="itl-filter-tags">
-          <div className="itl-filter-tag"><span className="itl-tag-label">ID</span><span className="itl-tag-op">≈</span></div>
-          <div className="itl-filter-tag"><span className="itl-tag-label">Item Name</span><span className="itl-tag-op">≈</span></div>
-          <div className="itl-filter-tag itl-tag-active"><span className="itl-tag-label">Item Group</span></div>
-          <div className="itl-filter-tag"><span className="itl-tag-label">Variant Of</span></div>
-          <div className="itl-filter-active-count">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-            </svg>
-            Filters 1
-            <button className="itl-tag-clear">×</button>
-          </div>
-        </div>
-        <div className="itl-filter-right">
-          <button className="itl-sort-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/>
-            </svg>
-            Created On
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      {/* Active filters indicator */}
+      {(searchTerm || statusFilter !== 'all') && (
+        <div className="itl-active-filters">
+          <FaFilter size={12} style={{ color: 'var(--primary-color)' }} />
+          <span style={{ color: 'var(--text-primary)' }}>Active filters:</span>
+          {searchTerm && (
+            <span style={{ color: 'var(--text-primary)' }}>
+              <strong>Search:</strong> "{searchTerm}"
+            </span>
+          )}
+          {statusFilter !== 'all' && (
+            <span style={{ color: 'var(--text-primary)' }}>
+              <strong>Status:</strong> {statusFilter}
+            </span>
+          )}
+          <button 
+            onClick={clearFilters}
+            className="itl-clear-filters"
+          >
+            <FaTimes size={10} /> Clear All
           </button>
         </div>
-      </div>
+      )}
 
       {/* Has Variants */}
       <div className="itl-has-variants-bar">
@@ -140,62 +239,129 @@ export default function ItemList() {
               <th className="itl-th">Item Type</th>
               <th className="itl-th">Purpose</th>
               <th className="itl-th itl-th-meta">
-                <span className="itl-count-label">{items.length} of {items.length}</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <span className="itl-count-label">{totalItems} of {items.length}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary, #9ca3af)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
               </th>
             </tr>
           </thead>
           <tbody>
-            {items.map((row) => (
-              <tr
-                key={row.id}
-                className={`itl-tr ${selected.has(row.id) ? "itl-tr-selected" : ""}`}
-                onClick={() => navigate(`/item/${encodeURIComponent(row.id)}`)}
-              >
-                <td className="itl-td-check" onClick={(e) => { e.stopPropagation(); toggleRow(row.id); }}>
-                  <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleRow(row.id)} className="itl-checkbox" />
-                </td>
-                <td className="itl-td itl-td-name">{row.itemName}</td>
-                <td className="itl-td">
-                  <span className={`itl-status-badge itl-status-${row.status.toLowerCase()}`}>{row.status}</span>
-                </td>
-                <td className="itl-td">{row.itemGroup}</td>
-                <td className="itl-td">{row.uom}</td>
-                <td className="itl-td">{row.itemType}</td>
-                <td className="itl-td">{row.purpose}</td>
-                <td className="itl-td itl-td-meta">
-                  <span className="itl-ago">{row.ago}</span>
-                  <button className="itl-meta-btn" onClick={(e) => e.stopPropagation()}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            {paginatedData.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="itl-empty-state">
+                  <div className="itl-empty-content">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                     </svg>
-                    {row.comments}
-                  </button>
-                  <span className="itl-dot">·</span>
-                  <button className="itl-meta-btn" onClick={(e) => e.stopPropagation()}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                    </svg>
-                  </button>
+                    <p>No items found</p>
+                    <span>Try adjusting your search criteria</span>
+                  </div>
                 </td>
               </tr>
-            ))}
+            ) : (
+              paginatedData.map((row) => (
+                <tr
+                  key={row.id}
+                  className={`itl-tr ${selected.has(row.id) ? "itl-tr-selected" : ""}`}
+                  onClick={() => navigate(`/item/${encodeURIComponent(row.id)}`)}
+                >
+                  <td className="itl-td-check" onClick={(e) => { e.stopPropagation(); toggleRow(row.id); }}>
+                    <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleRow(row.id)} className="itl-checkbox" />
+                  </td>
+                  <td className="itl-td itl-td-name">{row.itemName}</td>
+                  <td className="itl-td">
+                    <span className={`itl-status-badge itl-status-${row.status.toLowerCase()}`}>{row.status}</span>
+                  </td>
+                  <td className="itl-td">{row.itemGroup}</td>
+                  <td className="itl-td">{row.uom}</td>
+                  <td className="itl-td">{row.itemType}</td>
+                  <td className="itl-td">{row.purpose}</td>
+                  <td className="itl-td itl-td-meta">
+                    <span className="itl-ago">{row.ago}</span>
+                    <button className="itl-meta-btn" onClick={(e) => e.stopPropagation()}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                      </svg>
+                      {row.comments}
+                    </button>
+                    <span className="itl-dot">·</span>
+                    <button className="itl-meta-btn" onClick={(e) => e.stopPropagation()}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Pagination */}
-      <div className="itl-pagination">
-        {[20, 100, 500, 2500].map((n) => (
-          <button
-            key={n}
-            className={`itl-page-btn ${pageSize === n ? "itl-page-btn-active" : ""}`}
-            onClick={() => setPageSize(n)}
-          >{n}</button>
-        ))}
-      </div>
+      {totalPages > 1 && (
+        <div className="itl-pagination">
+          <div className="itl-pagination-left">
+            <span className="itl-pagination-label">Show:</span>
+            <select 
+              value={itemsPerPage} 
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              className="itl-page-size-select"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="itl-pagination-label">entries</span>
+          </div>
+          <div className="itl-pagination-center">
+            <button 
+              onClick={goToFirstPage} 
+              disabled={currentPage === 1} 
+              className="itl-page-btn"
+            >
+              <FaAngleDoubleLeft size={12} />
+            </button>
+            <button 
+              onClick={goToPrevPage} 
+              disabled={currentPage === 1} 
+              className="itl-page-btn"
+            >
+              <FaChevronLeft size={12} />
+            </button>
+            {getPageNumbers().map(page => (
+              <button
+                key={page}
+                onClick={() => goToPage(page)}
+                className={`itl-page-btn ${currentPage === page ? 'itl-page-btn-active' : ''}`}
+              >
+                {page}
+              </button>
+            ))}
+            <button 
+              onClick={goToNextPage} 
+              disabled={currentPage === totalPages} 
+              className="itl-page-btn"
+            >
+              <FaChevronRight size={12} />
+            </button>
+            <button 
+              onClick={goToLastPage} 
+              disabled={currentPage === totalPages} 
+              className="itl-page-btn"
+            >
+              <FaAngleDoubleRight size={12} />
+            </button>
+          </div>
+          <div className="itl-pagination-right">
+            <span className="itl-pagination-info">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} entries
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Quick Add Modal */}
       {showModal && (
