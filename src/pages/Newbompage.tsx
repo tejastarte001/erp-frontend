@@ -1,16 +1,21 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   Home,
   ChevronDown,
-  Check,
+  ChevronRight,
   X,
   Pencil,
   Settings,
   Copy,
   Trash2,
-  MoveVertical,
+  AlertTriangle,
+  Package,
+  Wrench,
+  Info,
+  XCircle,
+  InfoIcon,
+  Save,
 } from "lucide-react";
-import "./Newbompage.css";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +37,13 @@ interface SecondaryRow {
   qty: string;
 }
 
+interface ValidationError {
+  field: string;
+  label: string;
+  message: string;
+  tabId: TabId;
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ITEM_SUGGESTIONS = [
@@ -42,18 +54,15 @@ const ITEM_SUGGESTIONS = [
   { code: "chair", sub: "chair, Products" },
 ];
 
-const UOM_OPTIONS  = ["Nos", "Kg", "Ltr", "Pcs", "Set", "Box"];
 const TYPE_OPTIONS = ["By-Product", "Scrap"];
 
-// ─── Small shared atoms ───────────────────────────────────────────────────────
+// ─── Shared atoms ─────────────────────────────────────────────────────────────
 
-const Label: React.FC<{ text: string; required?: boolean; info?: boolean }> = ({
-  text, required, info,
-}) => (
+const Label: React.FC<{ text: string; required?: boolean; info?: boolean }> = ({ text, required, info }) => (
   <span className="nbom-label">
     {text}
     {required && <span className="nbom-label__req">*</span>}
-    {info && <span className="nbom-label__info">?</span>}
+    {info    && <span className="nbom-label__info">?</span>}
   </span>
 );
 
@@ -79,20 +88,19 @@ const Checkbox: React.FC<{ label: string; hint?: string; checked?: boolean; onCh
   </div>
 );
 
-// ─── BOM Configuration Tab ───────────────────────────────────────────────────
+// ─── BOM Configuration Tab ────────────────────────────────────────────────────
 
 const BOMConfigTab: React.FC = () => {
-  const [isActive, setIsActive]           = useState(true);
-  const [isDefault, setIsDefault]         = useState(true);
-  const [setRateSubAssembly, setSetRateSubAssembly] = useState(true);
-  const [isPhantomBOM, setIsPhantomBOM]   = useState(false);
-  const [allowAltItem, setAllowAltItem]   = useState(false);
-  const [qiRequired, setQiRequired]       = useState(false);
-  const [basedOn, setBasedOn]             = useState("");
+  const [isActive,            setIsActive]            = useState(true);
+  const [isDefault,           setIsDefault]           = useState(true);
+  const [setRateSubAssembly,  setSetRateSubAssembly]  = useState(true);
+  const [isPhantomBOM,        setIsPhantomBOM]        = useState(false);
+  const [allowAltItem,        setAllowAltItem]        = useState(false);
+  const [qiRequired,          setQiRequired]          = useState(false);
+  const [basedOn,             setBasedOn]             = useState("");
 
   return (
     <div className="nbom-tab-content">
-      {/* Top checkboxes — 2 columns */}
       <div className="nbom-config-checks-grid">
         <div className="nbom-config-checks-col">
           <Checkbox label="Is Active"   checked={isActive}   onChange={() => setIsActive(v => !v)} />
@@ -104,33 +112,24 @@ const BOMConfigTab: React.FC = () => {
           />
         </div>
         <div className="nbom-config-checks-col">
-          <Checkbox label="Is Phantom BOM"        checked={isPhantomBOM}  onChange={() => setIsPhantomBOM(v => !v)} />
-          <Checkbox label="Allow Alternative Item" checked={allowAltItem}  onChange={() => setAllowAltItem(v => !v)} />
+          <Checkbox label="Is Phantom BOM"         checked={isPhantomBOM} onChange={() => setIsPhantomBOM(v => !v)} />
+          <Checkbox label="Allow Alternative Item"  checked={allowAltItem} onChange={() => setAllowAltItem(v => !v)} />
         </div>
       </div>
 
-      {/* Quality Inspection */}
       <div className="nbom-config-section">
         <div className="nbom-config-section__title">Quality Inspection</div>
         <Checkbox label="Quality Inspection Required" checked={qiRequired} onChange={() => setQiRequired(v => !v)} />
       </div>
 
-      {/* Default Warehouse */}
       <div className="nbom-config-section">
         <div className="nbom-config-section__title">Default Warehouse</div>
         <div className="nbom-form-grid">
-          <div className="nbom-field">
-            <Label text="Default Source Warehouse" />
-            <Input readOnly value="" placeholder="" />
-          </div>
-          <div className="nbom-field">
-            <Label text="Default Target Warehouse" />
-            <Input readOnly value="" placeholder="" />
-          </div>
+          <div className="nbom-field"><Label text="Default Source Warehouse" /><Input readOnly value="" /></div>
+          <div className="nbom-field"><Label text="Default Target Warehouse" /><Input readOnly value="" /></div>
         </div>
       </div>
 
-      {/* Consume Components */}
       <div className="nbom-config-section">
         <div className="nbom-config-section__title">Consume Components</div>
         <div style={{ maxWidth: 400 }}>
@@ -157,7 +156,6 @@ const MoreInfoTab: React.FC = () => {
 
   return (
     <div className="nbom-tab-content">
-      {/* Cost Configuration collapsible */}
       <div className="nbom-card" style={{ marginBottom: 0 }}>
         <div
           className="nbom-config-section__title nbom-config-section__title--collapsible"
@@ -167,7 +165,6 @@ const MoreInfoTab: React.FC = () => {
           Cost Configuration
           <ChevronDown size={14} style={{ transform: costConfigOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", color: "var(--c-text-muted)" }} />
         </div>
-
         {costConfigOpen && (
           <div className="nbom-card__body">
             <div className="nbom-form-grid">
@@ -180,21 +177,13 @@ const MoreInfoTab: React.FC = () => {
                 </select>
               </div>
               <div>
-                <div className="nbom-field">
-                  <Label text="Currency" required />
-                  <Input readOnly value="INR" />
-                </div>
-                <div className="nbom-field" style={{ marginTop: 12 }}>
-                  <Label text="Conversion Rate" required />
-                  <Input readOnly value="1.000000000" />
-                </div>
+                <div className="nbom-field"><Label text="Currency" required /><Input readOnly value="INR" /></div>
+                <div className="nbom-field" style={{ marginTop: 12 }}><Label text="Conversion Rate" required /><Input readOnly value="1.000000000" /></div>
               </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Project */}
       <div style={{ padding: "16px 0", maxWidth: 400 }}>
         <div className="nbom-field">
           <Label text="Project" />
@@ -208,29 +197,26 @@ const MoreInfoTab: React.FC = () => {
 // ─── Component edit popup ─────────────────────────────────────────────────────
 
 interface ComponentPopupProps {
-  row: ComponentRow;
-  rowIndex: number;
-  onClose: () => void;
-  onSave: (updated: ComponentRow) => void;
+  row: ComponentRow; rowIndex: number;
+  onClose: () => void; onSave: (u: ComponentRow) => void;
 }
 
 const ComponentPopup: React.FC<ComponentPopupProps> = ({ row, rowIndex, onClose, onSave }) => {
   const [form, setForm]               = useState<ComponentRow>({ ...row });
   const [showSuggest, setShowSuggest] = useState(false);
-  const [doNotExplode, setDoNotExplode]               = useState(false);
-  const [allowAlt, setAllowAlt]       = useState(false);
-  const [isStock, setIsStock]         = useState(false);
-  const [hasVariants, setHasVariants]                 = useState(false);
-  const [includeInMfg, setIncludeInMfg]               = useState(false);
-  const [sourcedBySupplier, setSourcedBySupplier]     = useState(false);
-  const [isSubAssembly, setIsSubAssembly]             = useState(false);
-  const [isPhantom, setIsPhantom]     = useState(false);
-
+  const [doNotExplode, setDoNotExplode] = useState(false);
+  const [allowAlt,     setAllowAlt]    = useState(false);
+  const [isStock,      setIsStock]     = useState(false);
+  const [hasVariants,  setHasVariants] = useState(false);
+  const [includeInMfg, setIncludeInMfg] = useState(false);
+  const [sourcedBySupplier, setSourcedBySupplier] = useState(false);
+  const [isSubAssembly,     setIsSubAssembly]     = useState(false);
+  const [isPhantom,         setIsPhantom]         = useState(false);
   const set = (k: keyof ComponentRow) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
 
   return (
-    <div className="nbom-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="nbom-overlay" onMouseDown={e => e.target === e.currentTarget && onClose()}>
       <div className="nbom-popup">
         <div className="nbom-popup__head">
           <span className="nbom-popup__title">Editing Row #{rowIndex + 1}</span>
@@ -243,29 +229,21 @@ const ComponentPopup: React.FC<ComponentPopupProps> = ({ row, rowIndex, onClose,
             <button className="nbom-popup__close" onClick={onClose}><X size={16} /></button>
           </div>
         </div>
-
         <div className="nbom-popup__body">
           <div className="nbom-popup-grid">
             <div className="nbom-field">
               <Label text="Item Code" required />
               <div className="nbom-autocomplete-wrap">
-                <Input
-                  value={form.itemCode}
+                <Input value={form.itemCode}
                   onChange={e => { setForm(f => ({ ...f, itemCode: e.target.value })); setShowSuggest(true); }}
                   onFocus={() => setShowSuggest(true)}
                   onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
-                  placeholder="Search item..."
-                />
+                  placeholder="Search item..." />
                 {showSuggest && (
                   <div className="nbom-autocomplete-list">
-                    {ITEM_SUGGESTIONS.filter(s =>
-                      !form.itemCode || s.code.toLowerCase().includes(form.itemCode.toLowerCase())
-                    ).map(s => (
-                      <div
-                        key={s.code}
-                        className="nbom-autocomplete-item"
-                        onMouseDown={() => { setForm(f => ({ ...f, itemCode: s.code })); setShowSuggest(false); }}
-                      >
+                    {ITEM_SUGGESTIONS.filter(s => !form.itemCode || s.code.toLowerCase().includes(form.itemCode.toLowerCase())).map(s => (
+                      <div key={s.code} className="nbom-autocomplete-item"
+                        onMouseDown={() => { setForm(f => ({ ...f, itemCode: s.code })); setShowSuggest(false); }}>
                         <div className="nbom-autocomplete-item__code">{s.code}</div>
                         <div className="nbom-autocomplete-item__sub">{s.sub}</div>
                       </div>
@@ -277,38 +255,29 @@ const ComponentPopup: React.FC<ComponentPopupProps> = ({ row, rowIndex, onClose,
             <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 22 }}>
               <Checkbox label="Do Not Explode" checked={doNotExplode} onChange={() => setDoNotExplode(v => !v)} />
             </div>
-            <div className="nbom-field">
-              <Label text="BOM No" />
-              <Input readOnly value="" />
-            </div>
-            <div className="nbom-field">
-              <Label text="Source Warehouse" />
-              <Input readOnly value="" />
-            </div>
+            <div className="nbom-field"><Label text="BOM No" /><Input readOnly value="" /></div>
+            <div className="nbom-field"><Label text="Source Warehouse" /><Input readOnly value="" /></div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 4 }}>
-              <Checkbox label="Allow Alternative Item" checked={allowAlt}  onChange={() => setAllowAlt(v => !v)} />
-              <Checkbox label="Is Stock Item"          checked={isStock}   onChange={() => setIsStock(v => !v)} />
+              <Checkbox label="Allow Alternative Item" checked={allowAlt} onChange={() => setAllowAlt(v => !v)} />
+              <Checkbox label="Is Stock Item"          checked={isStock}  onChange={() => setIsStock(v => !v)} />
             </div>
           </div>
-
           <div className="nbom-popup-grid">
             <div className="nbom-field"><Label text="Qty" required /><Input value={form.qty} onChange={set("qty")} type="number" /></div>
             <div className="nbom-field"><Label text="Stock UOM" /><Input readOnly value="Nos" /></div>
             <div className="nbom-field"><Label text="UOM" required /><Input value={form.uom} onChange={set("uom")} /></div>
             <div className="nbom-field"><Label text="Conversion Factor" /><Input readOnly value="" /></div>
           </div>
-
           <div className="nbom-popup-section">
             <div className="nbom-popup-section__title">Rate &amp; Amount</div>
             <div className="nbom-popup-grid">
               <div className="nbom-field"><Label text="Rate" required /><Input value={form.rate} onChange={set("rate")} type="number" /></div>
             </div>
           </div>
-
           <div className="nbom-popup-grid">
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <Checkbox label="Has Variants"                  checked={hasVariants}   onChange={() => setHasVariants(v => !v)} />
-              <Checkbox label="Include Item In Manufacturing" checked={includeInMfg}  onChange={() => setIncludeInMfg(v => !v)} />
+              <Checkbox label="Has Variants"                   checked={hasVariants}  onChange={() => setHasVariants(v => !v)} />
+              <Checkbox label="Include Item In Manufacturing"  checked={includeInMfg} onChange={() => setIncludeInMfg(v => !v)} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <Checkbox label="Sourced by Supplier"  checked={sourcedBySupplier} onChange={() => setSourcedBySupplier(v => !v)} />
@@ -317,7 +286,6 @@ const ComponentPopup: React.FC<ComponentPopupProps> = ({ row, rowIndex, onClose,
             </div>
           </div>
         </div>
-
         <div className="nbom-popup__foot">
           <div className="nbom-shortcuts">
             <span>Shortcuts:</span>
@@ -334,13 +302,11 @@ const ComponentPopup: React.FC<ComponentPopupProps> = ({ row, rowIndex, onClose,
   );
 };
 
-// ─── Secondary Item edit popup ────────────────────────────────────────────────
+// ─── Secondary Item popup ─────────────────────────────────────────────────────
 
 interface SecondaryPopupProps {
-  row: SecondaryRow;
-  rowIndex: number;
-  onClose: () => void;
-  onSave: (updated: SecondaryRow) => void;
+  row: SecondaryRow; rowIndex: number;
+  onClose: () => void; onSave: (u: SecondaryRow) => void;
 }
 
 const SecondaryPopup: React.FC<SecondaryPopupProps> = ({ row, rowIndex, onClose, onSave }) => {
@@ -349,7 +315,7 @@ const SecondaryPopup: React.FC<SecondaryPopupProps> = ({ row, rowIndex, onClose,
     setForm(f => ({ ...f, [k]: e.target.value }));
 
   return (
-    <div className="nbom-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="nbom-overlay" onMouseDown={e => e.target === e.currentTarget && onClose()}>
       <div className="nbom-popup">
         <div className="nbom-popup__head">
           <span className="nbom-popup__title">Editing Row #{rowIndex + 1}</span>
@@ -362,7 +328,6 @@ const SecondaryPopup: React.FC<SecondaryPopupProps> = ({ row, rowIndex, onClose,
             <button className="nbom-popup__close" onClick={onClose}><X size={16} /></button>
           </div>
         </div>
-
         <div className="nbom-popup__body">
           <div className="nbom-field">
             <Label text="Type" required />
@@ -371,22 +336,17 @@ const SecondaryPopup: React.FC<SecondaryPopupProps> = ({ row, rowIndex, onClose,
               {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-
           <div className="nbom-popup-grid">
             <div className="nbom-field"><Label text="Item Code" required /><Input value={form.itemCode} onChange={set("itemCode")} placeholder="Search item…" /></div>
             <div className="nbom-field"><Label text="Qty" required /><Input value={form.qty} onChange={set("qty")} type="number" /></div>
           </div>
-
           <div className="nbom-popup-grid">
             <div className="nbom-field"><Label text="UOM" required /><Input value={form.uom} onChange={set("uom")} /></div>
             <div className="nbom-field"><Label text="Stock UOM" /><Input readOnly value="Nos" /></div>
           </div>
-
           <div className="nbom-popup-grid">
-            <div />
-            <div className="nbom-field"><Label text="Conversion Factor" required /><Input readOnly value="1.000" /></div>
+            <div /><div className="nbom-field"><Label text="Conversion Factor" required /><Input readOnly value="1.000" /></div>
           </div>
-
           <div className="nbom-field">
             <Label text="Description" />
             <div className="nbom-editor-wrap">
@@ -394,7 +354,7 @@ const SecondaryPopup: React.FC<SecondaryPopupProps> = ({ row, rowIndex, onClose,
                 <span style={{ fontSize: 12, color: "var(--c-text-muted)", padding: "0 6px", fontWeight: 600 }}>Normal</span>
                 <div className="nbom-editor-divider" />
                 {["B","I","U","S"].map(t => (
-                  <button key={t} className="nbom-editor-btn" style={{ fontWeight: t === "B" ? 700 : 400, fontStyle: t === "I" ? "italic" : "normal", textDecoration: t === "U" ? "underline" : t === "S" ? "line-through" : "none" }}>{t}</button>
+                  <button key={t} className="nbom-editor-btn" style={{ fontWeight: t==="B"?700:400, fontStyle: t==="I"?"italic":"normal", textDecoration: t==="U"?"underline":t==="S"?"line-through":"none" }}>{t}</button>
                 ))}
                 <div className="nbom-editor-divider" />
                 {["≡","⊟","⊞","⟨⟩","🔗"].map((ic, i) => <button key={i} className="nbom-editor-btn">{ic}</button>)}
@@ -402,7 +362,6 @@ const SecondaryPopup: React.FC<SecondaryPopupProps> = ({ row, rowIndex, onClose,
               <textarea className="nbom-editor-area" placeholder="Add a description…" rows={5} />
             </div>
           </div>
-
           <div className="nbom-popup-section">
             <div className="nbom-popup-grid" style={{ padding: "14px 12px" }}>
               <div className="nbom-field"><Label text="Cost Allocation %" required /><Input readOnly value="0.000" /></div>
@@ -412,7 +371,6 @@ const SecondaryPopup: React.FC<SecondaryPopupProps> = ({ row, rowIndex, onClose,
             </div>
           </div>
         </div>
-
         <div className="nbom-popup__foot">
           <div className="nbom-shortcuts">
             <span>Shortcuts:</span>
@@ -429,27 +387,96 @@ const SecondaryPopup: React.FC<SecondaryPopupProps> = ({ row, rowIndex, onClose,
   );
 };
 
-// ─── Main New BOM Page ────────────────────────────────────────────────────────
+// ─── Validation Modal ─────────────────────────────────────────────────────────
+
+interface ValidationModalProps {
+  errors: ValidationError[];
+  onClose: () => void;
+  onJump: (tabId: TabId) => void;
+  tabs: { id: TabId; label: string }[];
+}
+
+const ValidationModal: React.FC<ValidationModalProps> = ({ errors, onClose, onJump, tabs }) => (
+  <div className="nbom-modal-overlay" onClick={onClose}>
+    <div className="nbom-validation-modal" onClick={e => e.stopPropagation()}>
+      {/* Header */}
+      <div className="nbom-modal-header">
+        <h2 className="nbom-modal-title">
+          <AlertTriangle size={16} />
+          Missing Required Fields
+        </h2>
+        <button className="nbom-modal-close" onClick={onClose}><X size={18} /></button>
+      </div>
+
+      {/* Body */}
+      <div className="nbom-modal-body">
+        <p className="nbom-modal-intro">
+          Please fill in the following required fields before saving:
+        </p>
+        <div className="nbom-error-list">
+          {errors.map((err, i) => {
+            const tabLabel = tabs.find(t => t.id === err.tabId)?.label ?? err.tabId;
+            return (
+              <div key={i} className="nbom-validation-error-item" onClick={() => onJump(err.tabId)}>
+                <div className="nbom-error-header">
+                  <XCircle size={14} className="nbom-error-icon" />
+                  <strong className="nbom-error-label">{err.label}</strong>
+                  <span className="nbom-error-tab">{tabLabel}</span>
+                </div>
+                <div className="nbom-error-message">{err.message}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="nbom-hint-banner">
+          <InfoIcon size={13} className="nbom-hint-icon" />
+          Click on any error to jump to that section
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="nbom-modal-footer">
+        <button className="nbom-btn-cancel" onClick={onClose}>Close</button>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Tab definitions ──────────────────────────────────────────────────────────
+
+type TabId = "production" | "config" | "info";
+
+const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
+  { id: "production", label: "Production Item",    icon: <Package size={14} /> },
+  { id: "config",     label: "BOM Configuration",  icon: <Wrench  size={14} /> },
+  { id: "info",       label: "More Info",           icon: <Info    size={14} /> },
+];
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 interface NewBOMPageProps {
   onBack?: () => void;
 }
 
 const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState<"production" | "config" | "info">("production");
-  const [costAllocPanelOpen, setCostAllocPanelOpen] = useState(true);
-  const [opsPanelOpen, setOpsPanelOpen]             = useState(true);
-  const [withOperations, setWithOperations]         = useState(false);
+  const [activeTab,           setActiveTab]           = useState<TabId>("production");
+  const [costAllocPanelOpen,  setCostAllocPanelOpen]  = useState(true);
+  const [opsPanelOpen,        setOpsPanelOpen]        = useState(true);
+  const [withOperations,      setWithOperations]      = useState(false);
+  const [itemToManufacture,   setItemToManufacture]   = useState("");
 
-  const [compRows, setCompRows] = useState<ComponentRow[]>([
+  const [compRows,     setCompRows]     = useState<ComponentRow[]>([
     { id: 1, itemCode: "", qty: "0.000", uom: "", rate: "₹ 0.00", amount: "₹ 0.00" },
   ]);
-  const [editingComp, setEditingComp] = useState<{ row: ComponentRow; idx: number } | null>(null);
+  const [editingComp,  setEditingComp]  = useState<{ row: ComponentRow; idx: number } | null>(null);
 
-  const [secRows, setSecRows] = useState<SecondaryRow[]>([
+  const [secRows,      setSecRows]      = useState<SecondaryRow[]>([
     { id: 1, type: "", itemCode: "", itemName: "", uom: "", qty: "" },
   ]);
-  const [editingSec, setEditingSec] = useState<{ row: SecondaryRow; idx: number } | null>(null);
+  const [editingSec,   setEditingSec]   = useState<{ row: SecondaryRow; idx: number } | null>(null);
+
+  const [showValidation, setShowValidation] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
   const addCompRow = () =>
     setCompRows(r => [...r, { id: Date.now(), itemCode: "", qty: "0.000", uom: "", rate: "₹ 0.00", amount: "₹ 0.00" }]);
@@ -457,48 +484,186 @@ const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack }) => {
   const addSecRow = () =>
     setSecRows(r => [...r, { id: Date.now(), type: "", itemCode: "", itemName: "", uom: "", qty: "" }]);
 
+  // ─── Validation ──────────────────────────────────────────────────────────
+
+  const getAllErrors = (): ValidationError[] => {
+    const errs: ValidationError[] = [];
+
+    // Production tab
+    if (!itemToManufacture.trim())
+      errs.push({ field: "itemToManufacture", label: "Item to Manufacture", message: "Item to Manufacture is required", tabId: "production" });
+
+    const filledComps = compRows.filter(r => r.itemCode.trim());
+    if (filledComps.length === 0)
+      errs.push({ field: "components", label: "Components", message: "At least one component with an Item Code is required", tabId: "production" });
+
+    compRows.forEach((r, i) => {
+      if (r.itemCode && !r.uom.trim())
+        errs.push({ field: `comp_uom_${i}`, label: `Component ${i + 1} UOM`, message: `UOM is required for component "${r.itemCode}"`, tabId: "production" });
+    });
+
+    return errs;
+  };
+
+  const getTabErrorCount = (tabId: TabId) => getAllErrors().filter(e => e.tabId === tabId).length;
+
+  const hasAnyErrors = getAllErrors().length > 0;
+
+  // ─── Save handler ─────────────────────────────────────────────────────────
+
+  const handleSave = () => {
+    const errs = getAllErrors();
+    if (errs.length > 0) {
+      setValidationErrors(errs);
+      setShowValidation(true);
+      return;
+    }
+    // All good — submit logic here
+    console.log("Save BOM", { itemToManufacture, compRows, secRows });
+  };
+
+  const handleJump = (tabId: TabId) => {
+    setActiveTab(tabId);
+    setShowValidation(false);
+  };
+
+  const activeIndex = TABS.findIndex(t => t.id === activeTab);
+
+  const handleNext = () => { const n = TABS[activeIndex + 1]; if (n) setActiveTab(n.id); };
+  const handlePrev = () => { const p = TABS[activeIndex - 1]; if (p) setActiveTab(p.id); };
+
+  // ─── Per-tab warning ──────────────────────────────────────────────────────
+  const getTabWarning = (tabId: TabId) => getTabErrorCount(tabId) > 0;
+
   return (
     <div className="nbom-page">
-      {/* ── Topbar (not sticky) ─────────────────────────────────────── */}
+
+      {/* ── Validation Modal ───────────────────────────────────── */}
+      {showValidation && (
+        <ValidationModal
+          errors={validationErrors}
+          onClose={() => setShowValidation(false)}
+          onJump={handleJump}
+          tabs={TABS}
+        />
+      )}
+
+      {/* ── Topbar ────────────────────────────────────────────── */}
       <div className="nbom-topbar">
-        <div className="nbom-breadcrumb">
-          <button className="nbom-breadcrumb__home" title="Home"><Home size={13} /></button>
-          <span className="nbom-breadcrumb__sep">/</span>
-          <span className="nbom-breadcrumb__crumb" onClick={onBack}>Manufacturing</span>
-          <span className="nbom-breadcrumb__sep">/</span>
-          <span className="nbom-breadcrumb__crumb" onClick={onBack}>BOM</span>
-          <span className="nbom-breadcrumb__sep">/</span>
-          <span className="nbom-breadcrumb__crumb nbom-breadcrumb__crumb--active">New BOM</span>
-        </div>
+
+        {/* Breadcrumb */}
+        <nav className="nbom-breadcrumb" aria-label="Breadcrumb">
+          <ol className="nbom-breadcrumb__list">
+            <li className="nbom-breadcrumb__item nbom-breadcrumb__item--home">
+              <button className="nbom-breadcrumb__home-btn" title="Home" onClick={onBack}>
+                <Home size={13} />
+              </button>
+            </li>
+
+            <li className="nbom-breadcrumb__sep" aria-hidden><ChevronRight size={12} /></li>
+
+            <li className="nbom-breadcrumb__item">
+              <button className="nbom-breadcrumb__link" onClick={onBack}>
+                Manufacturing
+              </button>
+            </li>
+
+            <li className="nbom-breadcrumb__sep" aria-hidden><ChevronRight size={12} /></li>
+
+            <li className="nbom-breadcrumb__item">
+              <button className="nbom-breadcrumb__link" onClick={onBack}>
+                Bill of Materials
+              </button>
+            </li>
+
+            <li className="nbom-breadcrumb__sep" aria-hidden><ChevronRight size={12} /></li>
+
+            <li className="nbom-breadcrumb__item nbom-breadcrumb__item--active" aria-current="page">
+              <span className="nbom-breadcrumb__current">
+                <span className="nbom-breadcrumb__current-dot" />
+                New BOM
+              </span>
+            </li>
+          </ol>
+        </nav>
+
+        {/* Right actions */}
         <div className="nbom-topbar__right">
+          {hasAnyErrors && (
+            <div className="nbom-error-pill">
+              <AlertTriangle size={11} />
+              {getAllErrors().length} missing field{getAllErrors().length > 1 ? "s" : ""}
+            </div>
+          )}
           <span className="nbom-badge--unsaved">Not Saved</span>
-          <button className="nbom-btn-save">Save</button>
+          <button className="nbom-btn-save" onClick={handleSave}>
+            <Save size={13} />
+            Save
+          </button>
         </div>
       </div>
 
-      {/* ── Tabs ────────────────────────────────────────────────────── */}
-      <div className="nbom-tabs">
-        {(["production", "config", "info"] as const).map(tab => (
-          <button
-            key={tab}
-            className={`nbom-tab ${activeTab === tab ? "nbom-tab--active" : ""}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab === "production" ? "Production Item" : tab === "config" ? "BOM Configuration" : "More Info"}
-          </button>
-        ))}
+      {/* ── Stepper Tabs ───────────────────────────────────────── */}
+      <div className="nbom-stepper-wrap">
+        <div className="nbom-stepper-row">
+          {TABS.map((tab, idx) => {
+            const isActive = activeTab === tab.id;
+            const hasWarn  = getTabWarning(tab.id);
+            const errCount = getTabErrorCount(tab.id);
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`nbom-step-btn ${isActive ? "nbom-step-btn--active" : ""}`}
+              >
+                <div className={`nbom-step-circle
+                  ${isActive            ? "nbom-step-circle--active"  : ""}
+                  ${hasWarn && !isActive ? "nbom-step-circle--warning" : ""}
+                `}>
+                  {hasWarn && !isActive
+                    ? <AlertTriangle size={14} />
+                    : isActive
+                      ? tab.icon
+                      : idx + 1
+                  }
+                  {errCount > 0 && !isActive && (
+                    <div className="nbom-step-error-badge">{errCount}</div>
+                  )}
+                </div>
+
+                <div className="nbom-step-label-wrap">
+                  <div className={`nbom-step-step
+                    ${isActive            ? "nbom-step-step--active"  : ""}
+                    ${hasWarn && !isActive ? "nbom-step-step--warning" : ""}
+                  `}>Step {idx + 1}</div>
+                  <div className={`nbom-step-name ${isActive ? "nbom-step-name--active" : ""}`}>
+                    {tab.label}
+                  </div>
+                </div>
+
+                {isActive && <div className="nbom-step-underline" />}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* ── Body ────────────────────────────────────────────────────── */}
-      <div className="nbom-body">
+      {/* ── Warning banner ─────────────────────────────────────── */}
+      {getTabWarning(activeTab) && (
+        <div className="nbom-tab-warning-banner">
+          <AlertTriangle size={12} />
+          <span>This tab has incomplete or missing information. Please review before saving.</span>
+        </div>
+      )}
 
-        {/* ── BOM Configuration tab ─────────────────────────────────── */}
+      {/* ── Body ───────────────────────────────────────────────── */}
+      <div className="nbom-body" key={activeTab}>
+
         {activeTab === "config" && <BOMConfigTab />}
+        {activeTab === "info"   && <MoreInfoTab />}
 
-        {/* ── More Info tab ──────────────────────────────────────────── */}
-        {activeTab === "info" && <MoreInfoTab />}
-
-        {/* ── Production Item tab ────────────────────────────────────── */}
         {activeTab === "production" && (
           <>
             {/* Item to Manufacture */}
@@ -506,31 +671,30 @@ const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack }) => {
               <div className="nbom-card__body">
                 <div className="nbom-field">
                   <Label text="Item to Manufacture" required info />
-                  <Input placeholder="Search or enter item…" />
+                  <Input
+                    placeholder="Search or enter item…"
+                    value={itemToManufacture}
+                    onChange={e => setItemToManufacture(e.target.value)}
+                    className={!itemToManufacture.trim() ? "nbom-input--error" : ""}
+                  />
+                  {!itemToManufacture.trim() && (
+                    <span className="nbom-error-text">Item to Manufacture is required</span>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Cost Allocation / Process Loss */}
+            {/* Cost Allocation */}
             <div className="nbom-card">
               <div className="nbom-card__header" onClick={() => setCostAllocPanelOpen(o => !o)}>
-                <span className="nbom-card__title">
-                  <span className="nbom-card__title-dot" />
-                  Cost Allocation / Process Loss
-                </span>
+                <span className="nbom-card__title"><span className="nbom-card__title-dot" />Cost Allocation / Process Loss</span>
                 <ChevronDown size={15} className={`nbom-card__chev ${costAllocPanelOpen ? "nbom-card__chev--open" : ""}`} />
               </div>
               {costAllocPanelOpen && (
                 <div className="nbom-card__body">
                   <div className="nbom-form-grid">
-                    <div className="nbom-field">
-                      <Label text="% Cost Allocation" />
-                      <Input defaultValue="100.000" />
-                    </div>
-                    <div className="nbom-field">
-                      <Label text="% Process Loss" />
-                      <Input readOnly value="" placeholder="" />
-                    </div>
+                    <div className="nbom-field"><Label text="% Cost Allocation" /><Input defaultValue="100.000" /></div>
+                    <div className="nbom-field"><Label text="% Process Loss" /><Input readOnly value="" /></div>
                   </div>
                 </div>
               )}
@@ -539,30 +703,21 @@ const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack }) => {
             {/* Operations */}
             <div className="nbom-card">
               <div className="nbom-card__header" onClick={() => setOpsPanelOpen(o => !o)}>
-                <span className="nbom-card__title">
-                  <span className="nbom-card__title-dot" />
-                  Operations
-                </span>
+                <span className="nbom-card__title"><span className="nbom-card__title-dot" />Operations</span>
                 <ChevronDown size={15} className={`nbom-card__chev ${opsPanelOpen ? "nbom-card__chev--open" : ""}`} />
               </div>
               {opsPanelOpen && (
                 <div className="nbom-card__body">
-                  <Checkbox
-                    label="With Operations"
-                    hint="Manage cost of operations"
-                    checked={withOperations}
-                    onChange={() => setWithOperations(v => !v)}
-                  />
+                  <Checkbox label="With Operations" hint="Manage cost of operations" checked={withOperations} onChange={() => setWithOperations(v => !v)} />
                 </div>
               )}
             </div>
 
-            {/* Components table */}
+            {/* Components */}
             <div className="nbom-card">
               <div className="nbom-card__body">
                 <div className="nbom-card__title" style={{ marginBottom: 14 }}>
-                  <span className="nbom-card__title-dot" />
-                  Components
+                  <span className="nbom-card__title-dot" />Components
                 </div>
                 <div className="nbom-table-wrap">
                   <table className="nbom-table">
@@ -583,27 +738,13 @@ const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack }) => {
                         <tr key={row.id}>
                           <td className="nbom-table-cb"><input type="checkbox" /></td>
                           <td className="nbom-table-no">{idx + 1}</td>
-                          <td>
-                            <input className="nbom-table-input" value={row.itemCode}
-                              onChange={e => setCompRows(rs => rs.map((r, i) => i === idx ? { ...r, itemCode: e.target.value } : r))}
-                              placeholder="Item Code" />
-                          </td>
-                          <td>
-                            <input className="nbom-table-input" value={row.qty}
-                              onChange={e => setCompRows(rs => rs.map((r, i) => i === idx ? { ...r, qty: e.target.value } : r))}
-                              style={{ textAlign: "right", width: 80 }} />
-                          </td>
-                          <td>
-                            <input className="nbom-table-input" value={row.uom}
-                              onChange={e => setCompRows(rs => rs.map((r, i) => i === idx ? { ...r, uom: e.target.value } : r))}
-                              style={{ width: 80 }} />
-                          </td>
+                          <td><input className="nbom-table-input" value={row.itemCode} onChange={e => setCompRows(rs => rs.map((r, i) => i === idx ? { ...r, itemCode: e.target.value } : r))} placeholder="Item Code" /></td>
+                          <td><input className="nbom-table-input" value={row.qty} onChange={e => setCompRows(rs => rs.map((r, i) => i === idx ? { ...r, qty: e.target.value } : r))} style={{ textAlign: "right", width: 80 }} /></td>
+                          <td><input className="nbom-table-input" value={row.uom} onChange={e => setCompRows(rs => rs.map((r, i) => i === idx ? { ...r, uom: e.target.value } : r))} style={{ width: 80 }} /></td>
                           <td className="nbom-table-val">{row.rate}</td>
                           <td className="nbom-table-val">{row.amount}</td>
                           <td style={{ textAlign: "center" }}>
-                            <button className="nbom-edit-btn" onClick={() => setEditingComp({ row, idx })}>
-                              <Pencil size={12} />
-                            </button>
+                            <button className="nbom-edit-btn" onClick={() => setEditingComp({ row, idx })}><Pencil size={12} /></button>
                           </td>
                         </tr>
                       ))}
@@ -623,12 +764,11 @@ const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack }) => {
               </div>
             </div>
 
-            {/* Secondary Items table */}
+            {/* Secondary Items */}
             <div className="nbom-card">
               <div className="nbom-card__body">
                 <div className="nbom-card__title" style={{ marginBottom: 14 }}>
-                  <span className="nbom-card__title-dot" style={{ background: "var(--c-teal)" }} />
-                  Secondary Items
+                  <span className="nbom-card__title-dot" style={{ background: "var(--c-teal)" }} />Secondary Items
                 </div>
                 <div className="nbom-table-wrap">
                   <table className="nbom-table">
@@ -649,38 +789,12 @@ const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack }) => {
                         <tr key={row.id}>
                           <td className="nbom-table-cb"><input type="checkbox" /></td>
                           <td className="nbom-table-no">{idx + 1}</td>
-                          <td>
-                            <select className="nbom-table-select" value={row.type}
-                              onChange={e => setSecRows(rs => rs.map((r, i) => i === idx ? { ...r, type: e.target.value } : r))}>
-                              <option value="">Select…</option>
-                              {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                          </td>
-                          <td>
-                            <input className="nbom-table-input" value={row.itemCode}
-                              onChange={e => setSecRows(rs => rs.map((r, i) => i === idx ? { ...r, itemCode: e.target.value } : r))}
-                              placeholder="Item Code" />
-                          </td>
-                          <td>
-                            <input className="nbom-table-input" value={row.itemName}
-                              onChange={e => setSecRows(rs => rs.map((r, i) => i === idx ? { ...r, itemName: e.target.value } : r))}
-                              placeholder="Item Name" />
-                          </td>
-                          <td>
-                            <input className="nbom-table-input" value={row.uom}
-                              onChange={e => setSecRows(rs => rs.map((r, i) => i === idx ? { ...r, uom: e.target.value } : r))}
-                              placeholder="UOM" style={{ width: 80 }} />
-                          </td>
-                          <td>
-                            <input className="nbom-table-input" value={row.qty}
-                              onChange={e => setSecRows(rs => rs.map((r, i) => i === idx ? { ...r, qty: e.target.value } : r))}
-                              placeholder="Qty" style={{ width: 70, textAlign: "right" }} />
-                          </td>
-                          <td style={{ textAlign: "center" }}>
-                            <button className="nbom-edit-btn" onClick={() => setEditingSec({ row, idx })}>
-                              <Pencil size={12} />
-                            </button>
-                          </td>
+                          <td><select className="nbom-table-select" value={row.type} onChange={e => setSecRows(rs => rs.map((r, i) => i === idx ? { ...r, type: e.target.value } : r))}><option value="">Select…</option>{TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}</select></td>
+                          <td><input className="nbom-table-input" value={row.itemCode} onChange={e => setSecRows(rs => rs.map((r, i) => i === idx ? { ...r, itemCode: e.target.value } : r))} placeholder="Item Code" /></td>
+                          <td><input className="nbom-table-input" value={row.itemName} onChange={e => setSecRows(rs => rs.map((r, i) => i === idx ? { ...r, itemName: e.target.value } : r))} placeholder="Item Name" /></td>
+                          <td><input className="nbom-table-input" value={row.uom} onChange={e => setSecRows(rs => rs.map((r, i) => i === idx ? { ...r, uom: e.target.value } : r))} placeholder="UOM" style={{ width: 80 }} /></td>
+                          <td><input className="nbom-table-input" value={row.qty} onChange={e => setSecRows(rs => rs.map((r, i) => i === idx ? { ...r, qty: e.target.value } : r))} placeholder="Qty" style={{ width: 70, textAlign: "right" }} /></td>
+                          <td style={{ textAlign: "center" }}><button className="nbom-edit-btn" onClick={() => setEditingSec({ row, idx })}><Pencil size={12} /></button></td>
                         </tr>
                       ))}
                     </tbody>
@@ -697,22 +811,31 @@ const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack }) => {
         )}
       </div>
 
-      {/* ── Popups ──────────────────────────────────────────────────── */}
+      {/* ── Footer ─────────────────────────────────────────────── */}
+      <div className="nbom-footer-row">
+        {activeIndex > 0 && (
+          <button type="button" className="nbom-footer-btn nbom-footer-btn--secondary" onClick={handlePrev}>← Previous</button>
+        )}
+        {activeIndex < TABS.length - 1 && (
+          <button type="button" className="nbom-footer-btn nbom-footer-btn--primary" onClick={handleNext}>Next →</button>
+        )}
+        {activeIndex === TABS.length - 1 && (
+          <button type="button" className="nbom-footer-btn nbom-footer-btn--primary nbom-footer-btn--submit" onClick={handleSave}>
+            <Save size={14} /> Save BOM
+          </button>
+        )}
+      </div>
+
+      {/* ── Row edit popups ────────────────────────────────────── */}
       {editingComp && (
-        <ComponentPopup
-          row={editingComp.row}
-          rowIndex={editingComp.idx}
+        <ComponentPopup row={editingComp.row} rowIndex={editingComp.idx}
           onClose={() => setEditingComp(null)}
-          onSave={(updated) => setCompRows(rs => rs.map((r, i) => i === editingComp.idx ? updated : r))}
-        />
+          onSave={updated => setCompRows(rs => rs.map((r, i) => i === editingComp.idx ? updated : r))} />
       )}
       {editingSec && (
-        <SecondaryPopup
-          row={editingSec.row}
-          rowIndex={editingSec.idx}
+        <SecondaryPopup row={editingSec.row} rowIndex={editingSec.idx}
           onClose={() => setEditingSec(null)}
-          onSave={(updated) => setSecRows(rs => rs.map((r, i) => i === editingSec.idx ? updated : r))}
-        />
+          onSave={updated => setSecRows(rs => rs.map((r, i) => i === editingSec.idx ? updated : r))} />
       )}
     </div>
   );
