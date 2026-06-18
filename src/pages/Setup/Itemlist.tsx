@@ -8,15 +8,12 @@ import {
   FaChevronRight,
   FaAngleDoubleLeft,
   FaAngleDoubleRight,
-  FaEye,
-  FaEdit,
-  FaTrash,
+
   FaBoxes,
   FaTags,
-  FaList,
+
   FaCheckCircle,
-  FaTimesCircle,
-  FaBox,
+  FaTimesCircle
 } from 'react-icons/fa';
 import ItemQuickAdd from "./Itemquickadd";
 import "./ItemList.css";
@@ -50,7 +47,7 @@ export default function ItemList() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [allChecked, setAllChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [pageSize, setPageSize] = useState(20);
+  // const [pageSize, setPageSize] = useState(20);
   const [hasVariants, setHasVariants] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');

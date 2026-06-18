@@ -11,10 +11,6 @@ import {
   FaTag,
   FaPlus,
   FaTrash,
-  FaBuilding,
-  FaBoxes,
-  FaList,
-  FaCheckSquare,
 } from 'react-icons/fa';
 import "./BrandForm.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
@@ -47,7 +43,7 @@ export default function BrandForm() {
   const [defaults, setDefaults] = useState<BrandDefaults[]>([]);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, ] = useState<{ [key: string]: string }>({});
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 

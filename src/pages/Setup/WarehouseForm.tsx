@@ -49,7 +49,7 @@ export default function WarehouseForm() {
   const [isContactInfoExpanded, setIsContactInfoExpanded] = useState(false);
   const [isTransitExpanded, setIsTransitExpanded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, ] = useState<{ [key: string]: string }>({});
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 

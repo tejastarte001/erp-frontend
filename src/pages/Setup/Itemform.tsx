@@ -10,7 +10,6 @@ import {
   FaPlus,
   FaEdit,
   FaTag,
-  FaFolder,
   FaList,
   FaBoxes,
   FaDollarSign,
@@ -25,23 +24,23 @@ import "./ItemForm.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
 import toast from "react-hot-toast";
 
-type Tab =
-  | "Details"
-  | "Accounting"
-  | "UOM"
-  | "Tax"
-  | "Inventory"
-  | "Purchasing"
-  | "Sales"
-  | "Manufacturing"
-  | "Quality"
-  | "Pricing"
-  | "Connections";
+// type Tab =
+//   | "Details"
+//   | "Accounting"
+//   | "UOM"
+//   | "Tax"
+//   | "Inventory"
+//   | "Purchasing"
+//   | "Sales"
+//   | "Manufacturing"
+//   | "Quality"
+//   | "Pricing"
+//   | "Connections";
 
-const TABS: Tab[] = [
-  "Details","Accounting","UOM","Tax","Inventory",
-  "Purchasing","Sales","Manufacturing","Quality","Pricing","Connections",
-];
+// const TABS: Tab[] = [
+//   "Details","Accounting","UOM","Tax","Inventory",
+//   "Purchasing","Sales","Manufacturing","Quality","Pricing","Connections",
+// ];
 
 interface TableRow { id: string; [key: string]: string }
 
@@ -714,7 +713,7 @@ function ConnectionsTab() {
           {["JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR","APR","MAY","JUN"].map((m) => (
             <div key={m} className="itf-heatmap-col">
               <div className="itf-heatmap-month">{m}</div>
-              {["Mon","","Wed","","Fri"].map((d, i) => (
+              {["Mon","","Wed","","Fri"].map(( i) => (
                 <div key={i} className="itf-heatmap-row">
                   {Array.from({ length: 4 }).map((_, j) => (
                     <div key={j} className="itf-heatmap-cell" />
@@ -805,7 +804,7 @@ export default function ItemForm() {
   const isEditMode = !isNew;
 
   const [activeTab, setActiveTab] = useState<number>(0);
-  const [isDirty, setIsDirty] = useState(isNew);
+  const [, setIsDirty] = useState(isNew);
   const [submitting, setSubmitting] = useState(false);
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
