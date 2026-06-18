@@ -1,28 +1,27 @@
-/* ==================================================================
-   BOM List — design tokens (mirrors Stock Entry)
-   ================================================================== */
+
 
 .bom-page {
-  --c-bg: #ffffff;
-  --c-surface: #f7f8fb;
-  --c-border: #e6e8ee;
-  --c-border-strong: #d6d9e3;
-  --c-text: #1f2433;
-  --c-text-muted: #8b92a5;
-  --c-text-faint: #b3b9c8;
+  /* Bridge local aliases to theme variables set by AdminThemeContext */
+  --c-bg:            var(--card-bg, #ffffff);
+  --c-surface:       var(--layout-bg, #f7f8fb);
+  --c-border:        var(--border-color, #e6e8ee);
+  --c-border-strong: color-mix(in srgb, var(--border-color, #e6e8ee) 70%, #000);
+  --c-text:          var(--text-primary, #1f2433);
+  --c-text-muted:    var(--text-secondary, #8b92a5);
+  --c-text-faint:    color-mix(in srgb, var(--text-secondary, #8b92a5) 60%, transparent);
 
-  /* column accent colors */
-  --c-id: #8b5cf6;       /* violet  */
-  --c-item: #f59e0b;     /* amber   */
-  --c-active: #0ea5e9;   /* sky     */
+  /* column accent colors — fixed, not theme-dependent */
+  --c-id:        #8b5cf6;
+  --c-status:    #0ea5e9;
+  --c-operation: #f59e0b;
 
-  /* action accent colors */
-  --c-primary: #4f46e5;
-  --c-primary-hover: #4338ca;
-  --c-blue: #3b82f6;
-  --c-violet: #8b5cf6;
-  --c-teal: #14b8a6;
-  --c-amber: #f59e0b;
+  /* action colors — pulled from theme */
+  --c-primary:       var(--primary-color, #4f46e5);
+  --c-primary-hover: color-mix(in srgb, var(--primary-color, #4f46e5) 85%, #000);
+  --c-blue:          var(--primary-color, #3b82f6);
+  --c-violet:        #8b5cf6;
+  --c-teal:          #14b8a6;
+  --c-amber:         #f59e0b;
 
   font-family: -apple-system, "Inter", "Segoe UI", Roboto, sans-serif;
   color: var(--c-text);
@@ -30,10 +29,8 @@
   width: 100%;
 }
 
-* {
-  box-sizing: border-box;
-}
-
+* { box-sizing: border-box;
+ }
 /* ==================================================================
    Header / breadcrumb row
    ================================================================== */
