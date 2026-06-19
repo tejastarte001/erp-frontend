@@ -1,7 +1,9 @@
-import { useState,  } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
+import api from '../services/api';
+import { storage } from '../utils/storage';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -31,12 +33,55 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log({ email, password });
-      navigate("/dashboard");
-    } catch (err) {
-      setError("Invalid email or password. Please try again.");
+      // Call the login API
+      const response = await api.post('/user/login', {
+        username: email,
+        password: password
+      });
+
+      // Check if login was successful
+      if (response.data && response.data.success === 1) {
+        const { data } = response.data;
+        
+        // Store all auth data using the storage utility
+        storage.setAuthData({
+          user: data.user,
+          token: data.token
+        });
+
+        console.log('Login successful:', response.data);
+        console.log('User data stored:', storage.getUser());
+        console.log('Token stored:', storage.getToken());
+        
+        // Navigate to dashboard
+        navigate("/dashboard");
+      } else {
+        // Handle unsuccessful login
+        setError(response.data?.message || "Invalid email or password. Please try again.");
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      
+      // Handle different error scenarios
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        if (err.response.status === 401) {
+          setError("Invalid email or password. Please try again.");
+        } else if (err.response.status === 404) {
+          setError("User not found. Please check your email.");
+        } else if (err.response.status === 500) {
+          setError("Server error. Please try again later.");
+        } else {
+          setError(err.response.data?.message || "Login failed. Please try again.");
+        }
+      } else if (err.request) {
+        // The request was made but no response was received
+        setError("Network error. Please check your connection.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -93,6 +138,7 @@ export default function LoginPage() {
                   onKeyPress={handleKeyPress}
                   required
                   autoFocus
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -112,12 +158,14 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyPress={handleKeyPress}
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   className="password-toggle"
                   onClick={() => setShowPassword(!showPassword)}
                   tabIndex={-1}
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary, #6c7a91)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -136,7 +184,7 @@ export default function LoginPage() {
 
             <div className="form-options">
               <label className="remember-me">
-                <input type="checkbox" />
+                <input type="checkbox" disabled={isLoading} />
                 <span>Remember me</span>
               </label>
               <a href="#" className="forgot-link">Forgot Password?</a>
