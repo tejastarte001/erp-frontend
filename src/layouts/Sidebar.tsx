@@ -22,6 +22,10 @@ export default function Sidebar({
     const saved = localStorage.getItem('expandedCategories');
     return saved ? JSON.parse(saved) : {
       'Manufacturing': true,
+
+      'Sales Order': false, // Added Sales Order with default collapsed
+      'Organization': false,
+
       'Setup': false,
       'System': false
     };
