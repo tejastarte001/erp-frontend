@@ -16,6 +16,7 @@ import {
   InfoIcon,
   Save,
 } from "lucide-react";
+import "./Newbompage.css";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

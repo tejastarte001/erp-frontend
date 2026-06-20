@@ -734,6 +734,7 @@ body .sidebar.minimized + .sidebar-toggle-btn {
     display: block;
   }
 
+  /* On mobile, minimized state should behave like full sidebar */
   .sidebar.minimized {
     width: 280px;
   }
@@ -750,7 +751,7 @@ body .sidebar.minimized + .sidebar-toggle-btn {
   .sidebar.minimized .user-name,
   .sidebar.minimized .user-email,
   .sidebar.minimized .search-shortcut {
-    display: flex;
+    display: flex; /* Show all content on mobile even in minimized state */
   }
   
   .sidebar.minimized .sidebar-header {
@@ -806,10 +807,12 @@ body .sidebar.minimized + .sidebar-toggle-btn {
     font-size: 12px;
   }
   
+  /* Hide toggle button on mobile */
   .sidebar-toggle-btn {
     display: none !important;
   }
   
+  /* Hide tooltips on mobile */
   .sidebar.minimized .nav-item .nav-tooltip {
     display: none !important;
   }

@@ -24,7 +24,20 @@ import JobCardManagement from "./pages/JobCardManagement";
 import JobCardForm from "./pages/JobCardForm";
 import Stockentry from "./pages/Stockentry";
 import StockentryForm from "./pages/StockentryForm";
+
 import HomePage from "./pages/HomePage";
+
+import SalesOrder from "./pages/SalesOrder";
+import CreateSalesOrder from './pages/CreateSalesOrder';
+import SalesInvoice from "./pages/SalesInvoice";
+import CreateSalesInvoice from './pages/CreateSalesInvoice';
+
+import CompanyList from "./pages/CompanyList";
+import AddCompanyForm from "./pages/AddCompanyForm";
+import LetterHeadList from "./pages/LetterHeadList";
+import AddLetterHeadForm from "./pages/AddLetterHeadForm";
+
+
 
 function App() {
   return (
@@ -37,6 +50,10 @@ function App() {
 
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+                          <Route path="/sales-order" element={<SalesOrder />} />
+            <Route path="/sales-invoice" element={<SalesInvoice />} />
+            <Route path="/sales-order/new" element={<CreateSalesOrder />} />
+            <Route path="/sales-invoice/new" element={<CreateSalesInvoice />} />
               
               <Route path="/job-card" element={<JobCardManagement />} />
               <Route path="/job-cards/new" element={<JobCardForm />} />
@@ -55,6 +72,13 @@ function App() {
               <Route path="/item-attribute" element={<ItemAttributeList />} />
               <Route path="/item-attribute/new" element={<ItemAttributeForm />} />
               <Route path="/item-attribute/:id" element={<ItemAttributeForm />} />
+              
+                          <Route path="/company" element={<CompanyList />} />
+            <Route path="/company/new" element={<AddCompanyForm />} />
+            <Route path="/company/:id" element={<AddCompanyForm />} />
+            <Route path="/letter-head" element={<LetterHeadList />} />
+            <Route path="/letter-head/new" element={<AddLetterHeadForm />} />
+            <Route path="/letter-head/:id" element={<AddLetterHeadForm />} />
 
               {/* Warehouse Routes */}
               <Route path="/warehouse" element={<WarehouseList />} />
