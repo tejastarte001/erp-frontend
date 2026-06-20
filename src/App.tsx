@@ -23,6 +23,10 @@ import JobCardManagement from "./pages/JobCardManagement";
 import JobCardForm from "./pages/JobCardForm";
 import Stockentry from "./pages/Stockentry";
 import StockentryForm from "./pages/StockentryForm";
+import CompanyList from "./pages/CompanyList";
+import AddCompanyForm from "./pages/AddCompanyForm";
+import LetterHeadList from "./pages/LetterHeadList";
+import AddLetterHeadForm from "./pages/AddLetterHeadForm";
 
 
 
@@ -52,7 +56,13 @@ function App() {
             {/* Item Routes */}
             <Route path="/item-list" element={<Itemlist />} />
             <Route path="/item/:id" element={<ItemForm />} />
-            
+            {/* Organization Routes */}
+            <Route path="/company" element={<CompanyList />} />
+            <Route path="/company/new" element={<AddCompanyForm />} />
+            <Route path="/company/:id" element={<AddCompanyForm />} />
+            <Route path="/letter-head" element={<LetterHeadList />} />
+            <Route path="/letter-head/new" element={<AddLetterHeadForm />} />
+            <Route path="/letter-head/:id" element={<AddLetterHeadForm />} />
             {/* Item Attribute Routes */}
             <Route path="/item-attribute" element={<ItemAttributeList />} />
             <Route path="/item-attribute/new" element={<ItemAttributeForm />} />
