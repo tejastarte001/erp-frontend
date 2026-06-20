@@ -23,6 +23,11 @@ import JobCardManagement from "./pages/JobCardManagement";
 import JobCardForm from "./pages/JobCardForm";
 import Stockentry from "./pages/Stockentry";
 import StockentryForm from "./pages/StockentryForm";
+import SalesOrder from "./pages/SalesOrder";
+import CreateSalesOrder from './pages/CreateSalesOrder';
+import SalesInvoice from "./pages/SalesInvoice";
+import CreateSalesInvoice from './pages/CreateSalesInvoice';
+
 
 
 
@@ -36,6 +41,10 @@ function App() {
 
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/sales-order" element={<SalesOrder />} />
+            <Route path="/sales-invoice" element={<SalesInvoice />} />
+            <Route path="/sales-order/new" element={<CreateSalesOrder />} />
+            <Route path="/sales-invoice/new" element={<CreateSalesInvoice />} />
             {/* <Route path="/sales" element={<SalesPage />} />
             <Route path="/purchase" element={<PurchasePage />} />
             <Route path="/inventory" element={<InventoryPage />} />

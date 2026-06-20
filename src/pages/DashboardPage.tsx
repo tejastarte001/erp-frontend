@@ -59,6 +59,7 @@ export default function DashboardPage() {
           <div className="report-item">Inventory Valuation</div>
           <div className="report-item">Production Report</div>
           <div className="report-item">Material Request</div>
+          <div className="report-item">Purchase Order</div>
         </div>
       </div>
     </div>
