@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import './Sidebar.css';
-// import { useAdminTheme } from '../admin-theme/AdminThemeContext';
+import { useModule } from '../context/ModuleContext';
+import logo from '../assets/logo.png';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -16,8 +17,8 @@ export default function Sidebar({
   isMinimized = false,
   onToggleMinimize
 }: SidebarProps) {
-  // const location = useLocation();
-  // const { theme } = useAdminTheme();
+  const location = useLocation();
+  const { currentModule, setCurrentModule } = useModule();
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>(() => {
     const saved = localStorage.getItem('expandedCategories');
     return saved ? JSON.parse(saved) : {
@@ -25,9 +26,48 @@ export default function Sidebar({
       'Sales Order': false, // Added Sales Order with default collapsed
       'Organization': false,
       'Setup': false,
+      'Sales': false,
+      'Organization': false,
+      'Tools': false,
+      'Reports': false,
       'System': false
     };
   });
+
+  // Update module based on current path
+  useEffect(() => {
+    const path = location.pathname;
+    
+    // Don't change module if we're on home or dashboard
+    if (path === '/home' || path === '/dashboard') {
+      return;
+    }
+    
+    // Check for specific module paths
+    if (path.startsWith('/bom') || path.startsWith('/work-order') || 
+        path.startsWith('/job-card') || path.startsWith('/stock-entry') || 
+        path.startsWith('/material-planning') || path.startsWith('/quality')) {
+      setCurrentModule('manufacturing');
+    } else if (path.startsWith('/item-list') || path.startsWith('/item-group') || 
+               path.startsWith('/item-attribute') || path.startsWith('/brand') || 
+               path.startsWith('/warehouse') || path.startsWith('/uom') || 
+               path.startsWith('/uom-conversion') || path.startsWith('/serial-no') || 
+               path.startsWith('/batch-no') || path.startsWith('/serial-batch-bundle') ||
+               path.startsWith('/stock')) {
+      setCurrentModule('setup');
+    } else if (path.startsWith('/sales-order') || path.startsWith('/sales-invoice') || 
+               path.startsWith('/delivery-note') || path.startsWith('/customers')) {
+      setCurrentModule('sales');
+    } else if (path.startsWith('/company') || path.startsWith('/letter-head')) {
+      setCurrentModule('organization');
+    } else if (path.startsWith('/reports')) {
+      setCurrentModule('reports');
+    } else if (path.startsWith('/tools')) {
+      setCurrentModule('tools');
+    } else if (path.startsWith('/settings')) {
+      setCurrentModule('system');
+    }
+  }, [location.pathname, setCurrentModule]);
 
   // Save expanded categories to localStorage
   useEffect(() => {
@@ -41,12 +81,10 @@ export default function Sidebar({
     }));
   };
 
-  // Handle nav item click - expand sidebar if minimized
   const handleNavClick = (e: React.MouseEvent) => {
     if (isMinimized && onToggleMinimize) {
       e.preventDefault();
       onToggleMinimize();
-      // After expanding, navigate to the link
       const target = e.currentTarget as HTMLAnchorElement;
       setTimeout(() => {
         window.location.href = target.href;
@@ -57,10 +95,11 @@ export default function Sidebar({
     }
   };
 
-  // Menu categories for ERP
-  const menuCategories = [
+  // All menu categories with module mapping
+  const allMenuCategories = [
     {
       title: 'Home',
+      module: 'home',
       icon: <HomeIcon />,
       items: [
         { title: 'Home', icon: <HomeIcon />, path: '/home' },
@@ -77,6 +116,7 @@ export default function Sidebar({
     },
     {
       title: 'Manufacturing',
+      module: 'manufacturing',
       icon: <ManufacturingIcon />,
       items: [
         { title: 'BOM', icon: <BomIcon />, path: '/bom' },
@@ -100,6 +140,7 @@ export default function Sidebar({
     },
     {
       title: 'Setup',
+      module: 'setup',
       icon: <SetupIcon />,
       items: [
         { title: 'Item', icon: <ItemIcon />, path: '/item-list' },
@@ -115,7 +156,30 @@ export default function Sidebar({
       ]
     },
     {
+      title: 'Sales',
+      module: 'sales',
+      icon: <SalesIcon />,
+      items: [
+        { title: 'Sales Order', icon: <SalesOrderIcon />, path: '/sales-order' },
+        { title: 'Add Sales Order', icon: <AddIcon />, path: '/sales-order/new' },
+        { title: 'Sales Invoice', icon: <InvoiceIcon />, path: '/sales-invoice' },
+        { title: 'Create Sales Invoice', icon: <CreateInvoiceIcon />, path: '/sales-invoice/new' }
+        // { title: 'Delivery Note', icon: <DeliveryIcon />, path: '/delivery-note' },
+        // { title: 'Customer', icon: <CustomerIcon />, path: '/customers' }
+      ]
+    },
+    {
+      title: 'Organization',
+      module: 'organization',
+      icon: <OrganizationIcon />,
+      items: [
+        { title: 'Company', icon: <CompanyIcon />, path: '/company' },
+        { title: 'Letter Head', icon: <LetterHeadIcon />, path: '/letter-head' }
+      ]
+    },
+    {
       title: 'Tools',
+      module: 'tools',
       icon: <ToolIcon />,
       items: [
         { title: 'Tools', icon: <ToolIcon />, path: '/tools' }
@@ -123,6 +187,7 @@ export default function Sidebar({
     },
     {
       title: 'Reports',
+      module: 'reports',
       icon: <ReportsIcon />,
       items: [
         { title: 'Reports', icon: <ReportsIcon />, path: '/reports' }
@@ -130,12 +195,47 @@ export default function Sidebar({
     },
     {
       title: 'System',
+      module: 'system',
       icon: <SettingsIcon />,
       items: [
         { title: 'Settings', icon: <SettingsIcon />, path: '/settings' }
       ]
     }
   ];
+
+  // Filter categories - ALWAYS show Home + selected module + System (Settings)
+  const getFilteredCategories = () => {
+    if (currentModule === 'home') {
+      // Show Home + System (Settings) when on home
+      return allMenuCategories.filter(cat => 
+        cat.module === 'home' || cat.module === 'system'
+      );
+    } else {
+      // Show Home + selected module + System (Settings) ALWAYS
+      return allMenuCategories.filter(cat => 
+        cat.module === 'home' || 
+        cat.module === currentModule || 
+        cat.module === 'system' // Always show System/Settings
+      );
+    }
+  };
+
+  const menuCategories = getFilteredCategories();
+
+  // Get module display name
+  const getModuleName = () => {
+    const names: Record<string, string> = {
+      'home': 'Home',
+      'manufacturing': 'Manufacturing',
+      'setup': 'Setup',
+      'sales': 'Sales',
+      'organization': 'Organization',
+      'tools': 'Tools',
+      'reports': 'Reports',
+      'system': 'System'
+    };
+    return names[currentModule] || 'Home';
+  };
 
   return (
     <>
@@ -149,15 +249,15 @@ export default function Sidebar({
         <div className="sidebar-header">
           <div className="logo">
             <div className="logo-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                <rect x="14" y="14" width="7" height="7" rx="1"/>
-              </svg>
+              <img src={logo} alt="SculptERP Logo" className="logo-image" />
             </div>
             <div>
-              <div className="logo-text">Manufacturing <span className="logo-highlight">ERP</span></div>
+              <div className="logo-text">SculptERP</div>
+              {!isMinimized && currentModule !== 'home' && (
+                <div className="module-indicator">
+                  {getModuleName()} Module
+                </div>
+              )}
             </div>
           </div>
           {onClose && (
@@ -232,17 +332,19 @@ export default function Sidebar({
             </div>
           ))}
 
-          {/* Getting Started Card */}
-          <div className="getting-started-section">
-            <div className="getting-started-card">
-              <div className="gs-icon-wrap">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--sidebar-text-secondary, #9CA3AF)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-                </svg>
+          {/* Getting Started Card - Only show in Home module */}
+          {currentModule === 'home' && (
+            <div className="getting-started-section">
+              <div className="getting-started-card">
+                <div className="gs-icon-wrap">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--sidebar-text-secondary, #9CA3AF)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <div className="gs-text">Complete setup to start manufacturing</div>
               </div>
-              <div className="gs-text">Complete setup to start manufacturing</div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* User */}
@@ -316,69 +418,79 @@ const ManufacturingIcon = () => (
   </svg>
 );
 
-// Sales Order Icon
-const SalesOrderIcon = () => (
+const SalesIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-    <polyline points="14 2 14 8 20 8"/>
-    <line x1="16" y1="13" x2="8" y2="13"/>
-    <line x1="16" y1="17" x2="8" y2="17"/>
-    <polyline points="10 9 9 9 8 9"/>
+    <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
   </svg>
 );
 
-// Add Icon (for Add Sales Order)
+const SalesOrderIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="18" rx="2" ry="2"/>
+    <line x1="8" y1="9" x2="16" y2="9"/>
+    <line x1="8" y1="13" x2="16" y2="13"/>
+    <line x1="8" y1="17" x2="12" y2="17"/>
+  </svg>
+);
+
 const AddIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10"/>
     <line x1="12" y1="8" x2="12" y2="16"/>
     <line x1="8" y1="12" x2="16" y2="12"/>
   </svg>
 );
 
-// Invoice Icon (for Sales Invoice list)
 const InvoiceIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
     <polyline points="14 2 14 8 20 8"/>
-    <line x1="8" y1="16" x2="16" y2="16"/>
-    <line x1="8" y1="12" x2="16" y2="12"/>
-    <line x1="8" y1="20" x2="10" y2="20"/>
+    <line x1="8" y1="13" x2="16" y2="13"/>
+    <line x1="8" y1="17" x2="16" y2="17"/>
+    <line x1="8" y1="9" x2="10" y2="9"/>
   </svg>
 );
 
-// Create Invoice Icon (for Create Sales Invoice)
 const CreateInvoiceIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
     <polyline points="14 2 14 8 20 8"/>
     <line x1="12" y1="18" x2="12" y2="12"/>
     <line x1="9" y1="15" x2="15" y2="15"/>
-    <line x1="8" y1="6" x2="16" y2="6"/>
   </svg>
 );
 
-// New Delivery Icon
-const DeliveryIcon = () => (
+const OrganizationIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="1" y="3" width="15" height="13" rx="1"/>
-    <path d="M16 8h4l3 3v5h-7V8z"/>
-    <circle cx="5.5" cy="18.5" r="2.5"/>
-    <circle cx="18.5" cy="18.5" r="2.5"/>
+    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
   </svg>
 );
 
-// New Customer Icon
-const CustomerIcon = () => (
+const CompanyIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-    <circle cx="12" cy="7" r="4"/>
+    <rect x="4" y="4" width="16" height="16" rx="2"/>
+    <path d="M9 8h6"/>
+    <path d="M9 12h6"/>
+    <path d="M9 16h4"/>
+  </svg>
+);
+
+const LetterHeadIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+    <line x1="3" y1="10" x2="21" y2="10"/>
+    <line x1="3" y1="14" x2="21" y2="14"/>
+    <line x1="3" y1="18" x2="21" y2="18"/>
+    <line x1="8" y1="4" x2="8" y2="10"/>
+    <line x1="16" y1="4" x2="16" y2="10"/>
   </svg>
 );
 
 const ItemIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
   </svg>
 );
 
@@ -390,7 +502,8 @@ const FolderIcon = () => (
 
 const SetupIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
   </svg>
 );
 
@@ -403,7 +516,8 @@ const SettingsIcon = () => (
 
 const TagIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2H2v10l9.17 9.17a2 2 0 0 0 2.83 0l7-7a2 2 0 0 0 0-2.83L12 2z"/><circle cx="7" cy="7" r="2" fill="none"/>
+    <path d="M12 2H2v10l9.17 9.17a2 2 0 0 0 2.83 0l7-7a2 2 0 0 0 0-2.83L12 2z"/>
+    <circle cx="7" cy="7" r="2" fill="none"/>
   </svg>
 );
 
@@ -415,7 +529,8 @@ const BrandIcon = () => (
 
 const WarehouseIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <path d="M9 22V12h6v10"/>
   </svg>
 );
 
@@ -427,43 +542,60 @@ const RulerIcon = () => (
 
 const RepeatIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+    <path d="M17 1l4 4-4 4"/>
+    <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+    <path d="M7 23l-4-4 4-4"/>
+    <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
   </svg>
 );
 
 const HashIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>
+    <line x1="4" y1="9" x2="20" y2="9"/>
+    <line x1="4" y1="15" x2="20" y2="15"/>
+    <line x1="10" y1="3" x2="8" y2="21"/>
+    <line x1="16" y1="3" x2="14" y2="21"/>
   </svg>
 );
 
 const LayersIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+    <polyline points="2 17 12 22 22 17"/>
+    <polyline points="2 12 12 17 22 12"/>
   </svg>
 );
 
 const PackageIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+    <path d="M2 17l10 5 10-5"/>
+    <path d="M2 12l10 5 10-5"/>
   </svg>
 );
 
 const BomIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+    <line x1="8" y1="6" x2="21" y2="6"/>
+    <line x1="8" y1="12" x2="21" y2="12"/>
+    <line x1="8" y1="18" x2="21" y2="18"/>
+    <line x1="3" y1="6" x2="3.01" y2="6"/>
+    <line x1="3" y1="12" x2="3.01" y2="12"/>
+    <line x1="3" y1="18" x2="3.01" y2="18"/>
   </svg>
 );
 
 const WorkOrderIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+    <path d="M9 11l3 3L22 4"/>
+    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
   </svg>
 );
 
 const JobCardIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+    <rect x="2" y="5" width="20" height="14" rx="2"/>
+    <line x1="2" y1="10" x2="22" y2="10"/>
   </svg>
 );
 
@@ -475,7 +607,10 @@ const StockIcon = () => (
 
 const TruckIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+    <rect x="1" y="3" width="15" height="13" rx="1"/>
+    <path d="M16 8h4l3 3v5h-7V8z"/>
+    <circle cx="5.5" cy="18.5" r="2.5"/>
+    <circle cx="18.5" cy="18.5" r="2.5"/>
   </svg>
 );
 
@@ -487,7 +622,9 @@ const ToolIcon = () => (
 
 const ReportsIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+    <line x1="18" y1="20" x2="18" y2="10"/>
+    <line x1="12" y1="20" x2="12" y2="4"/>
+    <line x1="6" y1="20" x2="6" y2="14"/>
   </svg>
 );
 
