@@ -4,6 +4,7 @@ import "./LoginPage.css";
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import api from '../services/api';
 import { storage } from '../utils/storage';
+import logo from '../assets/logo.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -53,8 +54,8 @@ export default function LoginPage() {
         console.log('User data stored:', storage.getUser());
         console.log('Token stored:', storage.getToken());
         
-        // Navigate to dashboard
-        navigate("/dashboard");
+        // Navigate to home
+        navigate("/home");
       } else {
         // Handle unsuccessful login
         setError(response.data?.message || "Invalid email or password. Please try again.");
@@ -99,14 +100,9 @@ export default function LoginPage() {
         <div className="login-card">
           <div className="login-header">
             <div className="login-logo">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary-color, #5c7cba)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                <rect x="14" y="14" width="7" height="7" rx="1"/>
-              </svg>
+              <img src={logo} alt="SculptERP Logo" className="login-logo-image" />
             </div>
-            <h1>Manufacturing ERP</h1>
+            <h1>SculptERP</h1>
             <p>Sign in to your account to continue</p>
           </div>
 
@@ -207,7 +203,7 @@ export default function LoginPage() {
           </form>
 
           <div className="login-footer">
-            <p>© 2026 Manufacturing ERP. All rights reserved.</p>
+            <p>© 2026 SculptERP. All rights reserved.</p>
           </div>
         </div>
       </div>
