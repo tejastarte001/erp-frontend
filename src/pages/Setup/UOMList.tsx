@@ -34,7 +34,11 @@ interface UOM {
 
 interface UOMFormData {
   name: string;
+  symbol: string;
+  common_code: string;
+  description: string;
   category: string;
+  must_be_whole_number: boolean;
 }
 
 interface ApiResponse {
@@ -86,8 +90,13 @@ export default function UOMList() {
   const [selectedUOM, setSelectedUOM] = useState<UOM | null>(null);
   const [formData, setFormData] = useState<UOMFormData>({
     name: "",
+    symbol: "",
+    common_code: "",
+    description: "",
     category: "",
+    must_be_whole_number: false,
   });
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Fetch UOMs from API
   const fetchUOMs = async () => {
@@ -192,36 +201,74 @@ export default function UOMList() {
   };
 
   const handleOpenModal = () => {
-    setFormData({ name: "", category: "" });
+    setFormData({ 
+      name: "", 
+      symbol: "", 
+      common_code: "", 
+      description: "", 
+      category: "",
+      must_be_whole_number: false 
+    });
+    setApiError(null);
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setFormData({ name: "", category: "" });
+    setFormData({ 
+      name: "", 
+      symbol: "", 
+      common_code: "", 
+      description: "", 
+      category: "",
+      must_be_whole_number: false 
+    });
+    setApiError(null);
   };
 
   const handleSave = async () => {
-    if (formData.name.trim()) {
-      try {
-        // Create new UOM
-        const response = await api.post('/uom', {
-          uom_name: formData.name,
-          category: formData.category || undefined,
-          symbol: '',
-          common_code: '',
-          enabled: 1,
-          must_be_whole_number: 0
-        });
-        
-        if (response.data.success === 1) {
-          // Refresh the list
-          fetchUOMs();
-          handleCloseModal();
+    if (!formData.name.trim()) {
+      setApiError('UOM Name is required');
+      return;
+    }
+
+    try {
+      // Create new UOM with proper payload
+      const payload = {
+        uom_name: formData.name.trim(),
+        symbol: formData.symbol.trim() || null,
+        common_code: formData.common_code.trim() || null,
+        description: formData.description.trim() || null,
+        category: formData.category || null,
+        must_be_whole_number: formData.must_be_whole_number ? 1 : 0,
+        owner: "Administrator",
+        modified_by: "Administrator"
+      };
+
+      const response = await api.post('/uom', payload);
+      
+      if (response.data && response.data.success === 1) {
+        // Refresh the list
+        fetchUOMs();
+        handleCloseModal();
+      } else {
+        setApiError(response.data?.message || 'Failed to create UOM');
+      }
+    } catch (err: any) {
+      console.error('Error creating UOM:', err);
+      
+      if (err.response) {
+        if (err.response.status === 409) {
+          setApiError('A UOM with this name already exists');
+        } else if (err.response.status === 400) {
+          setApiError(err.response.data?.message || 'Invalid data provided');
+        } else {
+          setApiError(err.response.data?.message || 'Failed to create UOM');
         }
-      } catch (err) {
-        console.error('Error creating UOM:', err);
-        alert('Failed to create UOM');
+      } else if (err.request) {
+        setApiError('Network error. Please check your connection.');
+      } else {
+        setApiError('An unexpected error occurred. Please try again.');
       }
     }
   };
@@ -550,6 +597,14 @@ export default function UOMList() {
               </button>
             </div>
 
+            {apiError && (
+              <div className="uoml-api-error">
+                <FaTimesCircle className="error-icon" />
+                <span>{apiError}</span>
+                <button className="error-close" onClick={() => setApiError(null)}>×</button>
+              </div>
+            )}
+
             <div className="uoml-modal-body">
               <div className="uoml-field">
                 <label className="uoml-label">UOM Name <span className="uoml-req">*</span></label>
@@ -559,6 +614,36 @@ export default function UOMList() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   autoFocus
                   placeholder="Enter UOM name"
+                />
+              </div>
+
+              <div className="uoml-field">
+                <label className="uoml-label">Symbol</label>
+                <input
+                  className="uoml-input"
+                  value={formData.symbol}
+                  onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
+                  placeholder="Enter symbol (e.g., Nos, kg, m)"
+                />
+              </div>
+
+              <div className="uoml-field">
+                <label className="uoml-label">Common Code</label>
+                <input
+                  className="uoml-input"
+                  value={formData.common_code}
+                  onChange={(e) => setFormData({ ...formData, common_code: e.target.value })}
+                  placeholder="Enter common code"
+                />
+              </div>
+
+              <div className="uoml-field">
+                <label className="uoml-label">Description</label>
+                <input
+                  className="uoml-input"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Enter description"
                 />
               </div>
 
@@ -574,6 +659,22 @@ export default function UOMList() {
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="uoml-field-check">
+                <input
+                  type="checkbox"
+                  id="mustBeWholeNumber"
+                  checked={formData.must_be_whole_number}
+                  onChange={(e) => setFormData({ ...formData, must_be_whole_number: e.target.checked })}
+                  className="uoml-checkbox"
+                />
+                <label htmlFor="mustBeWholeNumber" className="uoml-check-label">
+                  Must be whole number
+                </label>
+                <p className="uoml-check-hint">
+                  Enable if this UOM can only have whole number values
+                </p>
               </div>
             </div>
 

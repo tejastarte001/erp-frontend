@@ -50,13 +50,16 @@ html, body, #root {
   margin-bottom: 16px;
 }
 
-.login-logo svg {
-  width: 56px;
-  height: 56px;
-  padding: 12px;
-  background: var(--primary-gradient, #5c7cba);
-  border-radius: 12px;
-  stroke: white;
+.login-logo-image {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.login-logo-image:hover {
+  transform: scale(1.05);
 }
 
 .login-header h1 {
@@ -316,6 +319,11 @@ html, body, #root {
 
   .login-header h1 {
     font-size: 20px;
+  }
+
+  .login-logo-image {
+    width: 56px;
+    height: 56px;
   }
 
   .form-options {

@@ -4,6 +4,7 @@ import Header from "./Header";
 import "./MainLayout.css";
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import { useState } from 'react';
+// Remove ModuleProvider import - it's now at the top level
 
 export default function MainLayout() {
   const { theme } = useAdminTheme();

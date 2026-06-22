@@ -15,6 +15,7 @@ import {
 } from 'react-icons/fa';
 import "./ItemGroupForm.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
+import api from '../../services/api';
 
 interface DefaultRow {
   id: string;
@@ -92,6 +93,7 @@ export default function ItemGroupForm() {
   const [errors, ] = useState<{ [key: string]: string }>({});
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const comments = existing?.comments ?? [];
   const activity = existing?.activity ?? [];
@@ -130,6 +132,7 @@ export default function ItemGroupForm() {
 
   const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setApiError(null);
 
     const validationErrorsList = getAllValidationErrors();
     if (validationErrorsList.length > 0) {
@@ -140,11 +143,48 @@ export default function ItemGroupForm() {
 
     setSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsDirty(false);
-      navigate('/item-group');
-    } catch (err) {
-      // Handle error
+      if (isNew) {
+        // Create new item group
+        const payload = {
+          item_group_name: itemGroupName.trim(),
+          parent_item_group: parentItemGroup || "All Item Groups",
+          is_group: 0, // Always 0 as per requirement
+          owner: "Administrator",
+          modified_by: "Administrator"
+        };
+
+        const response = await api.post('/item-group', payload);
+        
+        if (response.data && response.data.success === 1) {
+          console.log('Item group created successfully:', response.data);
+          setIsDirty(false);
+          navigate('/item-group');
+        } else {
+          setApiError(response.data?.message || 'Failed to create item group');
+        }
+      } else {
+        // Update existing item group
+        // Note: You might need to implement PUT/PATCH endpoint for updates
+        console.log('Update mode - not implemented yet');
+        setIsDirty(false);
+        navigate('/item-group');
+      }
+    } catch (err: any) {
+      console.error('Error saving item group:', err);
+      
+      if (err.response) {
+        if (err.response.status === 409) {
+          setApiError('An item group with this name already exists');
+        } else if (err.response.status === 400) {
+          setApiError(err.response.data?.message || 'Invalid data provided');
+        } else {
+          setApiError(err.response.data?.message || 'Failed to save item group');
+        }
+      } else if (err.request) {
+        setApiError('Network error. Please check your connection.');
+      } else {
+        setApiError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -195,6 +235,15 @@ export default function ItemGroupForm() {
           </div>
         )}
 
+        {/* ─── API Error Display ────────────────────────────────────── */}
+        {apiError && (
+          <div className="igf-api-error">
+            <FaExclamationCircle className="error-icon" />
+            <span>{apiError}</span>
+            <button className="error-close" onClick={() => setApiError(null)}>×</button>
+          </div>
+        )}
+
         {/* ─── Header ────────────────────────────────────────────────── */}
         <div className="igf-header">
           <button onClick={() => navigate('/item-group')} className="back-btn">
@@ -230,6 +279,7 @@ export default function ItemGroupForm() {
                   onChange={(e) => { setItemGroupName(e.target.value); setIsDirty(true); }}
                   className={`form-field${errors.itemGroupName ? ' field-error' : ''}`}
                   placeholder="Enter item group name"
+                  disabled={submitting}
                 />
                 {errors.itemGroupName && <span className="igf-error-msg"><FaExclamationCircle size={10} />{errors.itemGroupName}</span>}
               </div>
@@ -244,6 +294,7 @@ export default function ItemGroupForm() {
                   onChange={(e) => { setParentItemGroup(e.target.value); setIsDirty(true); }}
                   className="form-field"
                   placeholder="Select parent group"
+                  disabled={submitting}
                 />
               </div>
 
@@ -255,6 +306,7 @@ export default function ItemGroupForm() {
                   onChange={(e) => { setHsnSac(e.target.value); setIsDirty(true); }}
                   className="form-field"
                   placeholder="Enter HSN/SAC code"
+                  disabled={submitting}
                 />
                 <p className="igf-field-hint">
                   You can search code by the description of the category.
@@ -269,6 +321,7 @@ export default function ItemGroupForm() {
                 checked={isGroup}
                 onChange={(e) => { setIsGroup(e.target.checked); setIsDirty(true); }}
                 className="igf-checkbox"
+                disabled={submitting}
               />
               <div>
                 <label htmlFor="isGroup" className="igf-check-label">
@@ -291,14 +344,14 @@ export default function ItemGroupForm() {
                   <thead>
                     <tr>
                       <th className="igf-ith igf-ith-no">
-                        <input type="checkbox" className="igf-checkbox" />
+                        <input type="checkbox" className="igf-checkbox" disabled={submitting} />
                       </th>
                       <th className="igf-ith">No.</th>
                       <th className="igf-ith">Company <span className="igf-required">*</span></th>
                       <th className="igf-ith">Default Warehouse</th>
                       <th className="igf-ith">Default Price List</th>
                       <th className="igf-ith igf-ith-action">
-                        <button className="igf-col-settings" title="Column settings" type="button">
+                        <button className="igf-col-settings" title="Column settings" type="button" disabled={submitting}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                           </svg>
@@ -314,28 +367,28 @@ export default function ItemGroupForm() {
                     ) : (
                       defaults.map((row, i) => (
                         <tr key={row.id} className="igf-itr">
-                          <td className="igf-itd"><input type="checkbox" className="igf-checkbox" /></td>
+                          <td className="igf-itd"><input type="checkbox" className="igf-checkbox" disabled={submitting} /></td>
                           <td className="igf-itd igf-itd-no">{i + 1}</td>
                           <td className="igf-itd">
                             <input className="igf-cell-input" value={row.company} onChange={(e) => {
                               setDefaults(defaults.map(r => r.id === row.id ? { ...r, company: e.target.value } : r));
                               setIsDirty(true);
-                            }} />
+                            }} disabled={submitting} />
                           </td>
                           <td className="igf-itd">
                             <input className="igf-cell-input" value={row.defaultWarehouse} onChange={(e) => {
                               setDefaults(defaults.map(r => r.id === row.id ? { ...r, defaultWarehouse: e.target.value } : r));
                               setIsDirty(true);
-                            }} />
+                            }} disabled={submitting} />
                           </td>
                           <td className="igf-itd">
                             <input className="igf-cell-input" value={row.defaultPriceList} onChange={(e) => {
                               setDefaults(defaults.map(r => r.id === row.id ? { ...r, defaultPriceList: e.target.value } : r));
                               setIsDirty(true);
-                            }} />
+                            }} disabled={submitting} />
                           </td>
                           <td className="igf-itd">
-                            <button className="igf-remove-row" onClick={() => removeDefaultRow(row.id)} type="button">×</button>
+                            <button className="igf-remove-row" onClick={() => removeDefaultRow(row.id)} type="button" disabled={submitting}>×</button>
                           </td>
                         </tr>
                       ))
@@ -343,7 +396,7 @@ export default function ItemGroupForm() {
                   </tbody>
                 </table>
               </div>
-              <button className="igf-add-row" onClick={addDefaultRow} type="button">
+              <button className="igf-add-row" onClick={addDefaultRow} type="button" disabled={submitting}>
                 <FaPlus size={10} /> Add row
               </button>
             </div>
@@ -358,7 +411,7 @@ export default function ItemGroupForm() {
                 <table className="igf-inline-table">
                   <thead>
                     <tr>
-                      <th className="igf-ith igf-ith-no"><input type="checkbox" className="igf-checkbox" /></th>
+                      <th className="igf-ith igf-ith-no"><input type="checkbox" className="igf-checkbox" disabled={submitting} /></th>
                       <th className="igf-ith">No.</th>
                       <th className="igf-ith">Item Tax Template <span className="igf-required">*</span></th>
                       <th className="igf-ith">Tax Category</th>
@@ -366,7 +419,7 @@ export default function ItemGroupForm() {
                       <th className="igf-ith">Min Net Rate</th>
                       <th className="igf-ith">Max Net Rate</th>
                       <th className="igf-ith igf-ith-action">
-                        <button className="igf-col-settings" title="Column settings" type="button">
+                        <button className="igf-col-settings" title="Column settings" type="button" disabled={submitting}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                           </svg>
@@ -382,40 +435,40 @@ export default function ItemGroupForm() {
                     ) : (
                       taxes.map((row, i) => (
                         <tr key={row.id} className="igf-itr">
-                          <td className="igf-itd"><input type="checkbox" className="igf-checkbox" /></td>
+                          <td className="igf-itd"><input type="checkbox" className="igf-checkbox" disabled={submitting} /></td>
                           <td className="igf-itd igf-itd-no">{i + 1}</td>
                           <td className="igf-itd">
                             <input className="igf-cell-input" value={row.itemTaxTemplate} onChange={(e) => {
                               setTaxes(taxes.map(r => r.id === row.id ? { ...r, itemTaxTemplate: e.target.value } : r));
                               setIsDirty(true);
-                            }} />
+                            }} disabled={submitting} />
                           </td>
                           <td className="igf-itd">
                             <input className="igf-cell-input" value={row.taxCategory} onChange={(e) => {
                               setTaxes(taxes.map(r => r.id === row.id ? { ...r, taxCategory: e.target.value } : r));
                               setIsDirty(true);
-                            }} />
+                            }} disabled={submitting} />
                           </td>
                           <td className="igf-itd">
                             <input className="igf-cell-input" value={row.validFrom} onChange={(e) => {
                               setTaxes(taxes.map(r => r.id === row.id ? { ...r, validFrom: e.target.value } : r));
                               setIsDirty(true);
-                            }} />
+                            }} disabled={submitting} />
                           </td>
                           <td className="igf-itd">
                             <input className="igf-cell-input" value={row.minNetRate} onChange={(e) => {
                               setTaxes(taxes.map(r => r.id === row.id ? { ...r, minNetRate: e.target.value } : r));
                               setIsDirty(true);
-                            }} />
+                            }} disabled={submitting} />
                           </td>
                           <td className="igf-itd">
                             <input className="igf-cell-input" value={row.maxNetRate} onChange={(e) => {
                               setTaxes(taxes.map(r => r.id === row.id ? { ...r, maxNetRate: e.target.value } : r));
                               setIsDirty(true);
-                            }} />
+                            }} disabled={submitting} />
                           </td>
                           <td className="igf-itd">
-                            <button className="igf-remove-row" onClick={() => removeTaxRow(row.id)} type="button">×</button>
+                            <button className="igf-remove-row" onClick={() => removeTaxRow(row.id)} type="button" disabled={submitting}>×</button>
                           </td>
                         </tr>
                       ))
@@ -423,7 +476,7 @@ export default function ItemGroupForm() {
                   </tbody>
                 </table>
               </div>
-              <button className="igf-add-row" onClick={addTaxRow} type="button">
+              <button className="igf-add-row" onClick={addTaxRow} type="button" disabled={submitting}>
                 <FaPlus size={10} /> Add row
               </button>
             </div>
@@ -441,6 +494,7 @@ export default function ItemGroupForm() {
                     placeholder="Type a reply / comment"
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
+                    disabled={submitting}
                   />
                 </div>
 
@@ -458,7 +512,7 @@ export default function ItemGroupForm() {
 
                 <div className="igf-activity-header">
                   <span className="igf-section-title igf-activity-title">Activity</span>
-                  <button className="igf-new-email-btn" type="button">+ New Email</button>
+                  <button className="igf-new-email-btn" type="button" disabled={submitting}>+ New Email</button>
                 </div>
 
                 <ul className="igf-activity-list">
@@ -478,6 +532,7 @@ export default function ItemGroupForm() {
               type="button"
               onClick={() => navigate('/item-group')}
               className="cancel-btn"
+              disabled={submitting}
             >
               Cancel
             </button>

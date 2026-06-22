@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AdminThemeProvider } from './admin-theme/AdminThemeContext'; // Add this import
+import { AdminThemeProvider } from './admin-theme/AdminThemeContext';
+import { ModuleProvider } from './context/ModuleContext'; // Import ModuleProvider
 
 import LoginPage from "./pages/LoginPage";
 import MainLayout from "./layouts/MainLayout";
@@ -24,6 +25,9 @@ import JobCardForm from "./pages/JobCardForm";
 import Stockentry from "./pages/Stockentry";
 import StockentryForm from "./pages/StockentryForm";
 
+
+import HomePage from "./pages/HomePage";
+
 import SalesOrder from "./pages/SalesOrder";
 import CreateSalesOrder from './pages/CreateSalesOrder';
 import SalesInvoice from "./pages/SalesInvoice";
@@ -41,15 +45,16 @@ import CreateQuotationPage from "./pages/CreateQuotation";
 
 function App() {
   return (
-    <AdminThemeProvider> {/* Wrap everything with AdminThemeProvider */}
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LoginPage />} />
+    <AdminThemeProvider>
+      <ModuleProvider> {/* Move ModuleProvider here to wrap ALL routes */}
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LoginPage />} />
+            <Route path="/home" element={<HomePage />} />
 
-
-          <Route element={<MainLayout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/sales-order" element={<SalesOrder />} />
+            <Route element={<MainLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+                          <Route path="/sales-order" element={<SalesOrder />} />
             <Route path="/sales-invoice" element={<SalesInvoice />} />
             <Route path="/sales-order/new" element={<CreateSalesOrder />} />
             <Route path="/sales-invoice/new" element={<CreateSalesInvoice />} />
@@ -72,6 +77,9 @@ function App() {
             {/* Item Routes */}
             <Route path="/item-list" element={<Itemlist />} />
             <Route path="/item/:id" element={<ItemForm />} />
+                      <Route path="/item-attribute" element={<ItemAttributeList />} />
+              <Route path="/item-attribute/new" element={<ItemAttributeForm />} />
+              <Route path="/item-attribute/:id" element={<ItemAttributeForm />} />
             {/* Organization Routes */}
             <Route path="/company" element={<CompanyList />} />
             <Route path="/company/new" element={<AddCompanyForm />} />
@@ -79,37 +87,31 @@ function App() {
             <Route path="/letter-head" element={<LetterHeadList />} />
             <Route path="/letter-head/new" element={<AddLetterHeadForm />} />
             <Route path="/letter-head/:id" element={<AddLetterHeadForm />} />
-            {/* Item Attribute Routes */}
-            <Route path="/item-attribute" element={<ItemAttributeList />} />
-            <Route path="/item-attribute/new" element={<ItemAttributeForm />} />
-            <Route path="/item-attribute/:id" element={<ItemAttributeForm />} />
 
-            {/* Warehouse Routes */}
-            <Route path="/warehouse" element={<WarehouseList />} />
-            <Route path="/warehouse/new" element={<WarehouseForm />} />
-            <Route path="/warehouse/:id" element={<WarehouseForm />} />
+              {/* Warehouse Routes */}
+              <Route path="/warehouse" element={<WarehouseList />} />
+              <Route path="/warehouse/new" element={<WarehouseForm />} />
+              <Route path="/warehouse/:id" element={<WarehouseForm />} />
 
-            {/* Brand Routes */}
-            <Route path="/brand" element={<BrandList />} />
-            <Route path="/brand/new" element={<BrandForm />} />
-            <Route path="/brand/:id" element={<BrandForm />} />
+              {/* Brand Routes */}
+              <Route path="/brand" element={<BrandList />} />
+              <Route path="/brand/new" element={<BrandForm />} />
+              <Route path="/brand/:id" element={<BrandForm />} />
 
-            {/* UOM Routes */}
-            <Route path="/uom" element={<UOMList />} />
-            <Route path="/uom/new" element={<UOMForm />} />
-            <Route path="/uom/:id" element={<UOMForm />} />
-            
-            <Route path="/bom" element={<BOMPage />} />
-            <Route path="/bom/new" element={<NewBOMPage />} />
+              {/* UOM Routes */}
+              <Route path="/uom" element={<UOMList />} />
+              <Route path="/uom/new" element={<UOMForm />} />
+              <Route path="/uom/:id" element={<UOMForm />} />
+              
+              <Route path="/bom" element={<BOMPage />} />
+              <Route path="/bom/new" element={<NewBOMPage />} />
 
-
-            <Route path="/settings" element={<Settings />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+              <Route path="/settings" element={<Settings />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ModuleProvider>
     </AdminThemeProvider>
-
-
   );
 }
 
