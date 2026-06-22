@@ -34,7 +34,8 @@ import CompanyList from "./pages/CompanyList";
 import AddCompanyForm from "./pages/AddCompanyForm";
 import LetterHeadList from "./pages/LetterHeadList";
 import AddLetterHeadForm from "./pages/AddLetterHeadForm";
-
+import QuotationPage from "./pages/QuotationPage";
+import CreateQuotationPage from "./pages/CreateQuotation";
 
 
 
@@ -52,6 +53,9 @@ function App() {
             <Route path="/sales-invoice" element={<SalesInvoice />} />
             <Route path="/sales-order/new" element={<CreateSalesOrder />} />
             <Route path="/sales-invoice/new" element={<CreateSalesInvoice />} />
+            <Route path="/quotation" element={<QuotationPage />} />
+            <Route path="/quotation/new" element={<CreateQuotationPage />} />
+
             {/* <Route path="/sales" element={<SalesPage />} />
             <Route path="/purchase" element={<PurchasePage />} />
             <Route path="/inventory" element={<InventoryPage />} />
