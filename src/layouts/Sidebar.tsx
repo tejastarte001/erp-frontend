@@ -26,6 +26,7 @@ export default function Sidebar({
       'Sales': true,
       'Quotation': true,
       'Organization': false,
+
       'Setup': false,
       'Tools': false,
       'Reports': false,

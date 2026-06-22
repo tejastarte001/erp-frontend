@@ -25,6 +25,7 @@ import JobCardForm from "./pages/JobCardForm";
 import Stockentry from "./pages/Stockentry";
 import StockentryForm from "./pages/StockentryForm";
 
+
 import HomePage from "./pages/HomePage";
 
 import SalesOrder from "./pages/SalesOrder";
@@ -32,10 +33,13 @@ import CreateSalesOrder from './pages/CreateSalesOrder';
 import SalesInvoice from "./pages/SalesInvoice";
 import CreateSalesInvoice from './pages/CreateSalesInvoice';
 
+
 import CompanyList from "./pages/CompanyList";
 import AddCompanyForm from "./pages/AddCompanyForm";
 import LetterHeadList from "./pages/LetterHeadList";
 import AddLetterHeadForm from "./pages/AddLetterHeadForm";
+import QuotationPage from "./pages/QuotationPage";
+import CreateQuotationPage from "./pages/CreateQuotation";
 
 
 
@@ -54,26 +58,30 @@ function App() {
             <Route path="/sales-invoice" element={<SalesInvoice />} />
             <Route path="/sales-order/new" element={<CreateSalesOrder />} />
             <Route path="/sales-invoice/new" element={<CreateSalesInvoice />} />
-              
-              <Route path="/job-card" element={<JobCardManagement />} />
-              <Route path="/job-cards/new" element={<JobCardForm />} />
-              
-              {/* Item Group Routes */}
-              <Route path="/item-group" element={<ItemGroupList />} />
-              <Route path="/item-group/:id" element={<ItemGroupForm />} />
-              <Route path="/stock-entry" element={<Stockentry />} />
-              <Route path="/stock-entry/new" element={<StockentryForm />} />
-              
-              {/* Item Routes */}
-              <Route path="/item-list" element={<Itemlist />} />
-              <Route path="/item/:id" element={<ItemForm />} />
-              
-              {/* Item Attribute Routes */}
-              <Route path="/item-attribute" element={<ItemAttributeList />} />
+            <Route path="/quotation" element={<QuotationPage />} />
+            <Route path="/quotation/new" element={<CreateQuotationPage />} />
+
+            {/* <Route path="/sales" element={<SalesPage />} />
+            <Route path="/purchase" element={<PurchasePage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/production" element={<ProductionPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/settings" element={<SettingsPage />} /> */}
+            <Route path="/job-card" element={<JobCardManagement />} />
+            <Route path="/job-cards/new" element={<JobCardForm />} />
+            {/* Item Group Routes */}
+            <Route path="/item-group" element={<ItemGroupList />} />
+            <Route path="/item-group/:id" element={<ItemGroupForm />} />
+            <Route path="/stock-entry" element={<Stockentry />} />
+            <Route path="/stock-entry/new" element={<StockentryForm />} />
+            {/* Item Routes */}
+            <Route path="/item-list" element={<Itemlist />} />
+            <Route path="/item/:id" element={<ItemForm />} />
+                      <Route path="/item-attribute" element={<ItemAttributeList />} />
               <Route path="/item-attribute/new" element={<ItemAttributeForm />} />
               <Route path="/item-attribute/:id" element={<ItemAttributeForm />} />
-              
-                          <Route path="/company" element={<CompanyList />} />
+            {/* Organization Routes */}
+            <Route path="/company" element={<CompanyList />} />
             <Route path="/company/new" element={<AddCompanyForm />} />
             <Route path="/company/:id" element={<AddCompanyForm />} />
             <Route path="/letter-head" element={<LetterHeadList />} />
