@@ -23,11 +23,10 @@ export default function Sidebar({
     const saved = localStorage.getItem('expandedCategories');
     return saved ? JSON.parse(saved) : {
       'Manufacturing': true,
-      'Sales Order': false, // Added Sales Order with default collapsed
+      'Sales': true,
+      'Quotation': true,
       'Organization': false,
       'Setup': false,
-      'Sales': false,
-      'Organization': false,
       'Tools': false,
       'Reports': false,
       'System': false
@@ -58,6 +57,8 @@ export default function Sidebar({
     } else if (path.startsWith('/sales-order') || path.startsWith('/sales-invoice') || 
                path.startsWith('/delivery-note') || path.startsWith('/customers')) {
       setCurrentModule('sales');
+    } else if (path.startsWith('/quotation')) {
+      setCurrentModule('sales'); // Quotation belongs to sales module
     } else if (path.startsWith('/company') || path.startsWith('/letter-head')) {
       setCurrentModule('organization');
     } else if (path.startsWith('/reports')) {
@@ -95,7 +96,8 @@ export default function Sidebar({
     }
   };
 
-  // All menu categories with module mapping
+  // Define all menu categories with their module mapping
+  // Each category can have a 'module' property to filter by module
   const allMenuCategories = [
     {
       title: 'Home',
@@ -107,11 +109,23 @@ export default function Sidebar({
       ]
     },
     {
-      title: 'Organization',
-      icon: <OrganizationIcon />,
+      title: 'Sales',
+      module: 'sales',
+      icon: <SalesIcon />,
       items: [
-        { title: 'Company', icon: <CompanyIcon />, path: '/company' },
-        { title: 'Letter Head', icon: <LetterHeadIcon />, path: '/letter-head' }
+        { title: 'Sales Order', icon: <SalesOrderIcon />, path: '/sales-order' },
+        { title: 'Add Sales Order', icon: <AddIcon />, path: '/sales-order/new' },
+        { title: 'Sales Invoice', icon: <InvoiceIcon />, path: '/sales-invoice' },
+        { title: 'Create Sales Invoice', icon: <CreateInvoiceIcon />, path: '/sales-invoice/new' }
+      ]
+    },
+    {
+      title: 'Quotation',
+      module: 'sales', // Still part of sales module
+      icon: <QuotationIcon />,
+      items: [
+        { title: 'Quotation', icon: <QuotationIcon />, path: '/quotation' },
+        { title: 'Create Quotation', icon: <AddIcon />, path: '/quotation/new' }
       ]
     },
     {
@@ -124,18 +138,6 @@ export default function Sidebar({
         { title: 'Job Card', icon: <JobCardIcon />, path: '/job-card' },
         { title: 'Stock Entry', icon: <StockIcon />, path: '/stock-entry' },
         { title: 'Material Planning', icon: <TruckIcon />, path: '/material-planning' }
-      ]
-    },
-    {
-      title: 'Sales ',
-      icon: <SalesOrderIcon />,
-      items: [
-        { title: 'Sales Order', icon: <SalesOrderIcon />, path: '/sales-order' },
-        { title: 'Add Sales Order', icon: <AddIcon />, path: '/sales-order/new' },
-        { title: 'Sales Invoice', icon: <InvoiceIcon />, path: '/sales-invoice' },
-        { title: 'Create Sales Invoice', icon: <CreateInvoiceIcon />, path: '/sales-invoice/new' }
-        // { title: 'Delivery Note', icon: <DeliveryIcon />, path: '/delivery-note' },
-        // { title: 'Customer', icon: <CustomerIcon />, path: '/customers' }
       ]
     },
     {
@@ -153,19 +155,6 @@ export default function Sidebar({
         { title: 'Serial No', icon: <HashIcon />, path: '/serial-no' },
         { title: 'Batch No', icon: <LayersIcon />, path: '/batch-no' },
         { title: 'Serial and Batch Bundle', icon: <PackageIcon />, path: '/serial-batch-bundle' }
-      ]
-    },
-    {
-      title: 'Sales',
-      module: 'sales',
-      icon: <SalesIcon />,
-      items: [
-        { title: 'Sales Order', icon: <SalesOrderIcon />, path: '/sales-order' },
-        { title: 'Add Sales Order', icon: <AddIcon />, path: '/sales-order/new' },
-        { title: 'Sales Invoice', icon: <InvoiceIcon />, path: '/sales-invoice' },
-        { title: 'Create Sales Invoice', icon: <CreateInvoiceIcon />, path: '/sales-invoice/new' }
-        // { title: 'Delivery Note', icon: <DeliveryIcon />, path: '/delivery-note' },
-        // { title: 'Customer', icon: <CustomerIcon />, path: '/customers' }
       ]
     },
     {
@@ -203,19 +192,19 @@ export default function Sidebar({
     }
   ];
 
-  // Filter categories - ALWAYS show Home + selected module + System (Settings)
+  // Filter categories based on current module
   const getFilteredCategories = () => {
     if (currentModule === 'home') {
-      // Show Home + System (Settings) when on home
+      // Show only Home + System when on home
       return allMenuCategories.filter(cat => 
         cat.module === 'home' || cat.module === 'system'
       );
     } else {
-      // Show Home + selected module + System (Settings) ALWAYS
+      // Show Home + all categories belonging to current module + System
       return allMenuCategories.filter(cat => 
         cat.module === 'home' || 
         cat.module === currentModule || 
-        cat.module === 'system' // Always show System/Settings
+        cat.module === 'system'
       );
     }
   };
@@ -397,21 +386,6 @@ const OrganizationIcon = () => (
   </svg>
 );
 
-const CompanyIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-6 4h1m4 0h1"/>
-  </svg>
-);
-
-const LetterHeadIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-    <polyline points="14 2 14 8 20 8"/>
-    <line x1="8" y1="13" x2="16" y2="13"/>
-    <line x1="8" y1="17" x2="12" y2="17"/>
-  </svg>
-);
-
 const ManufacturingIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 4h6v6M4 20L20 4M18 20h-6M4 8V4h4"/>
@@ -421,6 +395,16 @@ const ManufacturingIcon = () => (
 const SalesIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+  </svg>
+);
+
+const QuotationIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10 9 9 9 8 9"/>
   </svg>
 );
 
@@ -457,13 +441,6 @@ const CreateInvoiceIcon = () => (
     <polyline points="14 2 14 8 20 8"/>
     <line x1="12" y1="18" x2="12" y2="12"/>
     <line x1="9" y1="15" x2="15" y2="15"/>
-  </svg>
-);
-
-const OrganizationIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
   </svg>
 );
 
