@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { 
   FaSearch, FaPlus, FaEye, FaEdit, FaTrash, FaFilePdf, 
   FaFilter, FaCheckCircle, FaClock, FaTimesCircle,
-  FaPrint, FaFileAlt, FaExternalLinkAlt, FaDollarSign,
-  FaChartLine, FaTimes, FaArrowLeft, FaSave, FaSpinner,
-  FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt
+  FaPrint, FaFileAlt, FaExternalLinkAlt, 
+  FaChartLine, FaTimes,  FaSave, FaSpinner,
+   FaEnvelope,
 } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import toast from 'react-hot-toast';
