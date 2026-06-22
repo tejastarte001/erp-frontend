@@ -54,39 +54,39 @@ function App() {
 
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
-                          <Route path="/sales-order" element={<SalesOrder />} />
-            <Route path="/sales-invoice" element={<SalesInvoice />} />
-            <Route path="/sales-order/new" element={<CreateSalesOrder />} />
-            <Route path="/sales-invoice/new" element={<CreateSalesInvoice />} />
-            <Route path="/quotation" element={<QuotationPage />} />
-            <Route path="/quotation/new" element={<CreateQuotationPage />} />
+              <Route path="/sales-order" element={<SalesOrder />} />
+              <Route path="/sales-invoice" element={<SalesInvoice />} />
+              <Route path="/sales-order/new" element={<CreateSalesOrder />} />
+              <Route path="/sales-invoice/new" element={<CreateSalesInvoice />} />
+              <Route path="/quotation" element={<QuotationPage />} />
+              <Route path="/quotation/new" element={<CreateQuotationPage />} />
 
-            {/* <Route path="/sales" element={<SalesPage />} />
+              {/* <Route path="/sales" element={<SalesPage />} />
             <Route path="/purchase" element={<PurchasePage />} />
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/production" element={<ProductionPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} /> */}
-            <Route path="/job-card" element={<JobCardManagement />} />
-            <Route path="/job-cards/new" element={<JobCardForm />} />
-            {/* Item Group Routes */}
-            <Route path="/item-group" element={<ItemGroupList />} />
-            <Route path="/item-group/:id" element={<ItemGroupForm />} />
-            <Route path="/stock-entry" element={<Stockentry />} />
-            <Route path="/stock-entry/new" element={<StockentryForm />} />
-            {/* Item Routes */}
-            <Route path="/item-list" element={<Itemlist />} />
-            <Route path="/item/:id" element={<ItemForm />} />
-                      <Route path="/item-attribute" element={<ItemAttributeList />} />
+              <Route path="/job-card" element={<JobCardManagement />} />
+              <Route path="/job-cards/new" element={<JobCardForm />} />
+              {/* Item Group Routes */}
+              <Route path="/item-group" element={<ItemGroupList />} />
+              <Route path="/item-group/:id" element={<ItemGroupForm />} />
+              <Route path="/stock-entry" element={<Stockentry />} />
+              <Route path="/stock-entry/new" element={<StockentryForm />} />
+              {/* Item Routes */}
+              <Route path="/item-list" element={<Itemlist />} />
+              <Route path="/item/:id" element={<ItemForm />} />
+              <Route path="/item-attribute" element={<ItemAttributeList />} />
               <Route path="/item-attribute/new" element={<ItemAttributeForm />} />
               <Route path="/item-attribute/:id" element={<ItemAttributeForm />} />
-            {/* Organization Routes */}
-            <Route path="/company" element={<CompanyList />} />
-            <Route path="/company/new" element={<AddCompanyForm />} />
-            <Route path="/company/:id" element={<AddCompanyForm />} />
-            <Route path="/letter-head" element={<LetterHeadList />} />
-            <Route path="/letter-head/new" element={<AddLetterHeadForm />} />
-            <Route path="/letter-head/:id" element={<AddLetterHeadForm />} />
+              {/* Organization Routes */}
+              <Route path="/company" element={<CompanyList />} />
+              <Route path="/company/new" element={<AddCompanyForm />} />
+              <Route path="/company/:id" element={<AddCompanyForm />} />
+              <Route path="/letter-head" element={<LetterHeadList />} />
+              <Route path="/letter-head/new" element={<AddLetterHeadForm />} />
+              <Route path="/letter-head/:id" element={<AddLetterHeadForm />} />
 
               {/* Warehouse Routes */}
               <Route path="/warehouse" element={<WarehouseList />} />
@@ -102,7 +102,7 @@ function App() {
               <Route path="/uom" element={<UOMList />} />
               <Route path="/uom/new" element={<UOMForm />} />
               <Route path="/uom/:id" element={<UOMForm />} />
-              
+
               <Route path="/bom" element={<BOMPage />} />
               <Route path="/bom/new" element={<NewBOMPage />} />
 

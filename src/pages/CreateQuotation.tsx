@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  FaArrowLeft, FaSave, FaSpinner, FaInfoCircle, FaPlus, 
-  FaTrash, FaExchangeAlt, FaKeyboard, FaFolder, FaFileAlt,
-  FaCalendarAlt, FaUser, FaEnvelope, FaPhone, FaBuilding,
-  FaMapMarkerAlt, FaDollarSign, FaClock, FaBarcode,
-  FaSearch, FaChevronDown, FaChevronUp, FaPrint,
-  FaCopy, FaPaperclip, FaTag, FaTruck, FaShip,
-  FaHome, FaAddressCard, FaCreditCard
+  FaArrowLeft, FaSave, FaSpinner,  FaPlus, 
+  FaTrash,  FaKeyboard,  FaFileAlt,
+
+ FaDollarSign, FaBarcode,
+   FaChevronDown, FaChevronUp, FaPrint,
+  FaCopy,  FaTag, 
+ FaAddressCard, FaCreditCard, FaTimes
 } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import './CreateQuotation.css';
@@ -124,11 +124,22 @@ export default function CreateQuotation() {
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null }>({});
   const itemInputRefs = useRef<{ [key: string]: HTMLInputElement | HTMLSelectElement | null }>({});
 
+  // Helper function to set refs properly (returns void)
+  const setRef = (key: string) => (el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null) => {
+    inputRefs.current[key] = el;
+  };
+
+  // Helper function for item refs
+  const setItemRef = (key: string) => (el: HTMLInputElement | HTMLSelectElement | null) => {
+    itemInputRefs.current[key] = el;
+    inputRefs.current[key] = el;
+  };
+
   // Sample data
-  const itemCategories = [
-    'Raw Material', 'Finished Goods', 'Semi-Finished', 'Packaging',
-    'Spare Parts', 'Consumables', 'Tools & Equipment', 'Electronics'
-  ];
+  // const itemCategories = [
+  //   'Raw Material', 'Finished Goods', 'Semi-Finished', 'Packaging',
+  //   'Spare Parts', 'Consumables', 'Tools & Equipment', 'Electronics'
+  // ];
 
   const taxTypes = ['Tax', 'Charge', 'Cess', 'Surcharge'];
   const accountHeads = ['GST - 18%', 'GST - 12%', 'GST - 5%', 'Service Tax', 'VAT', 'Customs Duty'];
@@ -488,7 +499,7 @@ export default function CreateQuotation() {
           <button className="btn-secondary" onClick={() => window.print()}>
             <FaPrint size={12} /> Print
           </button>
-          <button className="btn-secondary" onClick={() => toast.info('Duplicating...')}>
+          <button className="btn-secondary" onClick={() => toast('Duplicating...')}>
             <FaCopy size={12} /> Duplicate
           </button>
           <button className="cancel-btn" onClick={handleCancel}>
@@ -518,6 +529,7 @@ export default function CreateQuotation() {
                   name="namingSeries"
                   value={formData.namingSeries}
                   onChange={handleInputChange}
+                  ref={setRef('namingSeries')}
                 >
                   <option value="SAL-QTN-.YYYY.-">SAL-QTN-.YYYY.-</option>
                   <option value="SAL-QTN-.YYYY.-">SAL-QTN-.YYYY.-</option>
@@ -530,6 +542,7 @@ export default function CreateQuotation() {
                   name="quotationTo"
                   value={formData.quotationTo}
                   onChange={handleInputChange}
+                  ref={setRef('quotationTo')}
                 >
                   <option value="Customer">Customer</option>
                   <option value="Lead">Lead</option>
@@ -542,6 +555,7 @@ export default function CreateQuotation() {
                   name="customer"
                   value={formData.customer}
                   onChange={handleInputChange}
+                  ref={setRef('customer')}
                 >
                   <option value="CUST-001">CUST-001 - ABC Corp</option>
                   <option value="CUST-002">CUST-002 - XYZ Ltd</option>
@@ -557,7 +571,7 @@ export default function CreateQuotation() {
                   onChange={handleInputChange}
                   placeholder="Customer name"
                   className={errors.partyName ? 'error' : ''}
-                  ref={el => inputRefs.current['partyName'] = el}
+                  ref={setRef('partyName')}
                   onFocus={() => setFocusedField('partyName')}
                   onBlur={() => setFocusedField(null)}
                 />
@@ -571,7 +585,7 @@ export default function CreateQuotation() {
                   value={formData.date}
                   onChange={handleInputChange}
                   className={errors.date ? 'error' : ''}
-                  ref={el => inputRefs.current['date'] = el}
+                  ref={setRef('date')}
                 />
                 {errors.date && <span className="error-text">{errors.date}</span>}
               </div>
@@ -583,7 +597,7 @@ export default function CreateQuotation() {
                   value={formData.validTill}
                   onChange={handleInputChange}
                   className={errors.validTill ? 'error' : ''}
-                  ref={el => inputRefs.current['validTill'] = el}
+                  ref={setRef('validTill')}
                 />
                 {errors.validTill && <span className="error-text">{errors.validTill}</span>}
               </div>
@@ -593,6 +607,7 @@ export default function CreateQuotation() {
                   name="orderType"
                   value={formData.orderType}
                   onChange={handleInputChange}
+                  ref={setRef('orderType')}
                 >
                   <option value="Sales">Sales</option>
                   <option value="Return">Return</option>
@@ -614,6 +629,7 @@ export default function CreateQuotation() {
                   name="currency"
                   value={formData.currency}
                   onChange={handleInputChange}
+                  ref={setRef('currency')}
                 >
                   {currencies.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -624,6 +640,7 @@ export default function CreateQuotation() {
                   name="priceList"
                   value={formData.priceList}
                   onChange={handleInputChange}
+                  ref={setRef('priceList')}
                 >
                   {priceLists.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
@@ -696,11 +713,7 @@ export default function CreateQuotation() {
                           onChange={(e) => handleItemChange(index, 'itemCode', e.target.value)}
                           placeholder="Code"
                           className={errors[`item_${index}_code`] ? 'error' : ''}
-                          ref={el => {
-                            const key = `item_${index}_itemCode`;
-                            itemInputRefs.current[key] = el;
-                            inputRefs.current[key] = el;
-                          }}
+                          ref={setItemRef(`item_${index}_itemCode`)}
                           onFocus={() => setFocusedField(`item_${index}`)}
                           onBlur={() => setFocusedField(null)}
                           onKeyDown={(e) => handleItemKeyDown(e, index, 'itemCode')}
@@ -713,11 +726,7 @@ export default function CreateQuotation() {
                           value={item.itemName}
                           onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
                           placeholder="Item name"
-                          ref={el => {
-                            const key = `item_${index}_itemName`;
-                            itemInputRefs.current[key] = el;
-                            inputRefs.current[key] = el;
-                          }}
+                          ref={setItemRef(`item_${index}_itemName`)}
                           onKeyDown={(e) => handleItemKeyDown(e, index, 'itemName')}
                         />
                       </td>
@@ -728,11 +737,7 @@ export default function CreateQuotation() {
                           onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
                           min="1"
                           className={errors[`item_${index}_quantity`] ? 'error' : ''}
-                          ref={el => {
-                            const key = `item_${index}_quantity`;
-                            itemInputRefs.current[key] = el;
-                            inputRefs.current[key] = el;
-                          }}
+                          ref={setItemRef(`item_${index}_quantity`)}
                           onKeyDown={(e) => handleItemKeyDown(e, index, 'quantity')}
                         />
                         {errors[`item_${index}_quantity`] && <span className="error-text">{errors[`item_${index}_quantity`]}</span>}
@@ -745,11 +750,7 @@ export default function CreateQuotation() {
                           min="0"
                           step="0.01"
                           className={errors[`item_${index}_rate`] ? 'error' : ''}
-                          ref={el => {
-                            const key = `item_${index}_rate`;
-                            itemInputRefs.current[key] = el;
-                            inputRefs.current[key] = el;
-                          }}
+                          ref={setItemRef(`item_${index}_rate`)}
                           onKeyDown={(e) => handleItemKeyDown(e, index, 'rate')}
                         />
                         {errors[`item_${index}_rate`] && <span className="error-text">{errors[`item_${index}_rate`]}</span>}
@@ -824,6 +825,7 @@ export default function CreateQuotation() {
                       name="taxCategory"
                       value={formData.taxCategory}
                       onChange={handleInputChange}
+                      ref={setRef('taxCategory')}
                     >
                       <option value="">Select...</option>
                       {taxCategories.map(t => <option key={t} value={t}>{t}</option>)}
@@ -835,6 +837,7 @@ export default function CreateQuotation() {
                       name="taxesAndCharges"
                       value={formData.taxesAndCharges}
                       onChange={handleInputChange}
+                      ref={setRef('taxesAndCharges')}
                     >
                       <option value="">Select...</option>
                       <option value="GST-18">GST 18%</option>
@@ -848,6 +851,7 @@ export default function CreateQuotation() {
                       name="shippingRule"
                       value={formData.shippingRule}
                       onChange={handleInputChange}
+                      ref={setRef('shippingRule')}
                     >
                       <option value="">Select...</option>
                       {shippingRules.map(s => <option key={s} value={s}>{s}</option>)}
@@ -859,6 +863,7 @@ export default function CreateQuotation() {
                       name="incoterm"
                       value={formData.incoterm}
                       onChange={handleInputChange}
+                      ref={setRef('incoterm')}
                     >
                       <option value="">Select...</option>
                       {incoterms.map(i => <option key={i} value={i}>{i}</option>)}
@@ -996,6 +1001,7 @@ export default function CreateQuotation() {
                     name="customerAddress"
                     value={formData.customerAddress}
                     onChange={handleInputChange}
+                    ref={setRef('customerAddress')}
                   >
                     <option value="">Select...</option>
                     {customerAddresses.map(a => <option key={a} value={a}>{a}</option>)}
@@ -1007,6 +1013,7 @@ export default function CreateQuotation() {
                     name="placeOfSupply"
                     value={formData.placeOfSupply}
                     onChange={handleInputChange}
+                    ref={setRef('placeOfSupply')}
                   >
                     <option value="">Select...</option>
                     {placeOfSupply.map(p => <option key={p} value={p}>{p}</option>)}
@@ -1018,6 +1025,7 @@ export default function CreateQuotation() {
                     name="contactPerson"
                     value={formData.contactPerson}
                     onChange={handleInputChange}
+                    ref={setRef('contactPerson')}
                   >
                     <option value="">Select...</option>
                     {contactPersons.map(c => <option key={c} value={c}>{c}</option>)}
@@ -1029,6 +1037,7 @@ export default function CreateQuotation() {
                     name="shippingAddress"
                     value={formData.shippingAddress}
                     onChange={handleInputChange}
+                    ref={setRef('shippingAddress')}
                   >
                     <option value="">Select...</option>
                     {shippingAddresses.map(s => <option key={s} value={s}>{s}</option>)}
@@ -1040,6 +1049,7 @@ export default function CreateQuotation() {
                     name="companyAddress"
                     value={formData.companyAddress}
                     onChange={handleInputChange}
+                    ref={setRef('companyAddress')}
                   >
                     <option value="">Select...</option>
                     {companyAddresses.map(c => <option key={c} value={c}>{c}</option>)}
@@ -1067,6 +1077,7 @@ export default function CreateQuotation() {
                       name="paymentTermsTemplate"
                       value={formData.paymentTermsTemplate}
                       onChange={handleInputChange}
+                      ref={setRef('paymentTermsTemplate')}
                     >
                       {paymentTerms.map(p => <option key={p} value={p}>{p}</option>)}
                     </select>
@@ -1185,6 +1196,7 @@ export default function CreateQuotation() {
                     name="tcName"
                     value={formData.tcName}
                     onChange={handleInputChange}
+                    ref={setRef('tcName')}
                   >
                     <option value="">Select...</option>
                     {termsList.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1198,6 +1210,7 @@ export default function CreateQuotation() {
                     onChange={handleInputChange}
                     rows={4}
                     placeholder="Enter terms and conditions..."
+                    ref={setRef('termDetails')}
                   />
                 </div>
               </div>
@@ -1213,7 +1226,7 @@ export default function CreateQuotation() {
             </button>
           </div>
           <div className="action-right">
-            <button type="button" className="btn-secondary" onClick={() => toast.info('Converting to Sales Order...')}>
+            <button type="button" className="btn-secondary" onClick={() => toast('Converting to Sales Order...')}>
               <FaCopy size={12} /> Convert to Sales Order
             </button>
             <button type="submit" className="submit-btn" disabled={loading}>

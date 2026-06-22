@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import type { ChangeEvent, FormEvent, CSSProperties } from "react";
+import type { ChangeEvent, FormEvent,  } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   FaArrowLeft, FaSave, FaSpinner, FaInfoCircle, FaExclamationTriangle,
