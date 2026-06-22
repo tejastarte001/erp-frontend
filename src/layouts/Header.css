@@ -17,11 +17,19 @@
 
 .breadcrumb-sep {
   color: var(--text-secondary, #d1d5db);
-  font-size: 16px;
+  font-size: 14px;
+}
+
+.breadcrumb-module {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-color, #6366f1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .breadcrumb-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text-primary, #111827);
 }
@@ -51,4 +59,46 @@
 
 .header-icon-btn svg {
   stroke: var(--text-secondary, #6B7280);
+}
+
+/* Dark Theme Overrides */
+.dark-theme .header {
+  background: var(--card-bg, #1e293b);
+  border-color: var(--border-color, #334155);
+}
+
+.dark-theme .breadcrumb-title {
+  color: var(--text-primary, #f8fafc);
+}
+
+.dark-theme .breadcrumb-module {
+  color: var(--primary-color, #3b82f6);
+}
+
+.dark-theme .breadcrumb-sep {
+  color: var(--text-secondary, #64748b);
+}
+
+.dark-theme .header-icon-btn:hover {
+  background: var(--nav-hover, rgba(255, 255, 255, 0.08));
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .header {
+    padding: 0 12px;
+    height: 48px;
+  }
+
+  .breadcrumb-title {
+    font-size: 15px;
+  }
+
+  .breadcrumb-module {
+    font-size: 11px;
+  }
+
+  .breadcrumb-sep {
+    font-size: 12px;
+  }
 }
