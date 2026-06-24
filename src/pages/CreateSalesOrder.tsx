@@ -421,7 +421,7 @@ export default function CreateSalesOrder() {
             </div>
           </div>
 
-          {/* Currency Section */}
+          {/* Currency Section
           <div className="form-section" id="section-currency">
             <div className="section-header">
               <h3 className="section-title">Currency and Price List ✓</h3>
@@ -524,7 +524,7 @@ export default function CreateSalesOrder() {
                 </span>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Items Section */}
           <div className="form-section" id="section-items">

@@ -24,9 +24,8 @@ export default function Sidebar({
     return saved ? JSON.parse(saved) : {
       'Manufacturing': true,
       'Sales': true,
-      'Quotation': true,
+      'Items & Pricing': false,
       'Organization': false,
-
       'Setup': false,
       'Tools': false,
       'Reports': false,
@@ -38,12 +37,10 @@ export default function Sidebar({
   useEffect(() => {
     const path = location.pathname;
     
-    // Don't change module if we're on home or dashboard
     if (path === '/home' || path === '/dashboard') {
       return;
     }
     
-    // Check for specific module paths
     if (path.startsWith('/bom') || path.startsWith('/work-order') || 
         path.startsWith('/job-card') || path.startsWith('/stock-entry') || 
         path.startsWith('/material-planning') || path.startsWith('/quality')) {
@@ -56,10 +53,9 @@ export default function Sidebar({
                path.startsWith('/stock')) {
       setCurrentModule('setup');
     } else if (path.startsWith('/sales-order') || path.startsWith('/sales-invoice') || 
-               path.startsWith('/delivery-note') || path.startsWith('/customers')) {
+               path.startsWith('/delivery-note') || path.startsWith('/customers') ||
+               path.startsWith('/quotation')) {
       setCurrentModule('sales');
-    } else if (path.startsWith('/quotation')) {
-      setCurrentModule('sales'); // Quotation belongs to sales module
     } else if (path.startsWith('/company') || path.startsWith('/letter-head')) {
       setCurrentModule('organization');
     } else if (path.startsWith('/reports')) {
@@ -97,8 +93,7 @@ export default function Sidebar({
     }
   };
 
-  // Define all menu categories with their module mapping
-  // Each category can have a 'module' property to filter by module
+  // All menu categories
   const allMenuCategories = [
     {
       title: 'Home',
@@ -114,19 +109,23 @@ export default function Sidebar({
       module: 'sales',
       icon: <SalesIcon />,
       items: [
+        { title: 'Quotation', icon: <QuotationIcon />, path: '/quotation' },
         { title: 'Sales Order', icon: <SalesOrderIcon />, path: '/sales-order' },
-        { title: 'Add Sales Order', icon: <AddIcon />, path: '/sales-order/new' },
-        { title: 'Sales Invoice', icon: <InvoiceIcon />, path: '/sales-invoice' },
-        { title: 'Create Sales Invoice', icon: <CreateInvoiceIcon />, path: '/sales-invoice/new' }
+        { title: 'Sales Invoice', icon: <InvoiceIcon />, path: '/sales-invoice' }
+        // Removed: Add Sales Order, Create Sales Invoice
       ]
     },
     {
-      title: 'Quotation',
-      module: 'sales', // Still part of sales module
-      icon: <QuotationIcon />,
+      title: 'Items & Pricing',
+      module: 'sales',
+      icon: <ItemIcon />,
       items: [
-        { title: 'Quotation', icon: <QuotationIcon />, path: '/quotation' },
-        { title: 'Create Quotation', icon: <AddIcon />, path: '/quotation/new' }
+        { title: 'Item', icon: <ItemIcon />, path: '/item-list' },
+        { title: 'Item Group', icon: <FolderIcon />, path: '/item-group' },
+        { title: 'Price List', icon: <TagIcon />, path: '/price-list' },
+        { title: 'Item Price', icon: <BrandIcon />, path: '/item-price' },
+        { title: 'Pricing Rule', icon: <RulerIcon />, path: '/pricing-rule' },
+        { title: 'Coupon Code', icon: <CouponIcon />, path: '/coupon-code' }
       ]
     },
     {
@@ -142,12 +141,19 @@ export default function Sidebar({
       ]
     },
     {
+      title: 'Organization',
+      module: 'organization',
+      icon: <OrganizationIcon />,
+      items: [
+        { title: 'Company', icon: <CompanyIcon />, path: '/company' },
+        { title: 'Letter Head', icon: <LetterHeadIcon />, path: '/letter-head' }
+      ]
+    },
+    {
       title: 'Setup',
       module: 'setup',
       icon: <SetupIcon />,
       items: [
-        { title: 'Item', icon: <ItemIcon />, path: '/item-list' },
-        { title: 'Item Group', icon: <FolderIcon />, path: '/item-group' },
         { title: 'Item Attribute', icon: <TagIcon />, path: '/item-attribute' },
         { title: 'Brand', icon: <BrandIcon />, path: '/brand' },
         { title: 'Warehouse', icon: <WarehouseIcon />, path: '/warehouse' },
@@ -156,15 +162,6 @@ export default function Sidebar({
         { title: 'Serial No', icon: <HashIcon />, path: '/serial-no' },
         { title: 'Batch No', icon: <LayersIcon />, path: '/batch-no' },
         { title: 'Serial and Batch Bundle', icon: <PackageIcon />, path: '/serial-batch-bundle' }
-      ]
-    },
-    {
-      title: 'Organization',
-      module: 'organization',
-      icon: <OrganizationIcon />,
-      items: [
-        { title: 'Company', icon: <CompanyIcon />, path: '/company' },
-        { title: 'Letter Head', icon: <LetterHeadIcon />, path: '/letter-head' }
       ]
     },
     {
@@ -196,12 +193,10 @@ export default function Sidebar({
   // Filter categories based on current module
   const getFilteredCategories = () => {
     if (currentModule === 'home') {
-      // Show only Home + System when on home
       return allMenuCategories.filter(cat => 
         cat.module === 'home' || cat.module === 'system'
       );
     } else {
-      // Show Home + all categories belonging to current module + System
       return allMenuCategories.filter(cat => 
         cat.module === 'home' || 
         cat.module === currentModule || 
@@ -229,7 +224,6 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen && (
         <div className="sidebar-overlay" onClick={onClose}></div>
       )}
@@ -347,7 +341,7 @@ export default function Sidebar({
         </div>
       </aside>
 
-      {/* Toggle Button - Outside sidebar */}
+      {/* Toggle Button */}
       <button 
         className={`sidebar-toggle-btn ${isMinimized ? 'minimized' : 'expanded'}`}
         onClick={onToggleMinimize}
@@ -418,14 +412,6 @@ const SalesOrderIcon = () => (
   </svg>
 );
 
-const AddIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/>
-    <line x1="12" y1="8" x2="12" y2="16"/>
-    <line x1="8" y1="12" x2="16" y2="12"/>
-  </svg>
-);
-
 const InvoiceIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -433,15 +419,6 @@ const InvoiceIcon = () => (
     <line x1="8" y1="13" x2="16" y2="13"/>
     <line x1="8" y1="17" x2="16" y2="17"/>
     <line x1="8" y1="9" x2="10" y2="9"/>
-  </svg>
-);
-
-const CreateInvoiceIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-    <polyline points="14 2 14 8 20 8"/>
-    <line x1="12" y1="18" x2="12" y2="12"/>
-    <line x1="9" y1="15" x2="15" y2="15"/>
   </svg>
 );
 
@@ -603,6 +580,15 @@ const ReportsIcon = () => (
     <line x1="18" y1="20" x2="18" y2="10"/>
     <line x1="12" y1="20" x2="12" y2="4"/>
     <line x1="6" y1="20" x2="6" y2="14"/>
+  </svg>
+);
+
+// New Coupon Icon
+const CouponIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 12L12 4L4 12L12 20L20 12Z"/>
+    <path d="M12 8L12 16"/>
+    <path d="M8 12L16 12"/>
   </svg>
 );
 

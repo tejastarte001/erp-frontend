@@ -443,7 +443,7 @@ export default function CreateSalesInvoice() {
             </div>
           </div>
 
-          {/* Currency */}
+          {/* Currency
           <div className="form-section">
             <div className="section-header">
               <h3 className="section-title">Currency</h3>
@@ -482,7 +482,7 @@ export default function CreateSalesInvoice() {
                 <span>1 {formData.currency} = {formData.exchangeRate} USD</span>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Items */}
           <div className="form-section">

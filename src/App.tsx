@@ -40,6 +40,10 @@ import LetterHeadList from "./pages/LetterHeadList";
 import AddLetterHeadForm from "./pages/AddLetterHeadForm";
 import QuotationPage from "./pages/QuotationPage";
 import CreateQuotationPage from "./pages/CreateQuotation";
+import PriceList from "./pages/PriceList";
+import ItemPrice from "./pages/ItemPrice";
+import PricingRule from "./pages/PricingRule";
+import CouponCode from "./pages/CouponCode";
 
 
 
@@ -60,6 +64,11 @@ function App() {
             <Route path="/sales-invoice/new" element={<CreateSalesInvoice />} />
             <Route path="/quotation" element={<QuotationPage />} />
             <Route path="/quotation/new" element={<CreateQuotationPage />} />
+            <Route path="/price-list" element={<PriceList />} />
+            <Route path="/item-price" element={<ItemPrice />} />
+            <Route path="/pricing-rule" element={<PricingRule />} />
+            <Route path="/coupon-codes" element={<CouponCode />} />
+
 
             {/* <Route path="/sales" element={<SalesPage />} />
             <Route path="/purchase" element={<PurchasePage />} />
@@ -80,6 +89,7 @@ function App() {
                       <Route path="/item-attribute" element={<ItemAttributeList />} />
               <Route path="/item-attribute/new" element={<ItemAttributeForm />} />
               <Route path="/item-attribute/:id" element={<ItemAttributeForm />} />
+
             {/* Organization Routes */}
             <Route path="/company" element={<CompanyList />} />
             <Route path="/company/new" element={<AddCompanyForm />} />

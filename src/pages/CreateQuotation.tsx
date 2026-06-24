@@ -7,7 +7,8 @@ import {
   FaMapMarkerAlt, FaDollarSign, FaClock, FaBarcode,
   FaSearch, FaChevronDown, FaChevronUp, FaPrint,
   FaCopy, FaPaperclip, FaTag, FaTruck, FaShip,
-  FaHome, FaAddressCard, FaCreditCard
+  FaHome, FaAddressCard, FaCreditCard,
+  FaTimes
 } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import './CreateQuotation.css';
@@ -602,7 +603,7 @@ export default function CreateQuotation() {
             </div>
           </div>
 
-          {/* Currency Section */}
+          {/* Currency Section
           <div className="form-section">
             <div className="section-header">
               <h3 className="section-title"><FaDollarSign size={13} /> Currency and Price List</h3>
@@ -633,7 +634,7 @@ export default function CreateQuotation() {
                 <input type="number" value="1.000000000" disabled className="disabled-input" />
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Items Section */}
           <div className="form-section">
