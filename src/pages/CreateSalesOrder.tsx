@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSave, FaSpinner, FaInfoCircle, FaExchangeAlt, FaPlus, FaTrash, FaKeyboard } from 'react-icons/fa';
+import { FaArrowLeft, FaSave, FaSpinner, FaPlus, FaTrash, FaKeyboard } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import './CreateSalesOrder.css';
 import toast from 'react-hot-toast';
@@ -431,7 +431,7 @@ export default function CreateSalesOrder() {
             </div>
           </div>
 
-          {/* Currency Section */}
+          {/* Currency Section
           <div className="form-section" id="section-currency">
             <div className="section-header">
               <h3 className="section-title">Currency and Price List ✓</h3>
@@ -534,7 +534,7 @@ export default function CreateSalesOrder() {
                 </span>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Items Section */}
           <div className="form-section" id="section-items">

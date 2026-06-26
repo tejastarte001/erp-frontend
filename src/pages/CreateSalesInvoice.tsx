@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSave, FaSpinner,  FaPlus, FaTrash, FaExchangeAlt, FaKeyboard, FaFolder } from 'react-icons/fa';
+import { FaArrowLeft, FaSave, FaSpinner,  FaPlus, FaTrash, FaKeyboard, FaFolder } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import './CreateSalesInvoice.css';
 import toast from 'react-hot-toast';
@@ -443,7 +443,7 @@ export default function CreateSalesInvoice() {
             </div>
           </div>
 
-          {/* Currency */}
+          {/* Currency
           <div className="form-section">
             <div className="section-header">
               <h3 className="section-title">Currency</h3>
@@ -482,7 +482,7 @@ export default function CreateSalesInvoice() {
                 <span>1 {formData.currency} = {formData.exchangeRate} USD</span>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Items */}
           <div className="form-section">
