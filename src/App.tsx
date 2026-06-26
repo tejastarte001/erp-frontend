@@ -40,6 +40,7 @@ import LetterHeadList from "./pages/LetterHeadList";
 import AddLetterHeadForm from "./pages/AddLetterHeadForm";
 import QuotationPage from "./pages/QuotationPage";
 import CreateQuotationPage from "./pages/CreateQuotation";
+import WorkOrder from "./pages/WorkOrder";
 
 
 
@@ -93,6 +94,8 @@ function App() {
               <Route path="/warehouse/new" element={<WarehouseForm />} />
               <Route path="/warehouse/:id" element={<WarehouseForm />} />
 
+              {/* Work Order Routes */}
+              <Route path="/work-order" element={<WorkOrder />} />
               {/* Brand Routes */}
               <Route path="/brand" element={<BrandList />} />
               <Route path="/brand/new" element={<BrandForm />} />

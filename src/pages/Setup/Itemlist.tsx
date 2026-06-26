@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaSearch,
@@ -8,90 +8,133 @@ import {
   FaChevronRight,
   FaAngleDoubleLeft,
   FaAngleDoubleRight,
-
   FaBoxes,
   FaTags,
-
   FaCheckCircle,
-  FaTimesCircle
+  FaTimesCircle,
+  FaSpinner,
 } from 'react-icons/fa';
 import ItemQuickAdd from "./Itemquickadd";
 import "./ItemList.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
+import api from '../../services/api';
 
 interface Item {
-  id: string;
-  itemName: string;
-  status: "Enabled" | "Disabled";
-  itemGroup: string;
-  uom: string;
-  itemType: string;
-  purpose: string;
-  ago: string;
-  comments: number;
+  id: number;
+  item_code: string;
+  item_name: string;
+  item_group: string;
+  stock_uom: string;
+  is_stock_item: number;
+  is_fixed_asset: number;
+  is_sales_item: number;
+  is_purchase_item: number;
+  disabled: number;
+  description: string;
+  brand: string | null;
+  valuation_method: string;
+  creation: string;
+  modified: string;
 }
 
-const MOCK_ITEMS: Item[] = [
-  { id: "Table-001",  itemName: "Table",  status: "Enabled", itemGroup: "Products",   uom: "Nos", itemType: "Stock", purpose: "Sales", ago: "2 m",  comments: 0 },
-  { id: "Door1",      itemName: "Door1",  status: "Enabled", itemGroup: "Products",   uom: "Nos", itemType: "Stock", purpose: "Sales", ago: "now",  comments: 0 },
-  { id: "Table-002",  itemName: "Table",  status: "Enabled", itemGroup: "Products",   uom: "Nos", itemType: "Stock", purpose: "Sales", ago: "17 m", comments: 0 },
-  { id: "chair-001",  itemName: "chair",  status: "Enabled", itemGroup: "Consumable", uom: "Nos", itemType: "Stock", purpose: "Sales", ago: "21 m", comments: 0 },
-  { id: "23",         itemName: "23",     status: "Enabled", itemGroup: "Consumable", uom: "Nos", itemType: "Stock", purpose: "Sales", ago: "22 m", comments: 0 },
-  { id: "chair-002",  itemName: "chair",  status: "Enabled", itemGroup: "Products",   uom: "Nos", itemType: "Stock", purpose: "Sales", ago: "24 m", comments: 0 },
-  { id: "354",        itemName: "354",    status: "Enabled", itemGroup: "Consumable", uom: "Nos", itemType: "Stock", purpose: "Sales", ago: "1 h",  comments: 0 },
-];
+interface ApiResponse {
+  success: number;
+  data: Item[];
+}
 
 export default function ItemList() {
   const navigate = useNavigate();
   const { theme } = useAdminTheme();
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const [allChecked, setAllChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  // const [pageSize, setPageSize] = useState(20);
   const [hasVariants, setHasVariants] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const items = MOCK_ITEMS;
+  // Fetch items from API
+  const fetchItems = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', itemsPerPage.toString());
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
 
-  // Filter data based on search and status
-  const filteredData = items.filter(item => {
-    const matchesSearch = item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.id.toLowerCase().includes(searchTerm.toLowerCase());
+      const response = await api.get<ApiResponse>(`/item?${params.toString()}`);
+      
+      if (response.data.success === 1) {
+        setItems(response.data.data);
+        setTotalItems(response.data.data.length);
+      } else {
+        setError('Failed to fetch items');
+      }
+    } catch (err) {
+      console.error('Error fetching items:', err);
+      setError('An error occurred while fetching items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch when dependencies change
+  useEffect(() => {
+    fetchItems();
+  }, [currentPage, itemsPerPage, searchTerm]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, itemsPerPage]);
+
+  // Filter data based on status
+  const filteredItems = items.filter(item => {
     const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'enabled' && item.status === 'Enabled') ||
-                         (statusFilter === 'disabled' && item.status === 'Disabled');
-    return matchesSearch && matchesStatus;
+                         (statusFilter === 'enabled' && item.disabled === 0) ||
+                         (statusFilter === 'disabled' && item.disabled === 1);
+    return matchesStatus;
   });
 
-  const totalItems = filteredData.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginatedData = filteredData.slice(
+  const paginatedData = filteredItems.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+
   // Stats
-  const totalEnabled = items.filter(item => item.status === 'Enabled').length;
-  const totalDisabled = items.filter(item => item.status === 'Disabled').length;
-  const totalGroups = [...new Set(items.map(item => item.itemGroup))].length;
+  const totalEnabled = items.filter(item => item.disabled === 0).length;
+  const totalDisabled = items.filter(item => item.disabled === 1).length;
+  const totalGroups = [...new Set(items.map(item => item.item_group))].length;
 
   const stats = [
-    { title: 'Total Items', value: items.length, icon: <FaBoxes />, color: '#6366f1' },
+    { title: 'Total Items', value: totalItems, icon: <FaBoxes />, color: '#6366f1' },
     { title: 'Enabled', value: totalEnabled, icon: <FaCheckCircle />, color: '#10b981' },
     { title: 'Disabled', value: totalDisabled, icon: <FaTimesCircle />, color: '#ef4444' },
     { title: 'Item Groups', value: totalGroups, icon: <FaTags />, color: '#f59e0b' },
   ];
 
   const toggleAll = () => {
-    if (allChecked) { setSelected(new Set()); }
-    else { setSelected(new Set(paginatedData.map((r) => r.id))); }
+    if (allChecked) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(paginatedData.map((r) => r.id)));
+    }
     setAllChecked(!allChecked);
   };
 
-  const toggleRow = (id: string) => {
+  const toggleRow = (id: number) => {
     const next = new Set(selected);
     next.has(id) ? next.delete(id) : next.add(id);
     setSelected(next);
@@ -125,6 +168,29 @@ export default function ItemList() {
   const clearFilters = () => {
     setSearchTerm('');
     setStatusFilter('all');
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) return '1d';
+    if (diffDays < 7) return `${diffDays}d`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo`;
+    return date.toLocaleDateString();
+  };
+
+  const handleRowClick = (item: Item) => {
+    navigate(`/item/${encodeURIComponent(item.item_code)}`, { 
+      state: { itemData: item } 
+    });
+  };
+
+  const handleAddItem = () => {
+    navigate('/item/new');
   };
 
   return (
@@ -182,7 +248,7 @@ export default function ItemList() {
             Created On
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
-          <button className="itl-btn-primary" onClick={() => setShowModal(true)}>
+          <button className="itl-btn-primary" onClick={handleAddItem}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
@@ -221,143 +287,167 @@ export default function ItemList() {
         <label htmlFor="hasVariants" className="itl-has-variants-label">Has Variants</label>
       </div>
 
-      {/* Table */}
-      <div className="itl-table-wrap">
-        <table className="itl-table">
-          <thead>
-            <tr>
-              <th className="itl-th-check">
-                <input type="checkbox" checked={allChecked} onChange={toggleAll} className="itl-checkbox" />
-              </th>
-              <th className="itl-th">Item Name</th>
-              <th className="itl-th">Status</th>
-              <th className="itl-th">Item Group</th>
-              <th className="itl-th">UOM</th>
-              <th className="itl-th">Item Type</th>
-              <th className="itl-th">Purpose</th>
-              <th className="itl-th itl-th-meta">
-                <span className="itl-count-label">{totalItems} of {items.length}</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary, #9ca3af)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedData.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="itl-empty-state">
-                  <div className="itl-empty-content">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    <p>No items found</p>
-                    <span>Try adjusting your search criteria</span>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              paginatedData.map((row) => (
-                <tr
-                  key={row.id}
-                  className={`itl-tr ${selected.has(row.id) ? "itl-tr-selected" : ""}`}
-                  onClick={() => navigate(`/item/${encodeURIComponent(row.id)}`)}
-                >
-                  <td className="itl-td-check" onClick={(e) => { e.stopPropagation(); toggleRow(row.id); }}>
-                    <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleRow(row.id)} className="itl-checkbox" />
-                  </td>
-                  <td className="itl-td itl-td-name">{row.itemName}</td>
-                  <td className="itl-td">
-                    <span className={`itl-status-badge itl-status-${row.status.toLowerCase()}`}>{row.status}</span>
-                  </td>
-                  <td className="itl-td">{row.itemGroup}</td>
-                  <td className="itl-td">{row.uom}</td>
-                  <td className="itl-td">{row.itemType}</td>
-                  <td className="itl-td">{row.purpose}</td>
-                  <td className="itl-td itl-td-meta">
-                    <span className="itl-ago">{row.ago}</span>
-                    <button className="itl-meta-btn" onClick={(e) => e.stopPropagation()}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                      </svg>
-                      {row.comments}
-                    </button>
-                    <span className="itl-dot">·</span>
-                    <button className="itl-meta-btn" onClick={(e) => e.stopPropagation()}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                      </svg>
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="itl-pagination">
-          <div className="itl-pagination-left">
-            <span className="itl-pagination-label">Show:</span>
-            <select 
-              value={itemsPerPage} 
-              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              className="itl-page-size-select"
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span className="itl-pagination-label">entries</span>
-          </div>
-          <div className="itl-pagination-center">
-            <button 
-              onClick={goToFirstPage} 
-              disabled={currentPage === 1} 
-              className="itl-page-btn"
-            >
-              <FaAngleDoubleLeft size={12} />
-            </button>
-            <button 
-              onClick={goToPrevPage} 
-              disabled={currentPage === 1} 
-              className="itl-page-btn"
-            >
-              <FaChevronLeft size={12} />
-            </button>
-            {getPageNumbers().map(page => (
-              <button
-                key={page}
-                onClick={() => goToPage(page)}
-                className={`itl-page-btn ${currentPage === page ? 'itl-page-btn-active' : ''}`}
-              >
-                {page}
-              </button>
-            ))}
-            <button 
-              onClick={goToNextPage} 
-              disabled={currentPage === totalPages} 
-              className="itl-page-btn"
-            >
-              <FaChevronRight size={12} />
-            </button>
-            <button 
-              onClick={goToLastPage} 
-              disabled={currentPage === totalPages} 
-              className="itl-page-btn"
-            >
-              <FaAngleDoubleRight size={12} />
-            </button>
-          </div>
-          <div className="itl-pagination-right">
-            <span className="itl-pagination-info">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} entries
-            </span>
-          </div>
+      {/* Loading State */}
+      {loading && (
+        <div className="itl-loading">
+          <FaSpinner className="spinning" size={24} />
+          <p>Loading items...</p>
         </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="itl-error">
+          <p>{error}</p>
+          <button onClick={fetchItems} className="itl-retry-btn">Retry</button>
+        </div>
+      )}
+
+      {/* Table */}
+      {!loading && !error && (
+        <>
+          <div className="itl-table-wrap">
+            <table className="itl-table">
+              <thead>
+                <tr>
+                  <th className="itl-th-check">
+                    <input type="checkbox" checked={allChecked} onChange={toggleAll} className="itl-checkbox" />
+                  </th>
+                  <th className="itl-th">Item Code</th>
+                  <th className="itl-th">Item Name</th>
+                  <th className="itl-th">Status</th>
+                  <th className="itl-th">Item Group</th>
+                  <th className="itl-th">UOM</th>
+                  <th className="itl-th">Type</th>
+                  <th className="itl-th itl-th-meta">
+                    <span className="itl-count-label">{filteredItems.length} of {totalItems}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary, #9ca3af)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedData.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="itl-empty-state">
+                      <div className="itl-empty-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <p>No items found</p>
+                        <span>Try adjusting your search criteria</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedData.map((row) => (
+                    <tr
+                      key={row.id}
+                      className={`itl-tr ${selected.has(row.id) ? "itl-tr-selected" : ""}`}
+                      onClick={() => handleRowClick(row)}
+                    >
+                      <td className="itl-td-check" onClick={(e) => { e.stopPropagation(); toggleRow(row.id); }}>
+                        <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleRow(row.id)} className="itl-checkbox" />
+                      </td>
+                      <td className="itl-td itl-td-code">{row.item_code}</td>
+                      <td className="itl-td itl-td-name">{row.item_name}</td>
+                      <td className="itl-td">
+                        <span className={`itl-status-badge itl-status-${row.disabled === 0 ? 'enabled' : 'disabled'}`}>
+                          {row.disabled === 0 ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </td>
+                      <td className="itl-td">{row.item_group}</td>
+                      <td className="itl-td">{row.stock_uom}</td>
+                      <td className="itl-td">
+                        {row.is_stock_item === 1 ? 'Stock' : 'Non-Stock'}
+                      </td>
+                      <td className="itl-td itl-td-meta">
+                        <span className="itl-ago">{formatDate(row.creation)}</span>
+                        <button className="itl-meta-btn" onClick={(e) => e.stopPropagation()}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                          </svg>
+                          0
+                        </button>
+                        <span className="itl-dot">·</span>
+                        <button className="itl-meta-btn" onClick={(e) => e.stopPropagation()}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="itl-pagination">
+              <div className="itl-pagination-left">
+                <span className="itl-pagination-label">Show:</span>
+                <select 
+                  value={itemsPerPage} 
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="itl-page-size-select"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span className="itl-pagination-label">entries</span>
+              </div>
+              <div className="itl-pagination-center">
+                <button 
+                  onClick={goToFirstPage} 
+                  disabled={currentPage === 1} 
+                  className="itl-page-btn"
+                >
+                  <FaAngleDoubleLeft size={12} />
+                </button>
+                <button 
+                  onClick={goToPrevPage} 
+                  disabled={currentPage === 1} 
+                  className="itl-page-btn"
+                >
+                  <FaChevronLeft size={12} />
+                </button>
+                {getPageNumbers().map(page => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`itl-page-btn ${currentPage === page ? 'itl-page-btn-active' : ''}`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button 
+                  onClick={goToNextPage} 
+                  disabled={currentPage === totalPages} 
+                  className="itl-page-btn"
+                >
+                  <FaChevronRight size={12} />
+                </button>
+                <button 
+                  onClick={goToLastPage} 
+                  disabled={currentPage === totalPages} 
+                  className="itl-page-btn"
+                >
+                  <FaAngleDoubleRight size={12} />
+                </button>
+              </div>
+              <div className="itl-pagination-right">
+                <span className="itl-pagination-info">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredItems.length)} of {filteredItems.length} entries
+                </span>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Quick Add Modal */}
