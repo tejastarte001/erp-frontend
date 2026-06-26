@@ -62,6 +62,14 @@ export default function HomePage() {
       color: "#f59e0b"
     },
     {
+      title: "Purchasing",
+      icon: <FaShoppingCart />,
+      path: "/dashboard",
+      module: 'purchasing' as const,
+      description: "Manage purchase orders",
+      color: "#f59e0b"
+    },
+    {
       title: "Organization",
       icon: <FaBuilding />,
       path: "/dashboard",

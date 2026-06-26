@@ -200,13 +200,13 @@ export default function SalesOrder() {
     <div className={`sales-order-page ${theme}-theme`}>
       <div className="page-header">
         <h1 className="page-title">Sales Order</h1>
-        {/* <button className="add-btn" onClick={() => setShowForm(true)}>
+        <button className="add-btn" onClick={() => setShowForm(true)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
           Add Sales Order
-        </button> */}
+        </button>
       </div>
 
       {/* Search and Filter Bar */}
@@ -402,7 +402,7 @@ export default function SalesOrder() {
                 </div>
               </div>
 
-              {/* Currency and Price List Section */}
+              {/* Currency and Price List Section
               <div className="form-section">
                 <div className="section-header">
                   <h3 className="section-title">Currency and Price List ✓</h3>
@@ -480,7 +480,7 @@ export default function SalesOrder() {
                     <span className="field-hint">Rate at which Price list currency is converted to company's base currency</span>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Items Section */}
               <div className="form-section">

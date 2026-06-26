@@ -405,6 +405,127 @@
   .modal-footer { flex-direction: column; }
   .modal-footer button { width: 100%; justify-content: center; }
 }
+/* ── Print All Button ──────────────────────────────────────── */
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Letterhead Styles ────────────────────────────────────── */
+.letterhead-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.letterhead-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary, #6b7280);
+  background: var(--layout-bg, #f3f4f6);
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  max-width: 150px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.letterhead-container {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.letterhead-image {
+  width: 100%;
+  max-height: 150px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.letterhead-divider {
+  border: none;
+  border-top: 2px solid var(--border-color, #e5e7eb);
+  margin: 12px 0;
+}
+
+/* ── Dark Theme ──────────────────────────────────────────── */
+.dark-theme .letterhead-indicator {
+  background: var(--layout-bg, #0f172a);
+  border-color: var(--border-color, #334155);
+  color: var(--text-secondary, #94a3b8);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .letterhead-actions {
+    flex-wrap: wrap;
+  }
+  
+  .letterhead-indicator {
+    max-width: 100px;
+    font-size: 10px;
+  }
+  
+  .letterhead-image {
+    max-height: 80px;
+  }
+}
+/* ── Dark Theme ──────────────────────────────────────────── */
+.dark-theme .letterhead-indicator {
+  background: var(--layout-bg, #0f172a);
+  border-color: var(--border-color, #334155);
+  color: var(--text-secondary, #94a3b8);
+}
+
+.dark-theme .pdf-body {
+  background: #1a1a2e;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .letterhead-actions {
+    flex-wrap: wrap;
+  }
+  
+  .letterhead-indicator {
+    max-width: 100px;
+    font-size: 10px;
+  }
+  
+  .pdf-body iframe {
+    height: 60vh;
+  }
+}
+
+/* ── Dark Theme ──────────────────────────────────────────── */
+.dark-theme .letterhead-indicator {
+  background: var(--layout-bg, #0f172a);
+  border-color: var(--border-color, #334155);
+  color: var(--text-secondary, #94a3b8);
+}
+
+.dark-theme .letterhead-divider {
+  border-top-color: var(--border-color, #334155);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .letterhead-actions {
+    flex-wrap: wrap;
+  }
+  
+  .letterhead-image {
+    max-height: 80px;
+  }
+  
+  .pdf-content .letterhead-image {
+    max-height: 80px;
+  }
+}
 
 /* ─── Dark Theme ─────────────────────────────────────────── */
 .dark-theme .quotation-page { background: var(--layout-bg, #0f172a); }

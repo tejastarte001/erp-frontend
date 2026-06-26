@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FaSearch, FaPlus, FaEye, FaEdit, FaTrash, FaFilePdf, 
   FaFilter, FaCheckCircle, FaClock, FaTimesCircle,
-  FaPrint, FaFileAlt, FaExternalLinkAlt, 
-  FaChartLine, FaTimes,  FaSave, FaSpinner,
-   FaEnvelope,
+  FaPrint, FaFileAlt, FaExternalLinkAlt, FaDollarSign,
+  FaChartLine, FaTimes, FaArrowLeft, FaSave, FaSpinner,
+  FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt,
+  FaUpload, FaImage
 } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import toast from 'react-hot-toast';
@@ -40,6 +41,7 @@ interface Quotation {
 
 export default function Quotation() {
   const navigate = useNavigate();
+  const printRef = useRef<HTMLDivElement>(null);
   
   let theme = 'light';
   try {
@@ -54,6 +56,14 @@ export default function Quotation() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState('All');
   
+  // Letterhead state
+  const [letterHead, setLetterHead] = useState<string | null>(() => {
+    return localStorage.getItem('quotationLetterhead') || null;
+  });
+  const [letterHeadName, setLetterHeadName] = useState<string>(() => {
+    return localStorage.getItem('quotationLetterheadName') || 'Letterhead';
+  });
+  
   // Modal states
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -61,6 +71,7 @@ export default function Quotation() {
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<Quotation | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const [quotations, setQuotations] = useState<Quotation[]>([
     {
@@ -123,6 +134,45 @@ export default function Quotation() {
     }
   ]);
 
+  // Letterhead functions
+  const uploadLetterHead = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please upload a valid image file (JPEG, PNG, GIF, WEBP)');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size should be less than 5MB');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setLetterHead(base64);
+      setLetterHeadName(file.name);
+      localStorage.setItem('quotationLetterhead', base64);
+      localStorage.setItem('quotationLetterheadName', file.name);
+      toast.success('Letterhead uploaded successfully!');
+    };
+    reader.onerror = () => {
+      toast.error('Failed to upload letterhead');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeLetterHead = () => {
+    setLetterHead(null);
+    setLetterHeadName('Letterhead');
+    localStorage.removeItem('quotationLetterhead');
+    localStorage.removeItem('quotationLetterheadName');
+    toast.success('Letterhead removed');
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Draft': return 'status-draft';
@@ -180,7 +230,6 @@ export default function Quotation() {
     if (!selectedQuote) return;
     setLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
       setQuotations(prev => 
         prev.map(q => q.id === selectedQuote.id ? selectedQuote : q)
@@ -196,7 +245,6 @@ export default function Quotation() {
     if (!selectedQuote) return;
     setLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
       setQuotations(prev => prev.filter(q => q.id !== selectedQuote.id));
       setShowDeleteModal(false);
@@ -205,7 +253,7 @@ export default function Quotation() {
     }, 1000);
   };
 
-  // PDF View
+  // PDF View for single quotation
   const handlePdfView = (quote: Quotation) => {
     setSelectedQuote(quote);
     setShowPdfModal(true);
@@ -243,6 +291,255 @@ export default function Quotation() {
     { value: 'Expired', label: 'Expired' }
   ];
 
+  // Get company details from localStorage
+  const getCompanyDetails = () => {
+    return {
+      name: localStorage.getItem('companyName') || 'Manufacturing ERP',
+      address: localStorage.getItem('companyAddress') || '123, Business Park, Mumbai, Maharashtra - 400001',
+      phone: localStorage.getItem('companyPhone') || '+91-9876543210',
+      email: localStorage.getItem('companyEmail') || 'info@manufacturingerp.com'
+    };
+  };
+
+  // Generate HTML for printing the list on letterhead
+  const generatePrintHtml = (data: Quotation[]) => {
+    const company = getCompanyDetails();
+    const total = data.reduce((sum, q) => sum + q.totalAmount, 0);
+    const acceptedTotal = data.filter(q => q.status === 'Accepted').reduce((sum, q) => sum + q.totalAmount, 0);
+    const conversion = total > 0 ? Math.round((acceptedTotal / total) * 100) : 0;
+
+    const tableRows = data.map(q => `
+      <tr>
+        <td><strong>${q.quotationNumber}</strong></td>
+        <td>${q.customerName}<br/><span class="sub-text">${q.customer}</span></td>
+        <td>${new Date(q.date).toLocaleDateString()}</td>
+        <td><span class="status-badge ${q.status.toLowerCase()}">${q.status}</span></td>
+        <td class="amount">${q.currency} ${q.totalAmount.toLocaleString()}</td>
+      </tr>
+    `).join('');
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8" />
+          <title>Quotations Report</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: Arial, sans-serif; 
+              background: #f0f0f0;
+              padding: 20px;
+            }
+            .letterhead-wrapper {
+              position: relative;
+              max-width: 1100px;
+              margin: 0 auto;
+              background: white;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+              page-break-after: avoid;
+            }
+            .letterhead-bg {
+              width: 100%;
+              display: block;
+              opacity: 1;
+            }
+            .content-overlay {
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              padding: 100px 50px 50px 50px;
+              overflow: hidden;
+            }
+            .report-header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .report-title {
+              font-size: 28px;
+              font-weight: 700;
+              color: #1f2937;
+              letter-spacing: 3px;
+              border-bottom: 3px solid #1f2937;
+              padding-bottom: 10px;
+              display: inline-block;
+            }
+            .report-meta {
+              display: flex;
+              justify-content: space-between;
+              margin: 15px 0 25px 0;
+              font-size: 13px;
+              color: #6b7280;
+              flex-wrap: wrap;
+              gap: 10px;
+            }
+            .report-meta .stats {
+              display: flex;
+              gap: 20px;
+            }
+            .report-meta .stats span {
+              background: #f3f4f6;
+              padding: 4px 12px;
+              border-radius: 12px;
+            }
+            .report-meta .stats span strong {
+              color: #1f2937;
+            }
+            .report-table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 13px;
+            }
+            .report-table thead {
+              background: #f8f9fa;
+            }
+            .report-table th {
+              padding: 10px 14px;
+              text-align: left;
+              font-weight: 600;
+              color: #374151;
+              border-bottom: 2px solid #e5e7eb;
+              text-transform: uppercase;
+              font-size: 11px;
+              letter-spacing: 0.5px;
+            }
+            .report-table td {
+              padding: 10px 14px;
+              border-bottom: 1px solid #f3f4f6;
+            }
+            .report-table tr:hover {
+              background: #f9fafb;
+            }
+            .report-table .amount {
+              font-weight: 600;
+              text-align: right;
+            }
+            .report-table .sub-text {
+              font-size: 11px;
+              color: #9ca3af;
+            }
+            .report-table .status-badge {
+              display: inline-block;
+              padding: 3px 12px;
+              border-radius: 12px;
+              font-size: 11px;
+              font-weight: 500;
+            }
+            .report-table .status-badge.draft { background: #f3f4f6; color: #6b7280; }
+            .report-table .status-badge.sent { background: #dbeafe; color: #1e40af; }
+            .report-table .status-badge.accepted { background: #d1fae5; color: #065f46; }
+            .report-table .status-badge.rejected { background: #fee2e2; color: #991b1b; }
+            .report-table .status-badge.expired { background: #fef3c7; color: #92400e; }
+            .report-table .status-badge.converted { background: #e0e7ff; color: #3730a3; }
+            .report-footer {
+              margin-top: 30px;
+              padding-top: 16px;
+              border-top: 1px solid #e5e7eb;
+              display: flex;
+              justify-content: space-between;
+              font-size: 12px;
+              color: #6b7280;
+            }
+            .report-footer .total-amount {
+              font-weight: 700;
+              font-size: 16px;
+              color: #1f2937;
+            }
+            .report-footer .total-amount span {
+              color: #6366f1;
+            }
+            @media print {
+              body { background: white; padding: 0; }
+              .letterhead-wrapper { box-shadow: none; max-width: 100%; }
+              .content-overlay { padding: 80px 40px 40px 40px; }
+              .report-table tr:hover { background: transparent; }
+            }
+            @media (max-width: 768px) {
+              .content-overlay { padding: 40px 20px 20px 20px; }
+              .report-meta { flex-direction: column; }
+              .report-table { font-size: 12px; }
+              .report-table th, .report-table td { padding: 6px 10px; }
+              .report-title { font-size: 20px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="letterhead-wrapper">
+            ${letterHead ? `<img src="${letterHead}" alt="Letterhead" class="letterhead-bg" />` : ''}
+            <div class="content-overlay">
+              <div class="report-header">
+                <div class="report-title">QUOTATIONS REPORT</div>
+              </div>
+              
+              <div class="report-meta">
+                <div>
+                  <strong>Generated:</strong> ${new Date().toLocaleString()}
+                </div>
+                <div class="stats">
+                  <span>📋 Total: <strong>${data.length}</strong></span>
+                  <span>💰 Total Amount: <strong>${data[0]?.currency || 'INR'} ${total.toLocaleString()}</strong></span>
+                  <span>📊 Conversion: <strong>${conversion}%</strong></span>
+                </div>
+              </div>
+
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>Quote #</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows}
+                </tbody>
+              </table>
+
+              <div class="report-footer">
+                <div>
+                  <strong>Company:</strong> ${company.name}<br/>
+                  ${company.address} | ${company.phone} | ${company.email}
+                </div>
+                <div class="total-amount">
+                  Grand Total: <span>${data[0]?.currency || 'INR'} ${total.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  // Handle Print All
+  const handlePrintAll = () => {
+    setIsPrinting(true);
+    
+    const dataToPrint = filteredQuotations.length > 0 ? filteredQuotations : quotations;
+    const printHtml = generatePrintHtml(dataToPrint);
+    
+    // Open print window
+    const printWindow = window.open('', '_blank', 'width=1100,height=800');
+    if (printWindow) {
+      printWindow.document.write(printHtml);
+      printWindow.document.close();
+      printWindow.focus();
+      
+      // Wait for images to load, then print
+      setTimeout(() => {
+        printWindow.print();
+        setIsPrinting(false);
+      }, 1000);
+    } else {
+      toast.error('Please allow popups for printing');
+      setIsPrinting(false);
+    }
+  };
+
   return (
     <div className={`quotation-page ${theme}-theme`}>
       {/* Header */}
@@ -252,9 +549,45 @@ export default function Quotation() {
           <span className="badge">{quotations.length}</span>
         </div>
         <div className="header-actions">
-          <button className="btn-icon" onClick={() => window.print()} title="Print">
-            <FaPrint size={14} />
+          {/* Letterhead Upload */}
+          <div className="letterhead-actions">
+            {letterHead ? (
+              <>
+                <button 
+                  className="btn-icon" 
+                  onClick={removeLetterHead}
+                  title="Remove Letterhead"
+                  style={{ color: '#ef4444' }}
+                >
+                  <FaTimes size={14} />
+                </button>
+                <span className="letterhead-indicator" title={letterHeadName}>
+                  <FaImage size={12} /> {letterHeadName.length > 20 ? letterHeadName.substring(0, 20) + '...' : letterHeadName}
+                </span>
+              </>
+            ) : (
+              <label className="btn-secondary" style={{ cursor: 'pointer' }}>
+                <FaUpload size={12} /> Upload Letterhead
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={uploadLetterHead} 
+                  style={{ display: 'none' }} 
+                />
+              </label>
+            )}
+          </div>
+          
+          {/* Print All Button */}
+          <button 
+            className="btn-primary" 
+            onClick={handlePrintAll}
+            disabled={isPrinting}
+            title="Print all quotations on letterhead"
+          >
+            <FaPrint size={14} /> {isPrinting ? 'Printing...' : 'Print All'}
           </button>
+          
           <button className="btn-primary" onClick={() => navigate('/quotation/new')}>
             <FaPlus size={12} /> New Quote
           </button>
@@ -762,17 +1095,28 @@ export default function Quotation() {
               </button>
             </div>
             <div className="modal-body pdf-body">
-              {/* PDF Content */}
+              {/* PDF Content - Single Quotation with Letterhead */}
               <div className="pdf-content">
+                {letterHead && (
+                  <div className="letterhead-container">
+                    <img 
+                      src={letterHead} 
+                      alt="Letterhead" 
+                      className="letterhead-image" 
+                    />
+                    <hr className="letterhead-divider" />
+                  </div>
+                )}
+
                 <div className="pdf-header">
                   <div className="pdf-title">QUOTATION</div>
                   <div className="pdf-number">{selectedQuote.quotationNumber}</div>
                 </div>
                 
                 <div className="pdf-company">
-                  <h2>Manufacturing ERP</h2>
-                  <p>123, Business Park, Mumbai, Maharashtra - 400001</p>
-                  <p>Phone: +91-9876543210 | Email: info@manufacturingerp.com</p>
+                  <h2>{getCompanyDetails().name}</h2>
+                  <p>{getCompanyDetails().address}</p>
+                  <p>Phone: {getCompanyDetails().phone} | Email: {getCompanyDetails().email}</p>
                 </div>
 
                 <div className="pdf-customer">
