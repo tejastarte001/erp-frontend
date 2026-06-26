@@ -95,17 +95,17 @@ function App() {
             <Route path="/production" element={<ProductionPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} /> */}
-            <Route path="/job-card" element={<JobCardManagement />} />
-            <Route path="/job-cards/new" element={<JobCardForm />} />
-            {/* Item Group Routes */}
-            <Route path="/item-group" element={<ItemGroupList />} />
-            <Route path="/item-group/:id" element={<ItemGroupForm />} />
-            <Route path="/stock-entry" element={<Stockentry />} />
-            <Route path="/stock-entry/new" element={<StockentryForm />} />
-            {/* Item Routes */}
-            <Route path="/item-list" element={<Itemlist />} />
-            <Route path="/item/:id" element={<ItemForm />} />
-                      <Route path="/item-attribute" element={<ItemAttributeList />} />
+              <Route path="/job-card" element={<JobCardManagement />} />
+              <Route path="/job-cards/new" element={<JobCardForm />} />
+              {/* Item Group Routes */}
+              <Route path="/item-group" element={<ItemGroupList />} />
+              <Route path="/item-group/:id" element={<ItemGroupForm />} />
+              <Route path="/stock-entry" element={<Stockentry />} />
+              <Route path="/stock-entry/new" element={<StockentryForm />} />
+              {/* Item Routes */}
+              <Route path="/item-list" element={<Itemlist />} />
+              <Route path="/item/:id" element={<ItemForm />} />
+              <Route path="/item-attribute" element={<ItemAttributeList />} />
               <Route path="/item-attribute/new" element={<ItemAttributeForm />} />
               <Route path="/item-attribute/:id" element={<ItemAttributeForm />} />
 
@@ -131,7 +131,7 @@ function App() {
               <Route path="/uom" element={<UOMList />} />
               <Route path="/uom/new" element={<UOMForm />} />
               <Route path="/uom/:id" element={<UOMForm />} />
-              
+
               <Route path="/bom" element={<BOMPage />} />
               <Route path="/bom/new" element={<NewBOMPage />} />
 

@@ -1,9 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Home,
   ChevronDown,
-  RefreshCw,
-  MoreHorizontal,
   Plus,
   Filter as FilterIcon,
   X,
@@ -85,9 +82,9 @@ const BOMPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
   // view / meta dropdowns
-  const [listViewOpen, setListViewOpen] = useState(false);
-  const [savedFiltersOpen, setSavedFiltersOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [, setListViewOpen] = useState(false);
+  const [, setSavedFiltersOpen] = useState(false);
+  const [, setMoreOpen] = useState(false);
 
   // sort
   const [sortOpen, setSortOpen] = useState(false);
@@ -153,15 +150,15 @@ const BOMPage: React.FC = () => {
 
   // Stats
   const totalBOMs = BOM_DATA.length;
-  const activeBOMs = BOM_DATA.filter(b => b.isActive).length;
-  const draftBOMs = BOM_DATA.filter(b => b.status === 'Draft').length;
+  // const activeBOMs = BOM_DATA.filter(b => b.isActive).length;
+  // const draftBOMs = BOM_DATA.filter(b => b.status === 'Draft').length;
 
-  const stats = [
-    { title: 'Total BOMs', value: totalBOMs, icon: <FileStack size={20} />, color: '#6366f1' },
-    { title: 'Active', value: activeBOMs, icon: <Check size={20} />, color: '#10b981' },
-    { title: 'Draft', value: draftBOMs, icon: <FileStack size={20} />, color: '#f59e0b' },
-    { title: 'Total Cost', value: '₹ 0.00', icon: <FileStack size={20} />, color: '#3b82f6' },
-  ];
+  // const stats = [
+  //   { title: 'Total BOMs', value: totalBOMs, icon: <FileStack size={20} />, color: '#6366f1' },
+  //   { title: 'Active', value: activeBOMs, icon: <Check size={20} />, color: '#10b981' },
+  //   { title: 'Draft', value: draftBOMs, icon: <FileStack size={20} />, color: '#f59e0b' },
+  //   { title: 'Total Cost', value: '₹ 0.00', icon: <FileStack size={20} />, color: '#3b82f6' },
+  // ];
 
   // Close all dropdowns when clicking outside
   useEffect(() => {

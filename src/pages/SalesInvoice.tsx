@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaSearch, FaPlus, FaEye, FaEdit, FaTrash, FaFilePdf, FaEnvelope, FaDownload, FaFilter, FaChevronDown, FaCheckCircle, FaClock, FaTimesCircle, FaPrint } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEye, FaEdit, FaTrash, FaFilePdf, FaEnvelope,  FaFilter,  FaCheckCircle, FaClock, FaTimesCircle, FaPrint } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import './SalesInvoice.css';
 

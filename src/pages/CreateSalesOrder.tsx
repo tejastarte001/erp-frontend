@@ -296,6 +296,16 @@ export default function CreateSalesOrder() {
     }
   };
 
+  // Helper function to set refs
+  const setRef = (key: string) => (el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null) => {
+    inputRefs.current[key] = el;
+  };
+
+  const setItemRef = (key: string) => (el: HTMLInputElement | null) => {
+    itemInputRefs.current[key] = el;
+    inputRefs.current[key] = el;
+  };
+
   return (
     <div className={`create-sales-order-page ${theme}-theme`}>
       {/* Header */}
@@ -336,7 +346,7 @@ export default function CreateSalesOrder() {
                   name="series"
                   value={formData.series}
                   onChange={handleInputChange}
-                  ref={el => inputRefs.current['series'] = el}
+                  ref={setRef('series')}
                   required
                 >
                   <option value="SAL-ORD-YYYY-">SAL-ORD-YYYY-</option>
@@ -350,7 +360,7 @@ export default function CreateSalesOrder() {
                   name="orderType"
                   value={formData.orderType}
                   onChange={handleInputChange}
-                  ref={el => inputRefs.current['orderType'] = el}
+                  ref={setRef('orderType')}
                   required
                 >
                   <option value="Sales">Sales</option>
@@ -365,7 +375,7 @@ export default function CreateSalesOrder() {
                     name="isSubcontracted"
                     checked={formData.isSubcontracted}
                     onChange={handleInputChange}
-                    ref={el => inputRefs.current['isSubcontracted'] = el as any}
+                    ref={setRef('isSubcontracted')}
                   />
                   Is Subcontracted
                 </label>
@@ -388,7 +398,7 @@ export default function CreateSalesOrder() {
                   onChange={handleInputChange}
                   placeholder="Enter customer name"
                   className={errors.customer ? 'error' : ''}
-                  ref={el => inputRefs.current['customer'] = el}
+                  ref={setRef('customer')}
                   onFocus={() => setFocusedField('customer')}
                   onBlur={() => setFocusedField(null)}
                   required
@@ -403,7 +413,7 @@ export default function CreateSalesOrder() {
                   value={formData.date}
                   onChange={handleInputChange}
                   className={errors.date ? 'error' : ''}
-                  ref={el => inputRefs.current['date'] = el}
+                  ref={setRef('date')}
                   required
                 />
                 {errors.date && <span className="error-text">{errors.date}</span>}
@@ -415,7 +425,7 @@ export default function CreateSalesOrder() {
                   name="deliveryDate"
                   value={formData.deliveryDate}
                   onChange={handleInputChange}
-                  ref={el => inputRefs.current['deliveryDate'] = el}
+                  ref={setRef('deliveryDate')}
                 />
               </div>
             </div>
@@ -435,7 +445,7 @@ export default function CreateSalesOrder() {
                   value={formData.currency}
                   onChange={handleInputChange}
                   className={errors.currency ? 'error' : ''}
-                  ref={el => inputRefs.current['currency'] = el}
+                  ref={setRef('currency')}
                   required
                 >
                   <option value="INR">INR</option>
@@ -454,7 +464,7 @@ export default function CreateSalesOrder() {
                   value={formData.priceList}
                   onChange={handleInputChange}
                   className={errors.priceList ? 'error' : ''}
-                  ref={el => inputRefs.current['priceList'] = el}
+                  ref={setRef('priceList')}
                   required
                 >
                   <option value="Standard Selling">Standard Selling</option>
@@ -475,7 +485,7 @@ export default function CreateSalesOrder() {
                   step="0.000000001"
                   min="0"
                   className={errors.exchangeRate ? 'error' : ''}
-                  ref={el => inputRefs.current['exchangeRate'] = el}
+                  ref={setRef('exchangeRate')}
                   required
                 />
                 <span className="field-hint">
@@ -489,7 +499,7 @@ export default function CreateSalesOrder() {
                   name="priceListCurrency"
                   value={formData.priceListCurrency}
                   onChange={handleInputChange}
-                  ref={el => inputRefs.current['priceListCurrency'] = el}
+                  ref={setRef('priceListCurrency')}
                   required
                 >
                   <option value="INR">INR</option>
@@ -508,7 +518,7 @@ export default function CreateSalesOrder() {
                   onChange={handleInputChange}
                   step="0.000000001"
                   min="0"
-                  ref={el => inputRefs.current['priceListExchangeRate'] = el}
+                  ref={setRef('priceListExchangeRate')}
                 />
                 <span className="field-hint">
                   <FaInfoCircle size={10} /> Rate at which Price list currency is converted to company's base currency
@@ -561,11 +571,7 @@ export default function CreateSalesOrder() {
                           onChange={(e) => handleItemChange(index, 'itemCode', e.target.value)}
                           placeholder="Code"
                           className={errors[`item_${index}_code`] ? 'error' : ''}
-                          ref={el => {
-                            const key = `item_${index}_code`;
-                            itemInputRefs.current[key] = el;
-                            inputRefs.current[key] = el;
-                          }}
+                          ref={setItemRef(`item_${index}_code`)}
                           onFocus={() => setFocusedField(`item_${index}`)}
                           onBlur={() => setFocusedField(null)}
                           onKeyDown={(e) => handleItemKeyDown(e, index, 'itemCode')}
@@ -578,11 +584,7 @@ export default function CreateSalesOrder() {
                           value={item.itemName}
                           onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
                           placeholder="Item name"
-                          ref={el => {
-                            const key = `item_${index}_itemName`;
-                            itemInputRefs.current[key] = el;
-                            inputRefs.current[key] = el;
-                          }}
+                          ref={setItemRef(`item_${index}_itemName`)}
                           onKeyDown={(e) => handleItemKeyDown(e, index, 'itemName')}
                         />
                       </td>
@@ -593,11 +595,7 @@ export default function CreateSalesOrder() {
                           onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
                           min="1"
                           className={errors[`item_${index}_quantity`] ? 'error' : ''}
-                          ref={el => {
-                            const key = `item_${index}_quantity`;
-                            itemInputRefs.current[key] = el;
-                            inputRefs.current[key] = el;
-                          }}
+                          ref={setItemRef(`item_${index}_quantity`)}
                           onKeyDown={(e) => handleItemKeyDown(e, index, 'quantity')}
                         />
                         {errors[`item_${index}_quantity`] && <span className="error-text">{errors[`item_${index}_quantity`]}</span>}
@@ -610,11 +608,7 @@ export default function CreateSalesOrder() {
                           min="0"
                           step="0.01"
                           className={errors[`item_${index}_rate`] ? 'error' : ''}
-                          ref={el => {
-                            const key = `item_${index}_rate`;
-                            itemInputRefs.current[key] = el;
-                            inputRefs.current[key] = el;
-                          }}
+                          ref={setItemRef(`item_${index}_rate`)}
                           onKeyDown={(e) => handleItemKeyDown(e, index, 'rate')}
                         />
                         {errors[`item_${index}_rate`] && <span className="error-text">{errors[`item_${index}_rate`]}</span>}
@@ -665,7 +659,7 @@ export default function CreateSalesOrder() {
                 onChange={handleInputChange}
                 placeholder="Add any additional notes..."
                 rows={3}
-                ref={el => inputRefs.current['notes'] = el}
+                ref={setRef('notes')}
               />
             </div>
           </div>

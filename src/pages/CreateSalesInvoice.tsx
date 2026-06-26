@@ -352,7 +352,7 @@ export default function CreateSalesInvoice() {
                   value={formData.salesOrder}
                   onChange={handleInputChange}
                   placeholder="SO-2026-001"
-                  ref={el => inputRefs.current['salesOrder'] = el}
+                  ref={el => { inputRefs.current['salesOrder'] = el; }}
                 />
               </div>
               <div className="form-group">
@@ -364,7 +364,7 @@ export default function CreateSalesInvoice() {
                   onChange={handleInputChange}
                   placeholder="CUST-001"
                   className={errors.customer ? 'error' : ''}
-                  ref={el => inputRefs.current['customer'] = el}
+                  ref={el => { inputRefs.current['customer'] = el; }}
                   onFocus={() => setFocusedField('customer')}
                   onBlur={() => setFocusedField(null)}
                 />
@@ -379,7 +379,7 @@ export default function CreateSalesInvoice() {
                   onChange={handleInputChange}
                   placeholder="ABC Corporation"
                   className={errors.customerName ? 'error' : ''}
-                  ref={el => inputRefs.current['customerName'] = el}
+                  ref={el => { inputRefs.current['customerName'] = el; }}
                 />
                 {errors.customerName && <span className="error-text">{errors.customerName}</span>}
               </div>
@@ -391,7 +391,7 @@ export default function CreateSalesInvoice() {
                   value={formData.customerEmail}
                   onChange={handleInputChange}
                   placeholder="customer@email.com"
-                  ref={el => inputRefs.current['customerEmail'] = el}
+                  ref={el => { inputRefs.current['customerEmail'] = el; }}
                 />
               </div>
               <div className="form-group">
@@ -402,7 +402,7 @@ export default function CreateSalesInvoice() {
                   value={formData.customerPhone}
                   onChange={handleInputChange}
                   placeholder="+91-XXXXXXXXXX"
-                  ref={el => inputRefs.current['customerPhone'] = el}
+                  ref={el => { inputRefs.current['customerPhone'] = el; }}
                 />
               </div>
               <div className="form-group full-width">
@@ -413,7 +413,7 @@ export default function CreateSalesInvoice() {
                   value={formData.customerAddress}
                   onChange={handleInputChange}
                   placeholder="123, Main Street, City, State, PIN"
-                  ref={el => inputRefs.current['customerAddress'] = el}
+                  ref={el => { inputRefs.current['customerAddress'] = el; }}
                 />
               </div>
               <div className="form-group">
@@ -424,7 +424,7 @@ export default function CreateSalesInvoice() {
                   value={formData.date}
                   onChange={handleInputChange}
                   className={errors.date ? 'error' : ''}
-                  ref={el => inputRefs.current['date'] = el}
+                  ref={el => { inputRefs.current['date'] = el; }}
                 />
                 {errors.date && <span className="error-text">{errors.date}</span>}
               </div>
@@ -436,7 +436,7 @@ export default function CreateSalesInvoice() {
                   value={formData.dueDate}
                   onChange={handleInputChange}
                   className={errors.dueDate ? 'error' : ''}
-                  ref={el => inputRefs.current['dueDate'] = el}
+                  ref={el => { inputRefs.current['dueDate'] = el; }}
                 />
                 {errors.dueDate && <span className="error-text">{errors.dueDate}</span>}
               </div>
@@ -455,7 +455,7 @@ export default function CreateSalesInvoice() {
                   name="currency"
                   value={formData.currency}
                   onChange={handleInputChange}
-                  ref={el => inputRefs.current['currency'] = el}
+                  ref={el => { inputRefs.current['currency'] = el; }}
                 >
                   <option value="INR">INR</option>
                   <option value="USD">USD</option>
@@ -472,7 +472,7 @@ export default function CreateSalesInvoice() {
                   onChange={handleInputChange}
                   step="0.0001"
                   min="0"
-                  ref={el => inputRefs.current['exchangeRate'] = el}
+                  ref={el => { inputRefs.current['exchangeRate'] = el; }}
                 />
               </div>
             </div>
@@ -684,7 +684,7 @@ export default function CreateSalesInvoice() {
                   name="paymentTerms"
                   value={formData.paymentTerms}
                   onChange={handleInputChange}
-                  ref={el => inputRefs.current['paymentTerms'] = el}
+                  ref={el => { inputRefs.current['paymentTerms'] = el; }}
                 >
                   <option value="Net 7">Net 7</option>
                   <option value="Net 15">Net 15</option>
@@ -703,7 +703,7 @@ export default function CreateSalesInvoice() {
                   onChange={handleInputChange}
                   min="0"
                   step="0.01"
-                  ref={el => inputRefs.current['paidAmount'] = el}
+                  ref={el => { inputRefs.current['paidAmount'] = el; }}
                 />
               </div>
               <div className="form-group full-width">
@@ -714,7 +714,7 @@ export default function CreateSalesInvoice() {
                   onChange={handleInputChange}
                   placeholder="Additional notes..."
                   rows={2}
-                  ref={el => inputRefs.current['notes'] = el}
+                  ref={el => { inputRefs.current['notes'] = el; }}
                 />
               </div>
               <div className="form-group full-width">
@@ -725,7 +725,7 @@ export default function CreateSalesInvoice() {
                   onChange={handleInputChange}
                   placeholder="Terms and conditions..."
                   rows={2}
-                  ref={el => inputRefs.current['termsConditions'] = el}
+                  ref={el => { inputRefs.current['termsConditions'] = el; }}
                 />
               </div>
             </div>
