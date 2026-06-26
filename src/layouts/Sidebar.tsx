@@ -137,7 +137,7 @@ export default function Sidebar({
         { title: 'Work Order', icon: <WorkOrderIcon />, path: '/work-order' },
         { title: 'Job Card', icon: <JobCardIcon />, path: '/job-card' },
         { title: 'Stock Entry', icon: <StockIcon />, path: '/stock-entry' },
-        { title: 'Material Planning', icon: <TruckIcon />, path: '/material-planning' }
+        // { title: 'Material Planning', icon: <TruckIcon />, path: '/material-planning' }
       ]
     },
     {
@@ -158,10 +158,10 @@ export default function Sidebar({
         { title: 'Brand', icon: <BrandIcon />, path: '/brand' },
         { title: 'Warehouse', icon: <WarehouseIcon />, path: '/warehouse' },
         { title: 'Unit of Measure (UOM)', icon: <RulerIcon />, path: '/uom' },
-        { title: 'UOM Conversion Factor', icon: <RepeatIcon />, path: '/uom-conversion' },
-        { title: 'Serial No', icon: <HashIcon />, path: '/serial-no' },
-        { title: 'Batch No', icon: <LayersIcon />, path: '/batch-no' },
-        { title: 'Serial and Batch Bundle', icon: <PackageIcon />, path: '/serial-batch-bundle' }
+        // { title: 'UOM Conversion Factor', icon: <RepeatIcon />, path: '/uom-conversion' },
+        // { title: 'Serial No', icon: <HashIcon />, path: '/serial-no' },
+        // { title: 'Batch No', icon: <LayersIcon />, path: '/batch-no' },
+        // { title: 'Serial and Batch Bundle', icon: <PackageIcon />, path: '/serial-batch-bundle' }
       ]
     },
     {

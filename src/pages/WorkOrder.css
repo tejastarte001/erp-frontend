@@ -1,0 +1,603 @@
+/* ==========================================================
+   WORK ORDER
+   BOM / STOCK ENTRY MATCHING UI
+   Theme Driven
+========================================================== */
+
+.wo-page {
+  --wo-primary: var(--primary-color, #6366f1);
+  --wo-primary-hover: var(--primary-hover, #5458ee);
+
+  --wo-text: var(--text-primary, #1f2937);
+  --wo-muted: var(--text-secondary, #6b7280);
+  --wo-border: var(--border-color, #e6eaf2);
+  --wo-bg: var(--page-bg, #f7f8fc);
+  --wo-card-bg: var(--card-bg, #ffffff);
+  --wo-input-bg: var(--input-bg, #ffffff);
+
+  --wo-fs-base: 14px;
+  --wo-fs-meta: 13px;
+
+  min-height: 100%;
+  background: var(--wo-bg);
+  padding: 24px;
+  color: var(--wo-text);
+  font-family: Inter, "Segoe UI", sans-serif;
+}
+
+/* ==========================================================
+   BREADCRUMB
+========================================================== */
+
+.wo-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 22px;
+}
+
+.wo-bc-home {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--wo-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 13px;
+}
+
+.wo-bc-sep {
+  color: var(--wo-border);
+}
+
+.wo-bc-muted {
+  color: var(--wo-muted);
+  font-size: 15px;
+}
+
+.wo-bc-active {
+  color: var(--wo-text);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* ==========================================================
+   TOOLBAR
+========================================================== */
+
+.wo-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.wo-list-toolbar-left,
+.wo-list-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wo-list-view-toggle,
+.wo-saved-filters {
+  height: 44px;
+  border-radius: 12px;
+  padding: 0 18px;
+  border: 1px solid var(--wo-border);
+  background: var(--wo-card-bg);
+  color: var(--wo-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.wo-saved-filters {
+  background: rgba(99,102,241,.08);
+  border-color: rgba(99,102,241,.14);
+  color: var(--wo-primary);
+}
+
+.wo-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--wo-border);
+  background: var(--wo-card-bg);
+  color: var(--wo-muted);
+  cursor: pointer;
+}
+
+.wo-icon-btn:hover {
+  background: var(--wo-bg);
+}
+
+.wo-btn-add {
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: var(--wo-primary);
+  color: white;
+  padding: 0 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wo-btn-add:hover {
+  background: var(--wo-primary-hover);
+}
+
+/* ==========================================================
+   FILTERS
+========================================================== */
+
+.wo-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.wo-filter-inputs,
+.wo-filter-right {
+  display: flex;
+  gap: 10px;
+}
+
+.wo-filter-chip,
+.wo-filter-btn,
+.wo-sort-btn {
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--wo-border);
+  background: var(--wo-card-bg);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--wo-text);
+  cursor: pointer;
+}
+
+.wo-filter-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--wo-primary);
+}
+
+.wo-count {
+  color: var(--wo-muted);
+  font-size: 13px;
+}
+
+/* ==========================================================
+   TABLE WRAPPER
+========================================================== */
+
+.wo-list-wrap {
+  background: var(--wo-card-bg);
+  border: 1px solid var(--wo-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* ==========================================================
+   TABLE
+========================================================== */
+
+.wo-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.wo-table thead th {
+  height: 58px;
+  background: var(--wo-bg);
+  color: var(--wo-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--wo-border);
+  padding: 0 16px;
+  text-align: left;
+}
+
+.wo-tr {
+  transition: .2s;
+}
+
+.wo-tr:hover {
+  background: var(--wo-bg);
+}
+
+.wo-tr td {
+  height: 72px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--wo-border);
+  font-size: 14px;
+  color: var(--wo-text);
+}
+
+.wo-td-link {
+  color: var(--wo-primary);
+  font-weight: 600;
+}
+
+.wo-td-id {
+  color: var(--wo-muted);
+  font-family: monospace;
+}
+
+.wo-td-right,
+.wo-th-right {
+  text-align: right;
+}
+
+.wo-td-actions,
+.wo-th-actions {
+  text-align: right;
+}
+
+.wo-action-icon {
+  color: var(--wo-muted);
+  margin-left: 10px;
+}
+
+/* ==========================================================
+   STATUS
+========================================================== */
+
+.wo-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.s-draft {
+  background: #fff4f4;
+  border: 1px solid #f4c7cb;
+  color: #b84f58;
+}
+
+.s-notstarted {
+  background: #fff9e7;
+  color: #a97706;
+}
+
+.s-inprocess {
+  background: #fff4d8;
+  color: #a46c00;
+}
+
+.s-completed {
+  background: #eaf8ef;
+  color: #15803d;
+}
+
+.s-stopped {
+  background: #fde8e8;
+  color: #dc2626;
+}
+
+/* ==========================================================
+   PRIORITY
+========================================================== */
+
+.wo-priority-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  border-radius: 999px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.wo-priority-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.p-low {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.p-medium {
+  background: #ebf5ff;
+  color: #2563eb;
+}
+
+.p-high {
+  background: #fff4d8;
+  color: #b7791f;
+}
+
+.p-urgent {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ==========================================================
+   PAGINATION
+========================================================== */
+
+.wo-list-footer {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wo-record-count {
+  font-size: 13px;
+  color: var(--wo-muted);
+}
+
+.wo-page-size-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.wo-page-size-btn {
+  min-width: 46px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--wo-border);
+  background: var(--wo-card-bg);
+  color: var(--wo-muted);
+  cursor: pointer;
+}
+
+.wo-page-size-active {
+  background: var(--wo-primary);
+  color: white;
+  border-color: var(--wo-primary);
+}
+
+/* ==========================================================
+   FORM TOPBAR
+========================================================== */
+
+.wo-topbar {
+  background: var(--wo-card-bg);
+  border-bottom: 1px solid var(--wo-border);
+  padding-bottom: 18px;
+  margin-bottom: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wo-topbar-left,
+.wo-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wo-topbar-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--wo-text);
+}
+
+.wo-back-btn {
+  border: none;
+  background: transparent;
+  color: var(--wo-muted);
+  cursor: pointer;
+}
+
+/* ==========================================================
+   BUTTONS
+========================================================== */
+
+.wo-btn-blue,
+.wo-btn-green,
+.wo-btn-ghost {
+  height: 44px;
+  border-radius: 12px;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.wo-btn-blue {
+  border: none;
+  background: var(--wo-primary);
+  color: white;
+}
+
+.wo-btn-green {
+  border: none;
+  background: #16a34a;
+  color: white;
+}
+
+.wo-btn-ghost {
+  border: 1px solid var(--wo-border);
+  background: var(--wo-card-bg);
+  color: var(--wo-text);
+}
+
+/* ==========================================================
+   CARD
+========================================================== */
+
+.wo-content {
+  width: 100%;
+  max-width: 100%;
+}
+
+.wo-card {
+  background: var(--wo-card-bg);
+  border: 1px solid var(--wo-border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.wo-card-header {
+  height: 60px;
+  background: var(--wo-bg);
+  border-bottom: 1px solid var(--wo-border);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 22px;
+}
+
+.wo-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--wo-text);
+}
+
+.wo-card-id {
+  color: var(--wo-muted);
+  font-family: monospace;
+}
+
+.wo-card-body {
+  padding: 28px;
+}
+
+/* ==========================================================
+   FORM
+========================================================== */
+
+.wo-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.wo-row-1 {
+  grid-template-columns: 1fr;
+}
+
+.wo-field label {
+  display: block;
+  margin-bottom: 10px;
+
+  color: var(--wo-muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.wo-field input,
+.wo-field select,
+.wo-field textarea {
+  width: 100%;
+  border: 1px solid var(--wo-border);
+  border-radius: 12px;
+  background: var(--wo-input-bg);
+
+  font-size: 14px;
+  color: var(--wo-text);
+
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.wo-field input,
+.wo-field select {
+  height: 48px;
+}
+
+.wo-field textarea {
+  min-height: 120px;
+  padding-top: 14px;
+  resize: vertical;
+}
+
+.wo-field input:focus,
+.wo-field select:focus,
+.wo-field textarea:focus {
+  outline: none;
+  border-color: var(--wo-primary);
+  box-shadow: 0 0 0 3px rgba(99,102,241,.10);
+}
+
+.req {
+  color: #ef4444;
+}
+
+.wo-select-wrap {
+  position: relative;
+}
+
+/* ==========================================================
+   READ VIEW
+========================================================== */
+
+.wo-view-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 24px;
+  padding: 28px;
+}
+
+.wo-read-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wo-read-label {
+  color: var(--wo-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.wo-read-value {
+  font-size: 14px;
+  color: var(--wo-text);
+}
+
+.wo-read-field-wide {
+  grid-column: 1 / -1;
+}
+
+/* ==========================================================
+   EMPTY
+========================================================== */
+
+.wo-empty {
+  padding: 90px 24px;
+  text-align: center;
+}
+
+.wo-empty-icon {
+  font-size: 42px;
+  margin-bottom: 16px;
+  opacity: .4;
+}
+
+.wo-empty-title {
+  margin-bottom: 20px;
+  font-size: 15px;
+  color: var(--wo-muted);
+}

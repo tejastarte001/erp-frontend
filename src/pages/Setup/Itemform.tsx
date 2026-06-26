@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   FaArrowLeft,
   FaSave,
@@ -23,24 +23,7 @@ import {
 import "./ItemForm.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
 import toast from "react-hot-toast";
-
-// type Tab =
-//   | "Details"
-//   | "Accounting"
-//   | "UOM"
-//   | "Tax"
-//   | "Inventory"
-//   | "Purchasing"
-//   | "Sales"
-//   | "Manufacturing"
-//   | "Quality"
-//   | "Pricing"
-//   | "Connections";
-
-// const TABS: Tab[] = [
-//   "Details","Accounting","UOM","Tax","Inventory",
-//   "Purchasing","Sales","Manufacturing","Quality","Pricing","Connections",
-// ];
+import api from '../../services/api';
 
 interface TableRow { id: string; [key: string]: string }
 
@@ -55,6 +38,25 @@ interface ValidationError {
   label: string;
   message: string;
   tabIndex: number;
+}
+
+interface ItemData {
+  id: number;
+  item_code: string;
+  item_name: string;
+  item_group: string;
+  stock_uom: string;
+  is_stock_item: number;
+  is_fixed_asset: number;
+  is_sales_item: number;
+  is_purchase_item: number;
+  disabled: number;
+  description: string;
+  brand: string | null;
+  valuation_method: string;
+  creation: string;
+  modified: string;
+  hsn_sac?: string;
 }
 
 /* ── Shared sub-components ─────────────────────────── */
@@ -240,7 +242,7 @@ function DetailsTab({ form, setForm }: { form: any; setForm: (f: any) => void })
             <Field label="Item Group" required>
               <TextInput value={form.itemGroup} onChange={(v) => s("itemGroup", v)} />
             </Field>
-            <Field label="HSN/SAC" required hint="You can search code by the description of the category.">
+            <Field label="HSN/SAC" hint="You can search code by the description of the category.">
               <TextInput value={form.hsnSac} onChange={(v) => s("hsnSac", v)} />
             </Field>
             <Field label="Default Unit of Measure" required>
@@ -798,13 +800,15 @@ function ConnectionsTab() {
 export default function ItemForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme } = useAdminTheme();
-  const isNew = id === "new";
-  const itemId = isNew ? "" : decodeURIComponent(id ?? "");
-  const isEditMode = !isNew;
-
+  
+  const isNew = id === "new" || !id;
+  const itemCode = isNew ? "" : decodeURIComponent(id ?? "");
+  
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<number>(0);
-  const [, setIsDirty] = useState(isNew);
+  const [isDirty, setIsDirty] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
@@ -823,11 +827,15 @@ export default function ItemForm() {
     { id: 10, name: 'Connections', icon: <FaLink size={14} /> },
   ];
 
+  // Get data from location state (from ItemList)
+  const itemData = location.state?.itemData as ItemData | undefined;
+  const prefillData = location.state?.prefill as any | undefined;
+
   const [form, setFormRaw] = useState({
-    itemName: isNew ? "" : itemId,
-    itemCode: isNew ? "" : "Door3",
-    itemGroup: isNew ? "" : "Products",
-    hsnSac: isNew ? "" : "010130",
+    itemName: "",
+    itemCode: "",
+    itemGroup: "",
+    hsnSac: "",
     defaultUOM: "Nos",
     disabled: false,
     maintainStock: true,
@@ -843,9 +851,119 @@ export default function ItemForm() {
     includeInMfg: true,
     isSubcontracted: false,
     productionCapacity: "0",
+    brand: "",
+    description: "",
+    valuationMethod: "FIFO",
+    valuationRate: "0.00",
   });
 
   const setForm = (f: any) => { setFormRaw(f); setIsDirty(true); };
+
+  // Fetch item data if editing
+  useEffect(() => {
+    if (!isNew && itemCode) {
+      // If we have data from location state, use it
+      if (itemData) {
+        setFormRaw({
+          itemName: itemData.item_name || "",
+          itemCode: itemData.item_code || "",
+          itemGroup: itemData.item_group || "",
+          hsnSac: itemData.hsn_sac || "",
+          defaultUOM: itemData.stock_uom || "Nos",
+          disabled: itemData.disabled === 1,
+          maintainStock: itemData.is_stock_item === 1,
+          isFixedAsset: itemData.is_fixed_asset === 1,
+          allowSales: itemData.is_sales_item === 1,
+          allowPurchase: itemData.is_purchase_item === 1,
+          allowAltItem: false,
+          isCustomerProvided: false,
+          hasVariants: false,
+          overDelivery: "0.000",
+          overBilling: "0.000",
+          grantCommission: true,
+          includeInMfg: true,
+          isSubcontracted: false,
+          productionCapacity: "0",
+          brand: itemData.brand || "",
+          description: itemData.description || "",
+          valuationMethod: itemData.valuation_method || "FIFO",
+          valuationRate: "0.00",
+        });
+        setIsDirty(false);
+      } else {
+        // Fetch from API if no location state
+        fetchItemData();
+      }
+    } else if (isNew && prefillData) {
+      // Prefill from quick add
+      setFormRaw({
+        itemName: prefillData.itemName || "",
+        itemCode: prefillData.itemCode || "",
+        itemGroup: prefillData.itemGroup || "",
+        hsnSac: prefillData.hsnSac || "",
+        defaultUOM: prefillData.defaultUOM || "Nos",
+        disabled: false,
+        maintainStock: prefillData.maintainStock ?? true,
+        isFixedAsset: prefillData.isFixedAsset ?? false,
+        allowSales: true,
+        allowPurchase: true,
+        allowAltItem: false,
+        isCustomerProvided: false,
+        hasVariants: false,
+        overDelivery: "0.000",
+        overBilling: "0.000",
+        grantCommission: true,
+        includeInMfg: true,
+        isSubcontracted: false,
+        productionCapacity: "0",
+        brand: "",
+        description: "",
+        valuationMethod: "FIFO",
+        valuationRate: "0.00",
+      });
+    }
+  }, [isNew, itemCode, itemData, prefillData]);
+
+  const fetchItemData = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/item/${itemCode}`);
+      if (response.data.success === 1) {
+        const data = response.data.data;
+        setFormRaw({
+          itemName: data.item_name || "",
+          itemCode: data.item_code || "",
+          itemGroup: data.item_group || "",
+          hsnSac: data.hsn_sac || "",
+          defaultUOM: data.stock_uom || "Nos",
+          disabled: data.disabled === 1,
+          maintainStock: data.is_stock_item === 1,
+          isFixedAsset: data.is_fixed_asset === 1,
+          allowSales: data.is_sales_item === 1,
+          allowPurchase: data.is_purchase_item === 1,
+          allowAltItem: false,
+          isCustomerProvided: false,
+          hasVariants: false,
+          overDelivery: "0.000",
+          overBilling: "0.000",
+          grantCommission: true,
+          includeInMfg: true,
+          isSubcontracted: false,
+          productionCapacity: "0",
+          brand: data.brand || "",
+          description: data.description || "",
+          valuationMethod: data.valuation_method || "FIFO",
+          valuationRate: "0.00",
+        });
+        setIsDirty(false);
+      }
+    } catch (err) {
+      console.error('Error fetching item:', err);
+      toast.error('Failed to load item data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const tabProps = { form, setForm };
 
@@ -858,8 +976,6 @@ export default function ItemForm() {
       allErrors.push({ field: 'itemName', label: 'Item Name', message: 'Item name is required', tabIndex: 0 });
     if (!form.itemGroup.trim())
       allErrors.push({ field: 'itemGroup', label: 'Item Group', message: 'Item group is required', tabIndex: 0 });
-    if (!form.hsnSac.trim())
-      allErrors.push({ field: 'hsnSac', label: 'HSN/SAC', message: 'HSN/SAC code is required', tabIndex: 0 });
     if (!form.defaultUOM.trim())
       allErrors.push({ field: 'defaultUOM', label: 'Default UOM', message: 'Default unit of measure is required', tabIndex: 0 });
 
@@ -903,12 +1019,43 @@ export default function ItemForm() {
 
     setSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsDirty(false);
-      toast.success(isEditMode ? 'Item updated successfully!' : 'Item created successfully!');
-      navigate('/item-list');
-    } catch (err) {
-      toast.error('Failed to save item');
+      const payload = {
+        item_code: form.itemCode || form.itemName.toUpperCase().replace(/\s+/g, '-'),
+        item_name: form.itemName.trim(),
+        item_group: form.itemGroup.trim(),
+        stock_uom: form.defaultUOM.trim(),
+        description: form.description || form.itemName.trim(),
+        is_stock_item: form.maintainStock ? 1 : 0,
+        is_sales_item: form.allowSales ? 1 : 0,
+        is_purchase_item: form.allowPurchase ? 1 : 0,
+        brand: form.brand || null,
+        valuation_method: form.valuationMethod || "FIFO",
+        disabled: form.disabled ? 1 : 0,
+        is_fixed_asset: form.isFixedAsset ? 1 : 0,
+        hsn_sac: form.hsnSac || null,
+      };
+
+      let response;
+      if (isNew) {
+        response = await api.post('/item', payload);
+      } else {
+        response = await api.put(`/item/${itemCode}`, payload);
+      }
+
+      if (response.data && response.data.success === 1) {
+        setIsDirty(false);
+        toast.success(isNew ? 'Item created successfully!' : 'Item updated successfully!');
+        navigate('/item-list');
+      } else {
+        toast.error(response.data?.message || 'Failed to save item');
+      }
+    } catch (err: any) {
+      console.error('Error saving item:', err);
+      if (err.response?.status === 409) {
+        toast.error('An item with this code already exists');
+      } else {
+        toast.error(err.response?.data?.message || 'Failed to save item');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -916,6 +1063,17 @@ export default function ItemForm() {
 
   const allValidationErrors = getAllValidationErrors();
   const hasAnyErrors = allValidationErrors.length > 0;
+
+  if (loading) {
+    return (
+      <div className={`itf-page ${theme}`}>
+        <div className="itf-loading-state">
+          <FaSpinner className="spinning" size={32} />
+          <p>Loading item data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`itf-page ${theme}`}>
@@ -974,8 +1132,9 @@ export default function ItemForm() {
           <span className="itf-bc-sep">/</span>
           <span className="itf-bc-link" onClick={() => navigate("/item-list")}>Item</span>
           <span className="itf-bc-sep">/</span>
-          <span className="itf-bc-current">{isNew ? "New Item" : form.itemName}</span>
-          {!isNew && <span className="itf-status-pill enabled">Enabled</span>}
+          <span className="itf-bc-current">{isNew ? "New Item" : form.itemName || itemCode}</span>
+          {!isNew && !form.disabled && <span className="itf-status-pill enabled">Enabled</span>}
+          {!isNew && form.disabled && <span className="itf-status-pill disabled">Disabled</span>}
 
           {hasAnyErrors && (
             <div className="itf-error-badge">
@@ -1011,7 +1170,7 @@ export default function ItemForm() {
         </div>
       </div>
 
-      {/* Tab bar - styled like NewReservation */}
+      {/* Tab bar */}
       <div className="itf-tab-bar">
         <div className="itf-tabs-container">
           {tabs.map((tab) => {
@@ -1059,9 +1218,9 @@ export default function ItemForm() {
         {/* Right sidebar - only for existing items */}
         {!isNew && (
           <aside className="itf-sidebar">
-            <div className="itf-doc-avatar">{form.itemName.charAt(0).toUpperCase()}</div>
-            <div className="itf-doc-name">{form.itemName}</div>
-            <div className="itf-doc-id">{form.itemCode}</div>
+            <div className="itf-doc-avatar">{form.itemName.charAt(0).toUpperCase() || 'I'}</div>
+            <div className="itf-doc-name">{form.itemName || itemCode}</div>
+            <div className="itf-doc-id">{form.itemCode || itemCode}</div>
 
             <div className="itf-sidebar-actions">
               <button className="itf-sidebar-action">
@@ -1088,9 +1247,9 @@ export default function ItemForm() {
 
             <div className="itf-sidebar-meta">
               <div className="itf-meta-row"><span className="itf-meta-label">Last Edited By</span><span className="itf-meta-val">You</span></div>
-              <div className="itf-meta-time">5 hours ago</div>
+              <div className="itf-meta-time">Just now</div>
               <div className="itf-meta-row" style={{ marginTop: 12 }}><span className="itf-meta-label">Created By</span><span className="itf-meta-val">You</span></div>
-              <div className="itf-meta-time">5 hours ago</div>
+              <div className="itf-meta-time">Just now</div>
             </div>
           </aside>
         )}
