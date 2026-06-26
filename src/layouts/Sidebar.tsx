@@ -181,6 +181,35 @@ export default function Sidebar({
       ]
     },
     {
+  title: 'Buying',
+  module: 'purchasing',
+  icon: <BuyingIcon />,
+  items: [
+    { title: 'Material Request', icon: <MaterialRequestIcon />, path: '/material-request' },
+    { title: 'Request for Quotation', icon: <RFQIcon />, path: '/request-for-quotation' },
+    { title: 'Supplier Quotation', icon: <SupplierQuotationIcon />, path: '/supplier-quotation' },
+    { title: 'Purchase Order', icon: <PurchaseOrderIcon />, path: '/purchase-order' },
+    { title: 'Purchase Invoice', icon: <PurchaseInvoiceIcon />, path: '/purchase-invoice' }
+  ]
+},
+     {
+  title: 'Setup',
+  module: 'purchasing',
+  icon: <SetupIcon />,
+  items: [
+    { title: 'Supplier', icon: <SupplierIcon />, path: '/supplier' },
+    { title: 'Supplier Group', icon: <SupplierGroupIcon />, path: '/supplier-group' },
+    { title: 'Item', icon: <ItemIcon />, path: '/item-list' },
+    { title: 'Price List', icon: <PriceListIcon />, path: '/price-list' },
+    { title: 'Address', icon: <AddressIcon />, path: '/address' },
+    { title: 'Contacts', icon: <ContactsIcon />, path: '/contacts' },
+    { title: 'Supplier Scorecard', icon: <SupplierScorecardIcon />, path: '/supplier-scorecard' },
+    { title: 'Supplier Scorecard Criteria', icon: <SupplierScorecardCriteriaIcon />, path: '/supplier-scorecard-criteria' }
+  ]
+},
+// ✅ This adds it as a single item under the Buying category
+
+    {
       title: 'System',
       module: 'system',
       icon: <SettingsIcon />,
@@ -188,6 +217,8 @@ export default function Sidebar({
         { title: 'Settings', icon: <SettingsIcon />, path: '/settings' }
       ]
     }
+   
+
   ];
 
   // Filter categories based on current module
@@ -214,6 +245,7 @@ export default function Sidebar({
       'manufacturing': 'Manufacturing',
       'setup': 'Setup',
       'sales': 'Sales',
+      'purchasing': 'Purchasing',
       'organization': 'Organization',
       'tools': 'Tools',
       'reports': 'Reports',
@@ -366,6 +398,16 @@ const HomeIcon = () => (
   </svg>
 );
 
+const MaterialRequestIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10 9 9 9 8 9"/>
+  </svg>
+);
+
 const DashboardIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
@@ -430,6 +472,7 @@ const CompanyIcon = () => (
     <path d="M9 16h4"/>
   </svg>
 );
+
 
 const LetterHeadIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -601,5 +644,138 @@ const ChevronDownIcon = () => (
 const ChevronUpIcon = () => (
   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
     <path d="M2 8l4-4 4 4" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+// --- Purchasing Module Icons ---
+
+
+const SupplierIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+    <path d="M16 11l2 2 4-4"/>
+    <path d="M19 13v4"/>
+    <path d="M16 13h6"/>
+  </svg>
+);
+
+
+const SupplierGroupIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    <path d="M16 11l2 2 4-4"/>
+  </svg>
+);
+
+
+
+const PriceListIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2H2v10l9.17 9.17a2 2 0 0 0 2.83 0l7-7a2 2 0 0 0 0-2.83L12 2z"/>
+    <circle cx="7" cy="7" r="2" fill="none"/>
+    <path d="M17 10l-2 2"/>
+  </svg>
+);
+
+const AddressIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+    <circle cx="12" cy="10" r="3"/>
+    <path d="M12 7v3"/>
+    <path d="M9 10h6"/>
+  </svg>
+);
+
+const ContactsIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+    <path d="M16 11l2 2 4-4"/>
+    <path d="M19 13v4"/>
+  </svg>
+);
+
+const SupplierScorecardIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/>
+    <polyline points="15 3 21 3 21 9"/>
+    <line x1="10" y1="14" x2="21" y2="3"/>
+    <path d="M14 14h7"/>
+    <path d="M14 18h4"/>
+  </svg>
+);
+// ── Purchasing Module Icons ──────────────────────────────────────
+
+// Main Buying Icon
+const BuyingIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+    <line x1="3" y1="6" x2="21" y2="6"/>
+    <path d="M16 10a4 4 0 0 1-8 0"/>
+    <path d="M12 14v4"/>
+    <path d="M8 18h8"/>
+  </svg>
+);
+
+
+// Request for Quotation Icon
+const RFQIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="8" y1="16" x2="16" y2="16"/>
+    <line x1="8" y1="12" x2="16" y2="12"/>
+    <line x1="8" y1="20" x2="12" y2="20"/>
+  </svg>
+);
+
+// Supplier Quotation Icon
+const SupplierQuotationIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+    <path d="M2 17l10 5 10-5"/>
+    <path d="M2 12l10 5 10-5"/>
+    <path d="M12 7v10"/>
+    <path d="M7 9.5v5"/>
+    <path d="M17 9.5v5"/>
+  </svg>
+);
+
+// Purchase Order Icon
+const PurchaseOrderIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10 9 9 9 8 9"/>
+  </svg>
+);
+
+// Purchase Invoice Icon
+const PurchaseInvoiceIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="8" y1="16" x2="16" y2="16"/>
+    <line x1="8" y1="12" x2="16" y2="12"/>
+    <line x1="8" y1="20" x2="10" y2="20"/>
+    <path d="M8 8h4"/>
+  </svg>
+);
+
+const SupplierScorecardCriteriaIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+    <line x1="3" y1="10" x2="21" y2="10"/>
+    <line x1="3" y1="14" x2="21" y2="14"/>
+    <line x1="3" y1="18" x2="21" y2="18"/>
+    <line x1="8" y1="4" x2="8" y2="10"/>
+    <line x1="16" y1="4" x2="16" y2="10"/>
+    <circle cx="12" cy="12" r="2"/>
+    <circle cx="12" cy="16" r="2"/>
   </svg>
 );

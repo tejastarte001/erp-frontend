@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  FaSearch, FaPlus, FaEdit, FaTrash, FaEye, FaFilter, 
+  FaSearch, FaPlus, FaEdit, FaTrash,  FaFilter, 
   FaCheckCircle, FaTimesCircle, FaSave, FaSpinner, FaTimes,
-  FaToggleOn, FaToggleOff, FaCopy, FaTag, FaCalendarAlt,
-  FaClock, FaUsers, FaGift, FaExternalLinkAlt, FaInfoCircle
+  FaToggleOn, FaToggleOff, FaCopy,
+  FaClock,  FaGift, FaExternalLinkAlt, 
 } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import toast from 'react-hot-toast';

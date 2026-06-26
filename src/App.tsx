@@ -44,7 +44,17 @@ import PriceList from "./pages/PriceList";
 import ItemPrice from "./pages/ItemPrice";
 import PricingRule from "./pages/PricingRule";
 import CouponCode from "./pages/CouponCode";
-
+import Supplier from "./pages/Supplier";
+import AddSupplier from "./pages/AddSupplier";
+import SupplierGroup from "./pages/SupplierGroup";
+import Contacts from "./pages/Contacts";
+import MaterialRequest from "./pages/MaterialRequest";
+import PurchaseOrder from "./pages/PurchaseOrder";
+import RequestForQuotation from "./pages/RequestForQuotation";
+import NewSupplierQuotation from "./pages/NewSupplierQuotation";
+import SupplierQuotation from "./pages/SupplierQuotation";
+import PurchaseInvoice from "./pages/PurchaseInvoice";
+import NewPurchaseInvoice from "./pages/NewPurchaseInvoice";
 
 
 function App() {
@@ -68,8 +78,17 @@ function App() {
             <Route path="/item-price" element={<ItemPrice />} />
             <Route path="/pricing-rule" element={<PricingRule />} />
             <Route path="/coupon-codes" element={<CouponCode />} />
-
-
+            <Route path="/supplier" element={<Supplier />} />
+           <Route path="/supplier/new" element={<AddSupplier />} />
+           <Route path="/supplier-group" element={<SupplierGroup />} />
+            <Route path="/contacts" element={<Contacts />} />
+            <Route path="/material-request" element={<MaterialRequest />} />
+            <Route path="/purchase-order" element={<PurchaseOrder />} />
+            <Route path="/request-for-quotation" element={<RequestForQuotation />} />
+            <Route path="/supplier-quotation" element={<SupplierQuotation />} />
+            <Route path="/supplier-quotation/new" element={<NewSupplierQuotation />} />
+            <Route path="/purchase-invoice" element={<PurchaseInvoice />} />
+            <Route path="/purchase-invoice/new" element={<NewPurchaseInvoice />} />
             {/* <Route path="/sales" element={<SalesPage />} />
             <Route path="/purchase" element={<PurchasePage />} />
             <Route path="/inventory" element={<InventoryPage />} />

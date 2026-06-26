@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  FaArrowLeft, FaSave, FaSpinner, FaInfoCircle, FaPlus, 
-  FaTrash, FaExchangeAlt, FaKeyboard, FaFolder, FaFileAlt,
-  FaCalendarAlt, FaUser, FaEnvelope, FaPhone, FaBuilding,
-  FaMapMarkerAlt, FaDollarSign, FaClock, FaBarcode,
-  FaSearch, FaChevronDown, FaChevronUp, FaPrint,
-  FaCopy, FaPaperclip, FaTag, FaTruck, FaShip,
-  FaHome, FaAddressCard, FaCreditCard,
+  FaArrowLeft, FaSave, FaSpinner,  FaPlus, 
+  FaTrash, FaKeyboard,  FaFileAlt,
+  FaDollarSign,  FaBarcode, FaChevronDown, FaChevronUp, FaPrint,FaCopy,  FaTag,
+   FaAddressCard, FaCreditCard,
   FaTimes
 } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';

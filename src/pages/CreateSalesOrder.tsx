@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaSave, FaSpinner, FaInfoCircle, FaExchangeAlt, FaPlus, FaTrash, FaKeyboard } from 'react-icons/fa';
+import { FaArrowLeft, FaSave, FaSpinner, FaPlus, FaTrash, FaKeyboard } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 import './CreateSalesOrder.css';
 import toast from 'react-hot-toast';
