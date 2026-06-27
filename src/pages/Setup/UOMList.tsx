@@ -404,7 +404,7 @@ export default function UOMList() {
   return (
     <div className={`uoml-page ${theme}`}>
       {/* Stats Cards */}
-      <div className="uoml-stats-container">
+      {/* <div className="uoml-stats-container">
         {stats.map((stat, index) => (
           <div key={index} className="uoml-stat-card" style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}cc 100%)` }}>
             <div className="uoml-stat-icon">{stat.icon}</div>
@@ -414,7 +414,7 @@ export default function UOMList() {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Search and Filter Bar */}
       <div className="uoml-filter-bar">

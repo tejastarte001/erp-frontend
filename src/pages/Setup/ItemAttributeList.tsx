@@ -131,7 +131,7 @@ export default function ItemAttributeList() {
   return (
     <div className={`ial-page ${theme}`}>
       {/* Stats Cards */}
-      <div className="ial-stats-container">
+      {/* <div className="ial-stats-container">
         {stats.map((stat, index) => (
           <div key={index} className="ial-stat-card" style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}cc 100%)` }}>
             <div className="ial-stat-icon">{stat.icon}</div>
@@ -141,7 +141,7 @@ export default function ItemAttributeList() {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Search and Filter Bar */}
       <div className="ial-filter-bar">

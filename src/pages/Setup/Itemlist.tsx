@@ -196,7 +196,7 @@ export default function ItemList() {
   return (
     <div className={`itl-page ${theme}`}>
       {/* Stats Cards */}
-      <div className="itl-stats-container">
+      {/* <div className="itl-stats-container">
         {stats.map((stat, index) => (
           <div key={index} className="itl-stat-card" style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}cc 100%)` }}>
             <div className="itl-stat-icon">{stat.icon}</div>
@@ -206,7 +206,7 @@ export default function ItemList() {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Search and Filter Bar */}
       <div className="itl-filter-bar">

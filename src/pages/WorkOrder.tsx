@@ -1,409 +1,627 @@
-import { useState } from "react";
+// WorkOrderList.tsx
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  FaSearch,
+  FaFilter,
+  FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
+  FaAngleDoubleLeft,
+  FaAngleDoubleRight,
+  FaEye,
+  FaEdit,
+  FaTrash,
+  FaPlus,
+  FaClock,
+  FaCheckCircle,
+  FaPauseCircle,
+  FaPlayCircle,
+  FaBox,
+  FaCalendar,
+  FaBuilding,
+} from 'react-icons/fa';
 import "./WorkOrder.css";
+import { useAdminTheme } from '../admin-theme/AdminThemeContext';
+import api from '../services/api';
 
 type Status = "Draft" | "Not Started" | "In Process" | "Completed" | "Stopped";
-type Priority = "Low" | "Medium" | "High" | "Urgent";
-type Mode = "list" | "new" | "view" | "edit";
 
-interface WOData {
-  id: string;
-  workOrderNo: string;
-  title: string;
-  description: string;
-  assignee: string;
-  dueDate: string;
-  priority: Priority;
+interface WorkOrder {
+  id: number;
+  name: string;
+  production_item: string;
+  bom_no: string;
+  qty: number;
+  produced_qty: number;
+  company: string;
   status: Status;
-  createdAt: string;
-  age: string;
+  planned_start_date: string;
+  planned_end_date: string;
 }
 
-const STATUS_OPTIONS: Status[] = ["Draft", "Not Started", "In Process", "Completed", "Stopped"];
-const PRIORITY_OPTIONS: Priority[] = ["Low", "Medium", "High", "Urgent"];
+interface WorkOrderDisplay {
+  id: string;
+  name: string;
+  productionItem: string;
+  bomNo: string;
+  qty: number;
+  producedQty: number;
+  company: string;
+  status: Status;
+  plannedStartDate: string;
+  plannedEndDate: string;
+  progress: number;
+  createdAgo: string;
+}
+
+interface ApiResponse {
+  success: number;
+  data: {
+    total: number;
+    page: number;
+    limit: number;
+    records: WorkOrder[];
+  };
+}
 
 const STATUS_CLASS: Record<Status, string> = {
-  Draft:          "s-draft",
-  "Not Started":  "s-notstarted",
-  "In Process":   "s-inprocess",
-  Completed:      "s-completed",
-  Stopped:        "s-stopped",
+  Draft: "s-draft",
+  "Not Started": "s-notstarted",
+  "In Process": "s-inprocess",
+  Completed: "s-completed",
+  Stopped: "s-stopped",
 };
 
-const PRIORITY_CLASS: Record<Priority, string> = {
-  Low:    "p-low",
-  Medium: "p-medium",
-  High:   "p-high",
-  Urgent: "p-urgent",
+const STATUS_LABELS: Record<Status, string> = {
+  Draft: "Draft",
+  "Not Started": "Not Started",
+  "In Process": "In Process",
+  Completed: "Completed",
+  Stopped: "Stopped",
 };
 
-const EMPTY = {
-  workOrderNo: "",
-  title:       "",
-  description: "",
-  assignee:    "",
-  dueDate:     "2026-06-17",
-  priority:    "Medium" as Priority,
-  status:      "Draft" as Status,
-};
+export default function WorkOrderList() {
+  const navigate = useNavigate();
+  const { theme } = useAdminTheme();
 
-let counter = 1;
-function genId() {
-  const id = `MFG-WO-2026-${String(counter).padStart(5, "0")}`;
-  counter++;
-  return id;
-}
+  const [workOrders, setWorkOrders] = useState<WorkOrderDisplay[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [allChecked, setAllChecked] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<WorkOrderDisplay | null>(null);
 
-function fmt(d: string) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-}
+  // Format date to relative time
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  return (
-    <div className="wo-field">
-      <label>{label}{required && <span className="req"> *</span>}</label>
-      {children}
-    </div>
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min`;
+    if (diffHours < 24) return `${diffHours} h`;
+    if (diffDays < 7) return `${diffDays} d`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} w`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} mo`;
+    return `${Math.floor(diffDays / 365)} y`;
+  };
+
+  // Calculate progress percentage
+  const calculateProgress = (qty: number, producedQty: number): number => {
+    if (qty === 0) return 0;
+    return Math.min(Math.round((producedQty / qty) * 100), 100);
+  };
+
+  // Fetch work orders from API
+  const fetchWorkOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await api.get<ApiResponse>(`/work-order?page=${currentPage}&limit=${itemsPerPage}`);
+
+      if (response.data.success === 1) {
+        const { records, total, page, limit } = response.data.data;
+        setTotalItems(total);
+        setTotalPages(Math.ceil(total / limit));
+        setCurrentPage(page);
+
+        const transformedData: WorkOrderDisplay[] = records.map((item: WorkOrder) => ({
+          id: item.id.toString(),
+          name: item.name,
+          productionItem: item.production_item,
+          bomNo: item.bom_no,
+          qty: item.qty,
+          producedQty: item.produced_qty,
+          company: item.company,
+          status: item.status,
+          plannedStartDate: item.planned_start_date,
+          plannedEndDate: item.planned_end_date,
+          progress: calculateProgress(item.qty, item.produced_qty),
+          createdAgo: formatDate(item.planned_start_date),
+        }));
+
+        setWorkOrders(transformedData);
+      } else {
+        setError('Failed to fetch work orders');
+      }
+    } catch (err) {
+      console.error('Error fetching work orders:', err);
+      setError('An error occurred while fetching work orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWorkOrders();
+  }, [currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  // Filter data
+  const filteredData = workOrders.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.productionItem.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.bomNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.company.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalFilteredItems = filteredData.length;
+  const filteredTotalPages = Math.ceil(totalFilteredItems / itemsPerPage);
+
+  const validCurrentPage = Math.min(currentPage, filteredTotalPages || 1);
+  if (validCurrentPage !== currentPage) {
+    setCurrentPage(validCurrentPage);
+  }
+
+  const paginatedData = filteredData.slice(
+    (validCurrentPage - 1) * itemsPerPage,
+    validCurrentPage * itemsPerPage
   );
-}
 
-export default function WorkOrder() {
-  const [mode, setMode]     = useState<Mode>("list");
-  const [records, setRecords] = useState<WOData[]>([]);
-  const [form, setForm]     = useState({ ...EMPTY });
-  const [editing, setEditing] = useState<WOData | null>(null);
-  const [viewing, setViewing] = useState<WOData | null>(null);
+  // Stats
+  const totalOrders = workOrders.length;
+  const inProcess = workOrders.filter(w => w.status === 'In Process').length;
+  const completed = workOrders.filter(w => w.status === 'Completed').length;
+  const draft = workOrders.filter(w => w.status === 'Draft').length;
+  const notStarted = workOrders.filter(w => w.status === 'Not Started').length;
+  const stopped = workOrders.filter(w => w.status === 'Stopped').length;
 
-  const ch = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+  const stats = [
+    { title: 'Total Orders', value: totalOrders, icon: <FaClock />, color: '#6366f1' },
+    { title: 'In Process', value: inProcess, icon: <FaPlayCircle />, color: '#f59e0b' },
+    { title: 'Completed', value: completed, icon: <FaCheckCircle />, color: '#10b981' },
+    { title: 'Draft', value: draft, icon: <FaBox />, color: '#8b5cf6' },
+    { title: 'Not Started', value: notStarted, icon: <FaCalendar />, color: '#6b7280' },
+    { title: 'Stopped', value: stopped, icon: <FaPauseCircle />, color: '#ef4444' },
+  ];
 
-  /* ── Save new ── */
-  const handleSave = () => {
-    if (!form.title.trim()) return;
-    const rec: WOData = {
-      ...form,
-      workOrderNo: form.workOrderNo || genId(),
-      id: genId(),
-      createdAt: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
-      age: "0 d",
-    };
-    setRecords(p => [rec, ...p]);
-    setMode("list");
+  const toggleAll = () => {
+    if (allChecked) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(paginatedData.map((r) => r.id)));
+    }
+    setAllChecked(!allChecked);
   };
 
-  /* ── Start Production ── */
-  const handleStartProduction = () => {
-    if (!form.title.trim()) return;
-    const rec: WOData = {
-      ...form,
-      status: "In Process",
-      workOrderNo: form.workOrderNo || genId(),
-      id: genId(),
-      createdAt: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
-      age: "0 d",
-    };
-    setRecords(p => [rec, ...p]);
-    setMode("list");
+  const toggleRow = (id: string) => {
+    const next = new Set(selected);
+    next.has(id) ? next.delete(id) : next.add(id);
+    setSelected(next);
+    setAllChecked(next.size === paginatedData.length);
   };
 
-  /* ── Update edited ── */
-  const handleUpdate = () => {
-    if (!editing) return;
-    setRecords(p => p.map(r => r.id === editing.id ? { ...r, ...form, workOrderNo: form.workOrderNo || r.workOrderNo } : r));
-    setViewing(v => v ? { ...v, ...form } : v);
-    setEditing(null);
-    setMode("view");
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= filteredTotalPages) {
+      setCurrentPage(page);
+    }
   };
 
-  /* ── Open view ── */
-  const openView = (rec: WOData) => {
-    setViewing(rec);
-    setMode("view");
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(filteredTotalPages);
+  const goToNextPage = () => goToPage(currentPage + 1);
+  const goToPrevPage = () => goToPage(currentPage - 1);
+
+  const handlePageSizeChange = (newSize: number) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1);
   };
 
-  /* ── Open edit ── */
-  const openEdit = (rec: WOData) => {
-    setEditing(rec);
-    setForm({
-      workOrderNo: rec.workOrderNo,
-      title:       rec.title,
-      description: rec.description,
-      assignee:    rec.assignee,
-      dueDate:     rec.dueDate,
-      priority:    rec.priority,
-      status:      rec.status,
-    });
-    setMode("edit");
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(filteredTotalPages, startPage + maxVisible - 1);
+    if (endPage - startPage + 1 < maxVisible) startPage = Math.max(1, endPage - maxVisible + 1);
+    for (let i = startPage; i <= endPage; i++) pages.push(i);
+    return pages;
   };
 
-  const openNew = () => {
-    setForm({ ...EMPTY, workOrderNo: "" });
-    setEditing(null);
-    setMode("new");
+  const handleDelete = (item: WorkOrderDisplay) => {
+    setSelectedItem(item);
+    setShowDeleteConfirm(true);
   };
 
-  const isEdit = mode === "edit";
-  const f = form;
+  const confirmDelete = async () => {
+    if (selectedItem) {
+      try {
+        const response = await api.delete(`/work-order/${selectedItem.id}`);
+        if (response.data.success === 1) {
+          setShowDeleteConfirm(false);
+          setSelectedItem(null);
+          fetchWorkOrders();
+        }
+      } catch (err) {
+        console.error('Error deleting work order:', err);
+        alert('Failed to delete work order');
+      }
+    }
+  };
 
-  /* ══════════════════════════════════════════
-     LIST VIEW
-  ══════════════════════════════════════════ */
-  if (mode === "list") {
-    return (
-      <div className="wo-page">
-        {/* breadcrumb */}
-        <div className="wo-breadcrumb">
-          <span className="wo-bc-home">⌂</span>
-          <span className="wo-bc-sep">/</span>
-          <span className="wo-bc-muted">Manufacturing</span>
-          <span className="wo-bc-sep">/</span>
-          <span className="wo-bc-active">Work Order</span>
-        </div>
+  // Navigate to edit form (view mode)
+  const handleRowClick = (item: WorkOrderDisplay) => {
+    navigate(`/work-order/${encodeURIComponent(item.id)}`);
+  };
 
-        {/* list toolbar */}
-        <div className="wo-list-toolbar">
-          <div className="wo-list-toolbar-left">
-            <div className="wo-list-view-toggle">
-              <span className="wo-list-view-icon">☰</span> List View <span className="wo-caret">▾</span>
-            </div>
-            <div className="wo-saved-filters">
-              Saved Filters <span className="wo-caret">▾</span>
-            </div>
-          </div>
-          <div className="wo-list-toolbar-right">
-            <button className="wo-icon-btn" title="Refresh">⟲</button>
-            <button className="wo-icon-btn" title="More">⋯</button>
-            <button className="wo-btn-add" onClick={openNew}>
-              + Add Work Order
-            </button>
-          </div>
-        </div>
+  const handleEdit = (item: WorkOrderDisplay) => {
+    navigate(`/work-order/${encodeURIComponent(item.id)}`);
+  };
 
-        {/* filter bar */}
-        <div className="wo-filter-bar">
-          <div className="wo-filter-inputs">
-            <div className="wo-filter-chip wo-filter-chip-id">
-              <span className="wo-filter-dot" /> ID <span className="wo-caret">⌃</span>
-            </div>
-            <div className="wo-filter-chip">
-              Status <span className="wo-caret">▾</span>
-            </div>
-            <div className="wo-filter-chip">
-              Priority <span className="wo-caret">▾</span>
+  const handleView = (item: WorkOrderDisplay) => {
+    navigate(`/work-order/${encodeURIComponent(item.id)}`);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+  };
+
+  const getStartIndex = () => {
+    return (validCurrentPage - 1) * itemsPerPage + 1;
+  };
+
+  const getEndIndex = () => {
+    return Math.min(validCurrentPage * itemsPerPage, totalFilteredItems);
+  };
+
+  return (
+    <div className={`wo-page ${theme}`}>
+      
+      {/* Stats Cards */}
+      {/* <div className="wo-stats-container">
+        {stats.map((stat, index) => (
+          <div key={index} className="wo-stat-card" style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}cc 100%)` }}>
+            <div className="wo-stat-icon">{stat.icon}</div>
+            <div className="wo-stat-content">
+              <p className="wo-stat-title">{stat.title}</p>
+              <p className="wo-stat-value">{stat.value}</p>
             </div>
           </div>
-          <div className="wo-filter-right">
-            <button className="wo-filter-btn">⏷ Filter</button>
-            <button className="wo-sort-btn">↕ Created On <span className="wo-caret">▾</span></button>
-          </div>
-        </div>
+        ))}
+      </div> */}
 
-        {/* table */}
-        <div className="wo-list-wrap">
-          {records.length === 0 ? (
-            <div className="wo-empty">
-              <div className="wo-empty-icon">📋</div>
-              <div className="wo-empty-title">You haven't created a Work Order yet</div>
-              <button className="wo-btn-add wo-empty-btn" onClick={openNew}>
-                + Create your first Work Order
+      {/* Search and Filter Bar */}
+      <div className="wo-filter-bar">
+        <div className="wo-filter-left">
+          <div className="wo-search-wrapper">
+            <FaSearch className="wo-search-icon" />
+            <input
+              type="text"
+              placeholder="Search work orders by name, item, BOM, or company..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="wo-search-input"
+            />
+            {searchTerm && (
+              <button className="wo-search-clear" onClick={() => setSearchTerm('')}>
+                <FaTimes size={12} />
               </button>
-            </div>
-          ) : (
+            )}
+          </div>
+        </div>
+        <div className="wo-filter-right">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="wo-filter-select"
+          >
+            <option value="all">All Status</option>
+            <option value="Draft">Draft</option>
+            <option value="Not Started">Not Started</option>
+            <option value="In Process">In Process</option>
+            <option value="Completed">Completed</option>
+            <option value="Stopped">Stopped</option>
+          </select>
+          <button className="wo-filter-btn">
+            <FaFilter size={12} />
+            Filter
+          </button>
+          <button className="wo-sort-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/>
+            </svg>
+            Created On
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <button className="wo-btn-primary" onClick={() => navigate("/work-order/new")}>
+            <FaPlus size={12} />
+            Add Work Order
+          </button>
+        </div>
+      </div>
+
+      {/* Active filters indicator */}
+      {(searchTerm || statusFilter !== 'all') && (
+        <div className="wo-active-filters">
+          <FaFilter size={12} style={{ color: 'var(--primary-color)' }} />
+          <span style={{ color: 'var(--text-primary)' }}>Active filters:</span>
+          {searchTerm && (
+            <span style={{ color: 'var(--text-primary)' }}>
+              <strong>Search:</strong> "{searchTerm}"
+            </span>
+          )}
+          {statusFilter !== 'all' && (
+            <span style={{ color: 'var(--text-primary)' }}>
+              <strong>Status:</strong> {STATUS_LABELS[statusFilter as Status]}
+            </span>
+          )}
+          <button
+            onClick={clearFilters}
+            className="wo-clear-filters"
+          >
+            <FaTimes size={10} /> Clear All
+          </button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="wo-loading">
+          <p>Loading work orders...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="wo-error">
+          <p>{error}</p>
+          <button onClick={fetchWorkOrders} className="wo-retry-btn">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Table */}
+      {!loading && !error && (
+        <>
+          <div className="wo-table-wrap">
             <table className="wo-table">
               <thead>
                 <tr>
-                  <th className="wo-th-check"><input type="checkbox" /></th>
-                  <th>Title</th>
-                  <th>Status</th>
-                  <th>Priority</th>
-                  <th>Assignee</th>
-                  <th>ID</th>
-                  <th className="wo-th-right">Due Date</th>
-                  <th className="wo-th-actions">Actions</th>
+                  <th className="wo-th-check">
+                    <input type="checkbox" checked={allChecked} onChange={toggleAll} className="wo-checkbox" />
+                  </th>
+                  <th className="wo-th">WO #</th>
+                  <th className="wo-th">Production Item</th>
+                  <th className="wo-th">BOM</th>
+                  <th className="wo-th">Qty</th>
+                  <th className="wo-th">Progress</th>
+                  <th className="wo-th">Company</th>
+                  <th className="wo-th">Status</th>
+                  <th className="wo-th">Planned Dates</th>
+                  <th className="wo-th wo-th-meta">
+                    <span className="wo-count-label">{totalFilteredItems} of {totalItems}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary, #9ca3af)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {records.map(r => (
-                  <tr key={r.id} className="wo-tr" onClick={() => openView(r)}>
-                    <td className="wo-td-check" onClick={e => e.stopPropagation()}>
-                      <input type="checkbox" />
-                    </td>
-                    <td className="wo-td-link">{r.title}</td>
-                    <td>
-                      <span className={`wo-status-pill ${STATUS_CLASS[r.status]}`}>{r.status}</span>
-                    </td>
-                    <td>
-                      <span className={`wo-priority-pill ${PRIORITY_CLASS[r.priority]}`}>
-                        <span className="wo-priority-dot" /> {r.priority}
-                      </span>
-                    </td>
-                    <td className="wo-td-muted">{r.assignee || "—"}</td>
-                    <td className="wo-td-id">{r.id}</td>
-                    <td className="wo-td-right wo-td-muted">{fmt(r.dueDate)}</td>
-                    <td className="wo-td-actions" onClick={e => e.stopPropagation()}>
-                      <span className="wo-action-icon">💬 0</span>
-                      <span className="wo-action-dot">·</span>
-                      <span className="wo-action-icon">♡</span>
+                {paginatedData.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="wo-empty-state">
+                      <div className="wo-empty-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <line x1="16" y1="13" x2="8" y2="13"/>
+                          <line x1="16" y1="17" x2="8" y2="17"/>
+                          <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                        <p>No work orders found</p>
+                        <span>Try adjusting your search criteria</span>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  paginatedData.map((row) => (
+                    <tr
+                      key={row.id}
+                      className={`wo-tr ${selected.has(row.id) ? "wo-tr-selected" : ""}`}
+                      onClick={() => handleRowClick(row)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <td className="wo-td-check" onClick={(e) => { e.stopPropagation(); toggleRow(row.id); }}>
+                        <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleRow(row.id)} className="wo-checkbox" />
+                      </td>
+                      <td className="wo-td wo-td-id">{row.name}</td>
+                      <td className="wo-td wo-td-link">{row.productionItem}</td>
+                      <td className="wo-td">{row.bomNo}</td>
+                      <td className="wo-td wo-td-number">{row.qty.toLocaleString()}</td>
+                      <td className="wo-td">
+                        <div className="wo-progress-container">
+                          <div className="wo-progress-bar">
+                            <div 
+                              className="wo-progress-fill" 
+                              style={{ width: `${row.progress}%` }}
+                            />
+                          </div>
+                          <span className="wo-progress-text">{row.progress}%</span>
+                        </div>
+                      </td>
+                      <td className="wo-td wo-td-company">
+                        <FaBuilding size={10} className="wo-company-icon" />
+                        {row.company}
+                      </td>
+                      <td className="wo-td">
+                        <span className={`wo-status-badge ${STATUS_CLASS[row.status]}`}>
+                          {STATUS_LABELS[row.status]}
+                        </span>
+                      </td>
+                      <td className="wo-td wo-td-dates">
+                        <div className="wo-date-range">
+                          <span className="wo-date-label">Start:</span>
+                          <span>{new Date(row.plannedStartDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                          <span className="wo-date-sep">→</span>
+                          <span className="wo-date-label">End:</span>
+                          <span>{new Date(row.plannedEndDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                        </div>
+                      </td>
+                      <td className="wo-td wo-td-meta" onClick={(e) => e.stopPropagation()}>
+                        <span className="wo-ago">{row.createdAgo}</span>
+                        <span className="wo-dot">·</span>
+                        <div className="wo-action-buttons">
+                          <button
+                            className="wo-action-btn wo-action-view"
+                            onClick={(e) => { e.stopPropagation(); handleView(row); }}
+                            title="View"
+                          >
+                            <FaEye size={12} />
+                          </button>
+                          <button
+                            className="wo-action-btn wo-action-edit"
+                            onClick={(e) => { e.stopPropagation(); handleEdit(row); }}
+                            title="Edit"
+                          >
+                            <FaEdit size={12} />
+                          </button>
+                          <button
+                            className="wo-action-btn wo-action-delete"
+                            onClick={(e) => { e.stopPropagation(); handleDelete(row); }}
+                            title="Delete"
+                          >
+                            <FaTrash size={12} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
-          )}
-        </div>
-        {records.length > 0 && (
-          <div className="wo-list-footer">
-            <span className="wo-record-count">{records.length} record{records.length !== 1 ? "s" : ""}</span>
-            <div className="wo-page-size-btns">
-              <button className="wo-page-size-btn wo-page-size-active">20</button>
-              <button className="wo-page-size-btn">100</button>
-              <button className="wo-page-size-btn">500</button>
-              <button className="wo-page-size-btn">2500</button>
-            </div>
           </div>
-        )}
-      </div>
-    );
-  }
 
-  /* ══════════════════════════════════════════
-     FORM (new / edit)
-  ══════════════════════════════════════════ */
-  if (mode === "new" || mode === "edit") {
-    return (
-      <div className="wo-page">
-        <div className="wo-topbar">
-          <div className="wo-topbar-left">
-            <button className="wo-back-btn" onClick={() => isEdit ? setMode("view") : setMode("list")}>
-              <span className="wo-back-arrow">←</span> Back
-            </button>
-            <span className="wo-topbar-title">
-              {isEdit && editing ? editing.id : "New Work Order"}
-            </span>
-            {isEdit && editing && (
-              <span className={`wo-status-pill ${STATUS_CLASS[editing.status]}`}>{editing.status}</span>
-            )}
-          </div>
-          <div className="wo-topbar-right">
-            
-            <button className="wo-btn-blue"
-              onClick={isEdit ? handleUpdate : handleSave}
-              disabled={!f.title.trim()}>
-              {isEdit ? "Update" : "Save"}
-            </button>
-            
-          </div>
-        </div>
-
-        <div className="wo-content">
-          <div className="wo-card">
-            <div className="wo-card-header">
-              <span className="wo-card-title">Work Order Details</span>
+          {/* Pagination */}
+          <div className="wo-pagination">
+            <div className="wo-pagination-left">
+              <span className="wo-pagination-label">Show:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="wo-page-size-select"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <span className="wo-pagination-label">entries</span>
             </div>
-            <div className="wo-card-body">
-              <div className="wo-row wo-row-1">
-                <Field label="Title" required>
-                  <input name="title" value={f.title} onChange={ch}
-                    placeholder="e.g. Assemble Cabinet Hardware" autoComplete="off" />
-                </Field>
-              </div>
-              <div className="wo-row wo-row-1">
-                <Field label="Description">
-                  <textarea name="description" value={f.description} onChange={ch}
-                    placeholder="Add any extra detail about this work order" rows={3} />
-                </Field>
-              </div>
-              <div className="wo-row">
-                <Field label="Assignee">
-                  <input name="assignee" value={f.assignee} onChange={ch}
-                    placeholder="e.g. john" autoComplete="off" />
-                </Field>
-                <Field label="Due Date">
-                  <input name="dueDate" type="date" value={f.dueDate} onChange={ch} />
-                </Field>
-              </div>
-              <div className="wo-row">
-                <Field label="Priority">
-                  <div className="wo-select-wrap">
-                    <span className={`wo-priority-dot wo-priority-dot-inline ${PRIORITY_CLASS[f.priority]}`} />
-                    <select name="priority" value={f.priority} onChange={ch}>
-                      {PRIORITY_OPTIONS.map(p => <option key={p}>{p}</option>)}
-                    </select>
-                  </div>
-                </Field>
-                <Field label="Status">
-                  <div className="wo-select-wrap">
-                    <select name="status" value={f.status} onChange={ch}>
-                      {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
-                    </select>
-                  </div>
-                </Field>
-              </div>
+            <div className="wo-pagination-center">
+              <button
+                onClick={goToFirstPage}
+                disabled={currentPage === 1 || totalFilteredItems === 0}
+                className="wo-page-btn"
+              >
+                <FaAngleDoubleLeft size={12} />
+              </button>
+              <button
+                onClick={goToPrevPage}
+                disabled={currentPage === 1 || totalFilteredItems === 0}
+                className="wo-page-btn"
+              >
+                <FaChevronLeft size={12} />
+              </button>
+              {totalFilteredItems > 0 && getPageNumbers().map(page => (
+                <button
+                  key={page}
+                  onClick={() => goToPage(page)}
+                  className={`wo-page-btn ${currentPage === page ? 'wo-page-btn-active' : ''}`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === filteredTotalPages || totalFilteredItems === 0}
+                className="wo-page-btn"
+              >
+                <FaChevronRight size={12} />
+              </button>
+              <button
+                onClick={goToLastPage}
+                disabled={currentPage === filteredTotalPages || totalFilteredItems === 0}
+                className="wo-page-btn"
+              >
+                <FaAngleDoubleRight size={12} />
+              </button>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ══════════════════════════════════════════
-     VIEW
-  ══════════════════════════════════════════ */
-  if (!viewing) return null;
-  const rec = records.find(r => r.id === viewing.id) || viewing;
-
-  return (
-    <div className="wo-page">
-      <div className="wo-topbar">
-        <div className="wo-topbar-left">
-          <button className="wo-back-btn" onClick={() => setMode("list")}>
-            <span className="wo-back-arrow">←</span> Back
-          </button>
-          <span className="wo-topbar-title">{rec.id}</span>
-          <span className={`wo-status-pill ${STATUS_CLASS[rec.status]}`}>{rec.status}</span>
-        </div>
-        <div className="wo-topbar-right">
-          <button className="wo-btn-ghost" onClick={openNew}>+ New</button>
-          <button className="wo-btn-blue" onClick={() => openEdit(rec)}>Edit</button>
-        </div>
-      </div>
-
-      <div className="wo-content">
-        <div className="wo-card">
-          <div className="wo-card-header">
-            <span className="wo-card-title">Work Order Details</span>
-            <span className="wo-card-id">{rec.id}</span>
-          </div>
-          <div className="wo-view-grid">
-            <div className="wo-read-field wo-read-field-wide">
-              <span className="wo-read-label">Title</span>
-              <span className="wo-read-value">{rec.title || "—"}</span>
-            </div>
-            <div className="wo-read-field wo-read-field-wide">
-              <span className="wo-read-label">Description</span>
-              <span className="wo-read-value">{rec.description || "—"}</span>
-            </div>
-            <div className="wo-read-field">
-              <span className="wo-read-label">Assignee</span>
-              <span className="wo-read-value">{rec.assignee || "—"}</span>
-            </div>
-            <div className="wo-read-field">
-              <span className="wo-read-label">Due Date</span>
-              <span className="wo-read-value">{fmt(rec.dueDate)}</span>
-            </div>
-            <div className="wo-read-field">
-              <span className="wo-read-label">Priority</span>
-              <span className={`wo-priority-pill ${PRIORITY_CLASS[rec.priority]}`}>
-                <span className="wo-priority-dot" /> {rec.priority}
+            <div className="wo-pagination-right">
+              <span className="wo-pagination-info">
+                {totalFilteredItems > 0 ? (
+                  `Showing ${getStartIndex()} to ${getEndIndex()} of ${totalFilteredItems} entries`
+                ) : (
+                  'No entries to show'
+                )}
               </span>
             </div>
-            <div className="wo-read-field">
-              <span className="wo-read-label">Status</span>
-              <span className={`wo-status-pill ${STATUS_CLASS[rec.status]}`}>{rec.status}</span>
+          </div>
+        </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && selectedItem && (
+        <div className="wo-modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="wo-modal wo-modal-delete">
+            <div className="wo-modal-header">
+              <span className="wo-modal-title">Confirm Delete</span>
+              <button className="wo-modal-close" onClick={() => setShowDeleteConfirm(false)}>
+                <FaTimes size={16} />
+              </button>
+            </div>
+            <div className="wo-modal-body">
+              <p>Are you sure you want to delete this work order?</p>
+              <p className="wo-modal-item-name"><strong>{selectedItem.name}</strong> - {selectedItem.productionItem}</p>
+              <p className="wo-modal-warning">This action cannot be undone.</p>
+            </div>
+            <div className="wo-modal-footer">
+              <button className="wo-btn-cancel" onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </button>
+              <button className="wo-btn-delete" onClick={confirmDelete}>
+                <FaTrash size={12} /> Delete
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
