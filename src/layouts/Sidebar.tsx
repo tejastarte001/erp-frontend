@@ -154,6 +154,8 @@ export default function Sidebar({
       module: 'setup',
       icon: <SetupIcon />,
       items: [
+        { title: 'Item', icon: <ItemIcon />, path: '/item-list' },
+        { title: 'Item Group', icon: <FolderIcon />, path: '/item-group' },
         { title: 'Item Attribute', icon: <TagIcon />, path: '/item-attribute' },
         { title: 'Brand', icon: <BrandIcon />, path: '/brand' },
         { title: 'Warehouse', icon: <WarehouseIcon />, path: '/warehouse' },
