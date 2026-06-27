@@ -204,7 +204,7 @@ export default function WarehouseList() {
   return (
     <div className={`wl-page ${theme}`}>
       {/* Stats Cards */}
-      <div className="wl-stats-container">
+      {/* <div className="wl-stats-container">
         {stats.map((stat, index) => (
           <div key={index} className="wl-stat-card" style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}cc 100%)` }}>
             <div className="wl-stat-icon">{stat.icon}</div>
@@ -214,7 +214,7 @@ export default function WarehouseList() {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Search and Filter Bar */}
       <div className="wl-filter-bar">

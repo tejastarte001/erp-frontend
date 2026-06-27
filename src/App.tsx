@@ -57,6 +57,8 @@ import NewSupplierQuotation from "./pages/NewSupplierQuotation";
 import SupplierQuotation from "./pages/SupplierQuotation";
 import PurchaseInvoice from "./pages/PurchaseInvoice";
 import NewPurchaseInvoice from "./pages/NewPurchaseInvoice";
+import WorkOrderForm from "./pages/WorkOrderForm";
+import WorkOrderList from "./pages/WorkOrder";
 
 
 function App() {
@@ -124,8 +126,11 @@ function App() {
               <Route path="/warehouse/new" element={<WarehouseForm />} />
               <Route path="/warehouse/:id" element={<WarehouseForm />} />
 
-              {/* Work Order Routes */}
-              <Route path="/work-order" element={<WorkOrder />} />
+              // In your router configuration
+<Route path="/work-order" element={<WorkOrderList />} />
+<Route path="/work-order/new" element={<WorkOrderForm />} />
+<Route path="/work-order/:id" element={<WorkOrderForm />} />
+
               {/* Brand Routes */}
               <Route path="/brand" element={<BrandList />} />
               <Route path="/brand/new" element={<BrandForm />} />
