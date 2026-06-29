@@ -12,7 +12,6 @@ import {
   FaEdit,
   FaTrash,
   FaRuler,
-  FaCheckCircle,
   FaTimesCircle,
   FaPlus,
   FaCheck,
@@ -170,17 +169,6 @@ export default function UOMList() {
     cat.category_name.toLowerCase().includes(categorySearch.toLowerCase())
   );
 
-  // Stats
-  const totalEnabled = uoms.filter(item => item.enabled === 1).length;
-  const totalDisabled = uoms.filter(item => item.enabled === 0).length;
-  const totalCategories = categories.length;
-
-  const stats = [
-    { title: 'Total UOMs', value: totalItems, icon: <FaRuler />, color: '#6366f1' },
-    { title: 'Enabled', value: totalEnabled, icon: <FaCheckCircle />, color: '#10b981' },
-    { title: 'Disabled', value: totalDisabled, icon: <FaTimesCircle />, color: '#ef4444' },
-    { title: 'Categories', value: totalCategories, icon: <FaRuler />, color: '#f59e0b' },
-  ];
 
   const toggleAll = () => {
     if (allChecked) {

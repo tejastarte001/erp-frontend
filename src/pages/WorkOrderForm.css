@@ -889,3 +889,278 @@
     width: 100%;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   ADDITIONS for tabbed Work Order UI (Production Item / Configuration /
+   More Info / Connections). Append this block to the bottom of the
+   existing WorkOrderForm.css — nothing here overrides prior rules.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ─── Tabs ────────────────────────────────────────────────────────────── */
+.wof-tabs {
+  display: flex;
+  gap: 22px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 18px;
+  overflow-x: auto;
+}
+
+.wof-tab-btn {
+  background: none;
+  border: none;
+  padding: 10px 2px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.wof-tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.wof-tab-btn-active {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.wof-tab-btn-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--primary-color);
+  border-radius: 2px 2px 0 0;
+}
+
+/* ─── Section title variant (no bottom border, used inline) ─────────── */
+.wof-section-title-flush {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.wof-hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  display: block;
+}
+
+/* ─── Checkbox fields ─────────────────────────────────────────────────── */
+.wof-checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.wof-checkbox-field input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.wof-checkbox-field label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.wof-checkbox-field input[type="checkbox"]:disabled + label,
+.wof-checkbox-field input[type="checkbox"]:disabled ~ div label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ─── Select field (matches .form-field look) ────────────────────────── */
+select.form-field {
+  appearance: none;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* ─── Editable tables (Operations / Required Items) ──────────────────── */
+.wof-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.wof-row-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: color-mix(in srgb, var(--primary-color) 10%, var(--card-bg));
+  border: 1px solid color-mix(in srgb, var(--primary-color) 35%, var(--border-color));
+  border-radius: 20px;
+  color: var(--primary-color);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.wof-row-add-btn:hover {
+  background: color-mix(in srgb, var(--primary-color) 18%, var(--card-bg));
+}
+
+.wof-table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.wof-editable-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.wof-editable-table th {
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+  background: var(--layout-bg);
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.wof-editable-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.wof-editable-table tr:last-child td {
+  border-bottom: none;
+}
+
+.wof-col-no {
+  width: 36px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.wof-col-action {
+  width: 40px;
+  text-align: center;
+}
+
+.form-field-sm {
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 7px;
+  min-width: 110px;
+}
+
+.wof-row-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.wof-row-delete-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger-color) 12%, transparent);
+  color: var(--danger-color);
+}
+
+.wof-row-delete-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ─── Connections tab: progress bars ──────────────────────────────────── */
+.wof-progress-block {
+  margin-bottom: 18px;
+}
+
+.wof-progress-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 6px;
+  background: var(--layout-bg);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.wof-progress-fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.wof-progress-label {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* ─── Connections tab: grid of transactions/reference/reservation ────── */
+.wof-connections-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.wof-connection-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  margin-top: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--card-bg);
+}
+
+.wof-connection-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 10%, var(--card-bg));
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .wof-connections-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wof-tabs {
+    gap: 16px;
+  }
+}

@@ -13,12 +13,6 @@ import {
   FaEdit,
   FaTrash,
   FaPlus,
-  FaClock,
-  FaCheckCircle,
-  FaPauseCircle,
-  FaPlayCircle,
-  FaBox,
-  FaCalendar,
   FaBuilding,
 } from 'react-icons/fa';
 import "./WorkOrder.css";
@@ -95,7 +89,7 @@ export default function WorkOrderList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [, setTotalPages] = useState(1);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState<WorkOrderDisplay | null>(null);
 
@@ -194,22 +188,6 @@ export default function WorkOrderList() {
     validCurrentPage * itemsPerPage
   );
 
-  // Stats
-  const totalOrders = workOrders.length;
-  const inProcess = workOrders.filter(w => w.status === 'In Process').length;
-  const completed = workOrders.filter(w => w.status === 'Completed').length;
-  const draft = workOrders.filter(w => w.status === 'Draft').length;
-  const notStarted = workOrders.filter(w => w.status === 'Not Started').length;
-  const stopped = workOrders.filter(w => w.status === 'Stopped').length;
-
-  const stats = [
-    { title: 'Total Orders', value: totalOrders, icon: <FaClock />, color: '#6366f1' },
-    { title: 'In Process', value: inProcess, icon: <FaPlayCircle />, color: '#f59e0b' },
-    { title: 'Completed', value: completed, icon: <FaCheckCircle />, color: '#10b981' },
-    { title: 'Draft', value: draft, icon: <FaBox />, color: '#8b5cf6' },
-    { title: 'Not Started', value: notStarted, icon: <FaCalendar />, color: '#6b7280' },
-    { title: 'Stopped', value: stopped, icon: <FaPauseCircle />, color: '#ef4444' },
-  ];
 
   const toggleAll = () => {
     if (allChecked) {

@@ -1028,3 +1028,215 @@
   color: #9ca3af;
 }
 }
+
+
+/* Add these styles to ItemForm.css */
+
+/* ── Enhanced Select Dropdown ─────────────────────────── */
+.itf-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.itf-select-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  background: var(--input-bg, #f9fafb);
+  transition: border-color 0.15s, background 0.15s;
+  cursor: text;
+}
+
+.itf-select-wrapper:hover {
+  border-color: var(--border-color-hover, #d1d5db);
+}
+
+.itf-select-open {
+  border-color: var(--primary-color, #2563eb);
+  background: var(--card-bg, white);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 15%, transparent);
+}
+
+.itf-select-input {
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  font-size: 13.5px;
+  color: var(--text-primary, #111827);
+  outline: none;
+  min-width: 0;
+  cursor: text;
+}
+
+.itf-select-input::placeholder {
+  color: var(--text-secondary, #9ca3af);
+}
+
+.itf-select-input:read-only {
+  cursor: pointer;
+}
+
+.itf-select-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  color: var(--text-secondary, #9ca3af);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.itf-select-open .itf-select-arrow {
+  transform: rotate(180deg);
+}
+
+.itf-select-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #9ca3af);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 4px;
+  border-radius: 50%;
+  transition: background 0.15s, color 0.15s;
+}
+
+.itf-select-clear:hover {
+  background: var(--nav-hover, #f3f4f6);
+  color: var(--text-primary, #111827);
+}
+
+.itf-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--card-bg, white);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px var(--shadow-color, rgba(0,0,0,0.12));
+  z-index: 1000;
+  padding: 6px 0;
+  animation: itfDropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes itfDropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.itf-select-dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+
+.itf-select-dropdown::-webkit-scrollbar-thumb {
+  background: var(--border-color, #e5e7eb);
+  border-radius: 2px;
+}
+
+.itf-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  color: var(--text-primary, #111827);
+  cursor: pointer;
+  transition: background 0.12s;
+  gap: 8px;
+}
+
+.itf-select-option:hover {
+  background: var(--nav-hover, #f3f4f6);
+}
+
+.itf-select-option-highlighted {
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+}
+
+.itf-select-option-check {
+  color: var(--primary-color, #2563eb);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.itf-select-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  color: var(--text-secondary, #9ca3af);
+  font-size: 13px;
+}
+
+.itf-select-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-secondary, #9ca3af);
+  font-size: 13px;
+}
+
+/* Dark theme overrides for select */
+.dark-theme .itf-select-wrapper {
+  background: var(--input-bg, #1e293b);
+  border-color: var(--border-color, #334155);
+}
+
+.dark-theme .itf-select-open {
+  border-color: var(--primary-color, #3b82f6);
+}
+
+.dark-theme .itf-select-input {
+  color: var(--text-primary, #f8fafc);
+}
+
+.dark-theme .itf-select-dropdown {
+  background: var(--card-bg, #1e293b);
+  border-color: var(--border-color, #334155);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.dark-theme .itf-select-option {
+  color: var(--text-primary, #f8fafc);
+}
+
+.dark-theme .itf-select-option:hover {
+  background: var(--nav-hover, rgba(255,255,255,0.05));
+}
+
+.dark-theme .itf-select-option-highlighted {
+  background: color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+
+.dark-theme .itf-select-clear:hover {
+  background: var(--nav-hover, rgba(255,255,255,0.05));
+  color: var(--text-primary, #f8fafc);
+}
+
+.dark-theme .itf-select-loading {
+  color: var(--text-secondary, #94a3b8);
+}
+
+.dark-theme .itf-select-empty {
+  color: var(--text-secondary, #94a3b8);
+}

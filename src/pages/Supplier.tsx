@@ -173,7 +173,7 @@ export default function Supplier() {
     }
   ]);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>>({
     supplierCode: '',
     supplierName: '',
     contactPerson: '',
@@ -190,7 +190,7 @@ export default function Supplier() {
     paymentTerms: 'Net 30',
     creditLimit: 0,
     rating: 0,
-    status: 'Active' as const,
+    status: 'Active',
     currency: 'INR'
   });
 

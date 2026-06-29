@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   FaArrowLeft,
@@ -19,6 +19,7 @@ import {
   FaIndustry,
   FaClipboardCheck,
   FaLink,
+  FaSearch,
 } from 'react-icons/fa';
 import "./ItemForm.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
@@ -59,6 +60,27 @@ interface ItemData {
   hsn_sac?: string;
 }
 
+interface ItemGroup {
+  id: number;
+  item_group_name: string;
+  parent_item_group: string;
+  is_group: number;
+  image: string | null;
+  creation: string;
+  modified: string;
+}
+
+interface UOM {
+  id: number;
+  uom_name: string;
+  symbol: string;
+  common_code: string;
+  category: string;
+  enabled: number;
+  must_be_whole_number: number;
+  creation: string;
+}
+
 /* ── Shared sub-components ─────────────────────────── */
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -97,16 +119,177 @@ function TextInput({
   );
 }
 
+// Enhanced SelectInput with search functionality
 function SelectInput({
-  value, onChange, options,
+  value,
+  onChange,
+  options,
+  placeholder = "Search or select...",
+  loading = false,
 }: {
-  value: string; onChange?: (v: string) => void; options: string[];
+  value: string;
+  onChange?: (v: string) => void;
+  options: { label: string; value: string }[];
+  placeholder?: string;
+  loading?: boolean;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const filteredOptions = options.filter(opt =>
+    opt.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const selectedOption = options.find(opt => opt.value === value);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearchTerm("");
+        setHighlightedIndex(-1);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && listRef.current && highlightedIndex >= 0) {
+      const item = listRef.current.children[highlightedIndex] as HTMLElement;
+      if (item) {
+        item.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex, isOpen]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === "Enter" || e.key === "ArrowDown") {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex(prev =>
+          prev < filteredOptions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
+          const selected = filteredOptions[highlightedIndex];
+          onChange?.(selected.value);
+          setSearchTerm("");
+          setIsOpen(false);
+          setHighlightedIndex(-1);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsOpen(false);
+        setSearchTerm("");
+        setHighlightedIndex(-1);
+        break;
+    }
+  };
+
   return (
-    <select className="itf-select" value={value} onChange={(e) => onChange?.(e.target.value)}>
-      <option value=""></option>
-      {options.map((o) => <option key={o} value={o}>{o}</option>)}
-    </select>
+    <div className="itf-select-container" ref={dropdownRef}>
+      <div
+        className={`itf-select-wrapper ${isOpen ? 'itf-select-open' : ''}`}
+        onClick={() => setIsOpen(true)}
+      >
+        <input
+          ref={inputRef}
+          type="text"
+          className="itf-select-input"
+          value={isOpen ? searchTerm : (selectedOption?.label || "")}
+          onChange={(e) => {
+            if (isOpen) {
+              setSearchTerm(e.target.value);
+              setHighlightedIndex(-1);
+            }
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={selectedOption?.label || placeholder}
+          onFocus={() => setIsOpen(true)}
+          readOnly={!isOpen}
+        />
+        <span className="itf-select-arrow">
+          {loading ? (
+            <FaSpinner className="spinning" size={12} />
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </span>
+        {isOpen && searchTerm && (
+          <button
+            className="itf-select-clear"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSearchTerm("");
+              setHighlightedIndex(-1);
+              if (inputRef.current) inputRef.current.focus();
+            }}
+          >
+            ×
+          </button>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="itf-select-dropdown" ref={listRef}>
+          {loading ? (
+            <div className="itf-select-loading">
+              <FaSpinner className="spinning" size={16} />
+              <span>Loading...</span>
+            </div>
+          ) : filteredOptions.length === 0 ? (
+            <div className="itf-select-empty">No options found</div>
+          ) : (
+            filteredOptions.map((opt, index) => (
+              <div
+                key={opt.value}
+                className={`itf-select-option ${index === highlightedIndex ? 'itf-select-option-highlighted' : ''}`}
+                onClick={() => {
+                  onChange?.(opt.value);
+                  setSearchTerm("");
+                  setIsOpen(false);
+                  setHighlightedIndex(-1);
+                }}
+                onMouseEnter={() => setHighlightedIndex(index)}
+              >
+                {opt.label}
+                {opt.value === value && (
+                  <span className="itf-select-option-check">✓</span>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -231,6 +414,67 @@ function SettingsIcon() {
 
 function DetailsTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
   const s = (k: string, v: any) => setForm({ ...form, [k]: v });
+  
+  // State for item groups
+  const [itemGroups, setItemGroups] = useState<ItemGroup[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+
+  // State for UOMs
+  const [uoms, setUoms] = useState<UOM[]>([]);
+  const [loadingUoms, setLoadingUoms] = useState(false);
+
+  // Fetch item groups on mount
+  useEffect(() => {
+    const fetchItemGroups = async () => {
+      setLoadingGroups(true);
+      try {
+        const response = await api.get("/item-group");
+        if (response.data.success === 1) {
+          setItemGroups(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching item groups:', err);
+        toast.error('Failed to load item groups');
+      } finally {
+        setLoadingGroups(false);
+      }
+    };
+    fetchItemGroups();
+  }, []);
+
+  // Fetch UOMs on mount
+  useEffect(() => {
+    const fetchUoms = async () => {
+      setLoadingUoms(true);
+      try {
+        const response = await api.get("/uom");
+        if (response.data.success === 1) {
+          setUoms(response.data.data.records || []);
+        }
+      } catch (err) {
+        console.error('Error fetching UOMs:', err);
+        toast.error('Failed to load UOMs');
+      } finally {
+        setLoadingUoms(false);
+      }
+    };
+    fetchUoms();
+  }, []);
+
+  // Convert item groups to select options format
+  const groupOptions = itemGroups.map(group => ({
+    label: group.item_group_name,
+    value: group.item_group_name
+  }));
+
+  // Convert UOMs to select options format
+  const uomOptions = uoms
+    .filter(uom => uom.enabled === 1)
+    .map(uom => ({
+      label: uom.uom_name + (uom.symbol ? ` (${uom.symbol})` : ''),
+      value: uom.uom_name
+    }));
+
   return (
     <>
       <section className="itf-section">
@@ -240,13 +484,25 @@ function DetailsTab({ form, setForm }: { form: any; setForm: (f: any) => void })
               <TextInput value={form.itemName} onChange={(v) => s("itemName", v)} />
             </Field>
             <Field label="Item Group" required>
-              <TextInput value={form.itemGroup} onChange={(v) => s("itemGroup", v)} />
+              <SelectInput 
+                value={form.itemGroup} 
+                onChange={(v) => s("itemGroup", v)} 
+                options={groupOptions}
+                loading={loadingGroups}
+                placeholder="Search for an item group..."
+              />
             </Field>
             <Field label="HSN/SAC" hint="You can search code by the description of the category.">
               <TextInput value={form.hsnSac} onChange={(v) => s("hsnSac", v)} />
             </Field>
             <Field label="Default Unit of Measure" required>
-              <TextInput value={form.defaultUOM} onChange={(v) => s("defaultUOM", v)} />
+              <SelectInput 
+                value={form.defaultUOM} 
+                onChange={(v) => s("defaultUOM", v)} 
+                options={uomOptions}
+                loading={loadingUoms}
+                placeholder="Search for a UOM..."
+              />
             </Field>
           </div>
           <div className="itf-col">
@@ -456,7 +712,15 @@ function InventoryTab({ form, setForm }: { form: any; setForm: (f: any) => void 
         <div className="itf-two-col">
           <div className="itf-col">
             <Field label="Valuation Method">
-              <SelectInput value={form.valuationMethod ?? ""} onChange={(v) => s("valuationMethod", v)} options={["FIFO","Moving Average","LIFO"]} />
+              <SelectInput 
+                value={form.valuationMethod ?? ""} 
+                onChange={(v) => s("valuationMethod", v)} 
+                options={[
+                  { label: "FIFO", value: "FIFO" },
+                  { label: "Moving Average", value: "Moving Average" },
+                  { label: "LIFO", value: "LIFO" }
+                ]}
+              />
             </Field>
           </div>
           <div className="itf-col">
@@ -477,7 +741,16 @@ function InventoryTab({ form, setForm }: { form: any; setForm: (f: any) => void 
               <TextInput value={form.endOfLife ?? "31-12-2099"} onChange={(v) => s("endOfLife", v)} />
             </Field>
             <Field label="Default Material Request Type">
-              <SelectInput value={form.matReqType ?? "Purchase"} onChange={(v) => s("matReqType", v)} options={["Purchase","Manufacture","Transfer","Customer Provided"]} />
+              <SelectInput 
+                value={form.matReqType ?? "Purchase"} 
+                onChange={(v) => s("matReqType", v)} 
+                options={[
+                  { label: "Purchase", value: "Purchase" },
+                  { label: "Manufacture", value: "Manufacture" },
+                  { label: "Transfer", value: "Transfer" },
+                  { label: "Customer Provided", value: "Customer Provided" }
+                ]}
+              />
             </Field>
           </div>
           <div className="itf-col">
@@ -808,7 +1081,7 @@ export default function ItemForm() {
   
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<number>(0);
-  const [isDirty, setIsDirty] = useState(false);
+  const [, setIsDirty] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);

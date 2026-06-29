@@ -8,10 +8,6 @@ import {
   FaChevronRight,
   FaAngleDoubleLeft,
   FaAngleDoubleRight,
-  FaBoxes,
-  FaTags,
-  FaCheckCircle,
-  FaTimesCircle,
   FaSpinner,
 } from 'react-icons/fa';
 import ItemQuickAdd from "./Itemquickadd";
@@ -113,17 +109,6 @@ export default function ItemList() {
 
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
-  // Stats
-  const totalEnabled = items.filter(item => item.disabled === 0).length;
-  const totalDisabled = items.filter(item => item.disabled === 1).length;
-  const totalGroups = [...new Set(items.map(item => item.item_group))].length;
-
-  const stats = [
-    { title: 'Total Items', value: totalItems, icon: <FaBoxes />, color: '#6366f1' },
-    { title: 'Enabled', value: totalEnabled, icon: <FaCheckCircle />, color: '#10b981' },
-    { title: 'Disabled', value: totalDisabled, icon: <FaTimesCircle />, color: '#ef4444' },
-    { title: 'Item Groups', value: totalGroups, icon: <FaTags />, color: '#f59e0b' },
-  ];
 
   const toggleAll = () => {
     if (allChecked) {
