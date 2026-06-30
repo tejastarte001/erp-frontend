@@ -168,11 +168,12 @@ export default function ItemList() {
     return date.toLocaleDateString();
   };
 
-  const handleRowClick = (item: Item) => {
-    navigate(`/item/${encodeURIComponent(item.item_code)}`, { 
-      state: { itemData: item } 
-    });
-  };
+const handleRowClick = (item: Item) => {
+  // Use the ID in the URL, not the item_code
+  navigate(`/item/${item.id}`, { 
+    state: { itemData: item } 
+  });
+};
 
 const handleAddItem = () => {
   setShowModal(true);  // This opens the quick add modal instead of navigating

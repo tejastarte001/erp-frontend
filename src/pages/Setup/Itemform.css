@@ -1498,3 +1498,48 @@
     display: none;
   }
 }
+
+/* In ItemForm.css */
+
+.itf-view-text {
+  transition: background-color 0.15s ease;
+}
+
+.itf-view-text.itf-clickable-view:hover {
+  background-color: var(--bg-hover, rgba(0,0,0,0.05));
+  border-radius: 4px;
+}
+
+.itf-clickable-view {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.itf-cell-input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 4px;
+  background: var(--bg-input, #fff);
+  color: var(--text-primary);
+  font-size: 13px;
+  transition: border-color 0.15s ease;
+}
+
+.itf-cell-input:focus {
+  outline: none;
+  border-color: var(--primary-color, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Dark theme support */
+[data-theme="dark"] .itf-cell-input {
+  background: var(--bg-input-dark, #1f2937);
+  border-color: var(--border-color-dark, #374151);
+  color: var(--text-primary-dark, #f3f4f6);
+}
+
+[data-theme="dark"] .itf-clickable-view:hover {
+  background-color: var(--bg-hover-dark, rgba(255,255,255,0.05));
+}

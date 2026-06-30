@@ -109,7 +109,7 @@ export default function Supplier() {
     isTransporter: false,
     isInternalSupplier: false,
     onHold: false,
-    status: 'Active' as const
+    status: 'Active' as 'Active' | 'Inactive'
   });
 
   const supplierTypes = ['Company', 'Individual', 'Partnership', 'Proprietorship', 'LLP', 'Trust', 'Society'];
@@ -188,7 +188,7 @@ export default function Supplier() {
         setSuppliers([]);
         setTotalSuppliers(0);
         setTotalPages(1);
-        toast.info('No suppliers found');
+        toast('No suppliers found');
       }
     } catch (error: any) {
       console.error('❌ Error fetching suppliers:', error);
