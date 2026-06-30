@@ -1,32 +1,63 @@
-import React, { useState, } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FaArrowLeft, FaSave, FaSpinner, FaInfoCircle, 
-  FaBuilding, FaUser,  FaMapMarkerAlt,
-FaIdCard, FaCheckCircle,
-
+  FaBuilding, FaUser, FaMapMarkerAlt,FaTag,
 } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
+import api from '../services/api';
 import toast from 'react-hot-toast';
 import './AddSupplier.css';
 
 interface SupplierForm {
-  gstin: string;
-  supplierType: string;
+  // Basic Info
   supplierName: string;
-  gstCategory: string;
+  supplierType: string;
+  supplierGroup: string;
+  country: string;
+  defaultCurrency: string;
+  language: string;
+  
+  // Contact
   firstName: string;
   lastName: string;
   emailId: string;
   mobileNo: string;
-  isPrimaryAddress: boolean;
-  pincode: string;
+  
+  // Address
   addressLine1: string;
   addressLine2: string;
-  isShippingAddress: boolean;
   city: string;
   state: string;
-  country: string;
+  pincode: string;
+  
+  // Tax & Financial
+  taxId: string;
+  taxCategory: string;
+  paymentTerms: string;
+  defaultBankAccount: string;
+  defaultPriceList: string;
+  
+  // Additional
+  website: string;
+  supplierDetails: string;
+  isTransporter: boolean;
+  isInternalSupplier: boolean;
+  onHold: boolean;
+}
+
+interface SupplierResponse {
+  success: number;
+  message: string;
+  data: {
+    fieldCount: number;
+    affectedRows: number;
+    insertId: number;
+    info: string;
+    serverStatus: number;
+    warningStatus: number;
+    changedRows: number;
+  };
 }
 
 export default function AddSupplier() {
@@ -41,36 +72,48 @@ export default function AddSupplier() {
   }
 
   const [loading, setLoading] = useState(false);
-  const [isGstAutofill, setIsGstAutofill] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pincodeSuggestions, setPincodeSuggestions] = useState<string[]>([]);
   const [showPincodeSuggestions, setShowPincodeSuggestions] = useState(false);
-  const [stateSuggestions, setStateSuggestions] = useState<string[]>([]);
-  const [showStateSuggestions, setShowStateSuggestions] = useState(false);
 
   const [formData, setFormData] = useState<SupplierForm>({
-    gstin: '',
-    supplierType: 'Company',
     supplierName: '',
-    gstCategory: 'Unregistered',
+    supplierType: 'Company',
+    supplierGroup: '',
+    country: 'India',
+    defaultCurrency: 'INR',
+    language: 'en',
     firstName: '',
     lastName: '',
     emailId: '',
     mobileNo: '',
-    isPrimaryAddress: true,
-    pincode: '',
     addressLine1: '',
     addressLine2: '',
-    isShippingAddress: true,
     city: '',
     state: '',
-    country: 'India'
+    pincode: '',
+    taxId: '',
+    taxCategory: 'Registered Regular',
+    paymentTerms: '30 Days',
+    defaultBankAccount: '',
+    defaultPriceList: 'Standard Buying',
+    website: '',
+    supplierDetails: '',
+    isTransporter: false,
+    isInternalSupplier: false,
+    onHold: false
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const supplierTypes = ['Company', 'Individual', 'Partnership', 'Proprietorship', 'LLP', 'Trust', 'Society'];
-  const gstCategories = ['Unregistered', 'Registered', 'Composition', 'SEZ', 'Export Oriented'];
+  const supplierGroups = ['Raw Materials', 'Electronic Components', 'Packaging', 'Chemicals', 'Logistics', 'Office Supplies', 'Services', 'All Supplier Groups'];
   const countries = ['India', 'USA', 'UK', 'Germany', 'China', 'Japan', 'UAE', 'Singapore'];
+  const currencies = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD'];
+  const languages = ['en', 'hi', 'es', 'fr', 'de', 'zh', 'ar'];
+  const taxCategories = ['Registered Regular', 'Registered Composition', 'Unregistered', 'SEZ', 'Export Oriented'];
+  const paymentTerms = ['7 Days', '15 Days', '30 Days', '45 Days', '60 Days', 'Due on Receipt'];
+  const priceLists = ['Standard Buying', 'Export Pricing', 'Wholesale', 'Distributor'];
 
   // Sample pincode data for autofill
   const pincodeData: { [key: string]: { city: string; state: string; country: string } } = {
@@ -92,68 +135,15 @@ export default function AddSupplier() {
     '122001': { city: 'Gurgaon', state: 'Haryana', country: 'India' }
   };
 
-  // Sample GSTIN data for autofill
-  const gstinData: { [key: string]: { name: string; address: string; city: string; state: string; pincode: string } } = {
-    '27AABCU1234D1Z1': {
-      name: 'ABC Manufacturing Co.',
-      address: '123, Industrial Estate, MIDC',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001'
-    },
-    '29BXYZU5678E1Z1': {
-      name: 'XYZ Electronics Ltd.',
-      address: '456, Tech Park, Electronic City',
-      city: 'Bangalore',
-      state: 'Karnataka',
-      pincode: '560001'
-    },
-    '27CPQRU9012F1Z1': {
-      name: 'PQR Packaging Solutions',
-      address: '789, Packaging Park',
-      city: 'Pune',
-      state: 'Maharashtra',
-      pincode: '411001'
-    }
-  };
-
-  // Handle GSTIN change - autofill party information
-  const handleGstinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toUpperCase();
-    setFormData(prev => ({ ...prev, gstin: value }));
-    
-    // Check if GSTIN exists in our mock data
-    if (value.length === 15 && gstinData[value]) {
-      const data = gstinData[value];
-      setIsGstAutofill(true);
-      setFormData(prev => ({
-        ...prev,
-        gstin: value,
-        supplierName: data.name,
-        addressLine1: data.address,
-        city: data.city,
-        state: data.state,
-        pincode: data.pincode,
-        country: 'India'
-      }));
-      toast.success('Party information autofilled from GSTIN!');
-    } else if (value.length === 15) {
-      setIsGstAutofill(false);
-      toast.error('No party found with this GSTIN');
-    }
-  };
-
   // Handle pincode change - autofill address
   const handlePincodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, pincode: value }));
     
-    // Show suggestions
     const suggestions = Object.keys(pincodeData).filter(p => p.startsWith(value));
     setPincodeSuggestions(suggestions);
     setShowPincodeSuggestions(suggestions.length > 0 && value.length > 0);
 
-    // Autofill if exact match
     if (pincodeData[value]) {
       const data = pincodeData[value];
       setFormData(prev => ({
@@ -180,24 +170,6 @@ export default function AddSupplier() {
       }));
     }
     setShowPincodeSuggestions(false);
-  };
-
-  // State suggestions (for typeahead)
-  const handleStateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFormData(prev => ({ ...prev, state: value }));
-    
-    const states = ['Maharashtra', 'Karnataka', 'Delhi', 'Gujarat', 'Tamil Nadu', 'West Bengal', 
-                    'Telangana', 'Rajasthan', 'Uttar Pradesh', 'Haryana', 'Punjab', 'Kerala',
-                    'Andhra Pradesh', 'Madhya Pradesh', 'Bihar', 'Odisha', 'Assam', 'Chhattisgarh'];
-    const suggestions = states.filter(s => s.toLowerCase().includes(value.toLowerCase()));
-    setStateSuggestions(suggestions);
-    setShowStateSuggestions(suggestions.length > 0 && value.length > 0);
-  };
-
-  const selectState = (state: string) => {
-    setFormData(prev => ({ ...prev, state }));
-    setShowStateSuggestions(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -255,20 +227,114 @@ export default function AddSupplier() {
     
     if (!validateForm()) {
       toast.error('Please fix the errors before submitting');
+      const firstError = Object.keys(errors)[0];
+      if (firstError) {
+        const element = document.querySelector(`[name="${firstError}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          (element as HTMLElement).focus();
+        }
+      }
       return;
     }
     
+    setIsSubmitting(true);
     setLoading(true);
     
     try {
-      console.log('Supplier Data:', formData);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success('Supplier created successfully!');
-      navigate('/supplier');
+      // ✅ CORRECT: Match the exact API payload structure
+      const payload = {
+        name: formData.supplierName,
+        supplier_name: formData.supplierName,
+        supplier_type: formData.supplierType,
+        supplier_group: formData.supplierGroup,
+        country: formData.country,
+        gender: null,
+        is_transporter: formData.isTransporter ? 1 : 0,
+        image: null,
+        default_currency: formData.defaultCurrency,
+        default_bank_account: formData.defaultBankAccount || null,
+        default_price_list: formData.defaultPriceList,
+        supplier_details: formData.supplierDetails || null,
+        website: formData.website || null,
+        language: formData.language || 'en',
+        supplier_primary_address: null,
+        primary_address: null,
+        supplier_primary_contact: null,
+        mobile_no: formData.mobileNo,
+        email_id: formData.emailId,
+        tax_id: formData.taxId || null,
+        tax_category: formData.taxCategory || null,
+        tax_withholding_category: null,
+        tax_withholding_group: null,
+        payment_terms: formData.paymentTerms || null,
+        is_internal_supplier: formData.isInternalSupplier ? 1 : 0,
+        represents_company: null,
+        allow_purchase_invoice_creation_without_purchase_order: 0,
+        allow_purchase_invoice_creation_without_purchase_receipt: 0,
+        warn_rfqs: 0,
+        prevent_rfqs: 0,
+        warn_pos: 0,
+        prevent_pos: 0,
+        on_hold: formData.onHold ? 1 : 0,
+        hold_type: null,
+        release_date: null,
+        modified_by: "Administrator",
+        owner: "Administrator",
+        _user_tags: null,
+        _comments: null,
+        _assign: null,
+        _liked_by: null
+      };
+
+      console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
+
+      const response = await api.post<SupplierResponse>('/supplier', payload);
+
+      console.log('📥 Response:', response.data);
+
+      if (response.data && response.data.success === 1) {
+        toast.success(response.data.message || 'Supplier created successfully!');
+        setTimeout(() => {
+          navigate('/supplier');
+        }, 500);
+      } else {
+        toast.error(response.data?.message || 'Failed to create supplier');
+      }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create supplier');
+      console.error('❌ Error creating supplier:', error);
+      
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', JSON.stringify(error.response.data, null, 2));
+        
+        if (error.response.status === 400) {
+          toast.error(error.response.data?.message || 'Bad request. Please check your input.');
+        } else if (error.response.status === 401) {
+          toast.error('Session expired. Please login again.');
+        } else if (error.response.status === 403) {
+          toast.error('You don\'t have permission to create suppliers.');
+        } else if (error.response.status === 409) {
+          toast.error(error.response.data?.message || 'Supplier already exists.');
+        } else if (error.response.status === 422) {
+          const errors = error.response.data?.errors || {};
+          Object.keys(errors).forEach(key => {
+            setErrors(prev => ({ ...prev, [key]: errors[key] }));
+          });
+          toast.error('Please fix the validation errors.');
+        } else if (error.response.status === 500) {
+          toast.error(error.response.data?.message || 'Server error. Please try again later.');
+        } else {
+          toast.error(error.response.data?.message || 'Failed to create supplier');
+        }
+      } else if (error.request) {
+        toast.error('Network error - No response from server');
+      } else {
+        toast.error(error.message || 'Failed to create supplier');
+      }
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -279,9 +345,8 @@ export default function AddSupplier() {
   };
 
   return (
-    <div className={`add-supplier-page ${theme}-theme}`}>
+    <div className={`add-supplier-page ${theme}-theme`}>
       <style>{`
-        /* ── Page Container ─────────────────────────────────────── */
         .add-supplier-page {
           display: flex;
           flex-direction: column;
@@ -298,7 +363,6 @@ export default function AddSupplier() {
         .add-supplier-page::-webkit-scrollbar-track { background: transparent; }
         .add-supplier-page::-webkit-scrollbar-thumb { background: var(--border-color, #e5e7eb); border-radius: 2px; }
 
-        /* ── Header ──────────────────────────────────────────────── */
         .page-header {
           display: flex;
           align-items: center;
@@ -394,12 +458,12 @@ export default function AddSupplier() {
           background: var(--layout-bg, #f3f4f6);
         }
 
-        /* ── Form Sections ────────────────────────────────────────── */
         .form-section {
           background: var(--card-bg, #ffffff);
           border-radius: 10px;
           padding: 16px 20px;
           border: 1px solid var(--border-color, #e5e7eb);
+          margin-bottom: 12px;
         }
 
         .form-section:last-child {
@@ -502,25 +566,6 @@ export default function AddSupplier() {
           gap: 4px;
         }
 
-        .field-hint .autofill-badge {
-          color: #10b981;
-          font-weight: 500;
-        }
-
-        /* ── GST Autofill Badge ───────────────────────────────────── */
-        .gst-autofill-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          font-size: 11px;
-          color: #10b981;
-          background: #d1fae5;
-          padding: 2px 10px;
-          border-radius: 10px;
-          font-weight: 500;
-        }
-
-        /* ── Checkbox Group ───────────────────────────────────────── */
         .checkbox-group {
           display: flex;
           align-items: center;
@@ -542,7 +587,6 @@ export default function AddSupplier() {
           cursor: pointer;
         }
 
-        /* ── Pincode Suggestions ──────────────────────────────────── */
         .suggestions-container {
           position: relative;
         }
@@ -595,7 +639,6 @@ export default function AddSupplier() {
           color: var(--text-secondary, #6b7280);
         }
 
-        /* ── Address Section ──────────────────────────────────────── */
         .address-checkboxes {
           display: flex;
           gap: 20px;
@@ -603,7 +646,22 @@ export default function AddSupplier() {
           margin-top: 4px;
         }
 
-        /* ── Responsive ───────────────────────────────────────────── */
+        .form-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          padding-top: 12px;
+          border-top: 1px solid var(--border-color, #e5e7eb);
+          margin-top: 4px;
+        }
+
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
           .add-supplier-page { padding: 12px 16px; }
           .page-header { flex-direction: column; align-items: stretch; }
@@ -620,7 +678,6 @@ export default function AddSupplier() {
           .form-group input, .form-group select { font-size: 14px; padding: 10px 12px; }
         }
 
-        /* ─── Dark Theme ─────────────────────────────────────────── */
         .dark-theme .add-supplier-page { background: var(--layout-bg, #0f172a); }
         .dark-theme .page-header { border-bottom-color: var(--border-color, #334155); }
         .dark-theme .page-title { color: var(--text-primary, #f8fafc); }
@@ -643,8 +700,6 @@ export default function AddSupplier() {
         .dark-theme .btn-secondary:hover { background: var(--layout-bg, #0f172a); }
         .dark-theme .btn-primary { background: var(--primary-color, #3b82f6); }
         .dark-theme .btn-primary:hover { background: var(--primary-hover, #2563eb); }
-        .dark-theme .gst-autofill-badge { background: rgba(16,185,129,0.2); color: #34d399; }
-        .dark-theme .section-title .badge-info { background: var(--layout-bg, #0f172a); color: var(--text-secondary, #94a3b8); }
       `}</style>
 
       {/* Header */}
@@ -659,63 +714,20 @@ export default function AddSupplier() {
           <button className="btn-secondary" onClick={handleCancel}>
             Cancel
           </button>
-          <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
-            {loading && <FaSpinner className="spinning" />}
-            <FaSave size={14} /> Save Supplier
+          <button className="btn-primary" onClick={handleSubmit} disabled={loading || isSubmitting}>
+            {(loading || isSubmitting) && <FaSpinner className="spinning" />}
+            <FaSave size={14} /> {isSubmitting ? 'Saving...' : 'Save Supplier'}
           </button>
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* GSTIN Section */}
+        {/* Basic Information */}
         <div className="form-section">
           <div className="section-title">
-            <FaIdCard size={14} /> GSTIN / UIN
-            <span className="badge-info">Autofill party information</span>
+            <FaBuilding size={14} /> Basic Information
           </div>
           <div className="form-grid">
-            <div className="form-group full-width">
-              <label>GSTIN / UIN</label>
-              <input
-                type="text"
-                name="gstin"
-                value={formData.gstin}
-                onChange={handleGstinChange}
-                placeholder="Enter GSTIN (e.g., 27AABCU1234D1Z1)"
-                style={{ textTransform: 'uppercase' }}
-              />
-              {isGstAutofill && (
-                <div className="field-hint">
-                  <FaCheckCircle size={12} color="#10b981" />
-                  <span className="autofill-badge">✓ Party information autofilled</span>
-                </div>
-              )}
-              <div className="field-hint">
-                <FaInfoCircle size={12} />
-                Autofill party information by entering their GSTIN
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Supplier Details */}
-        <div className="form-section">
-          <div className="section-title">
-            <FaBuilding size={14} /> Supplier Details
-          </div>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Supplier Type <span className="required">*</span></label>
-              <select
-                name="supplierType"
-                value={formData.supplierType}
-                onChange={handleInputChange}
-              >
-                {supplierTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
             <div className="form-group">
               <label>Supplier Name <span className="required">*</span></label>
               <input
@@ -729,24 +741,77 @@ export default function AddSupplier() {
               {errors.supplierName && <span className="error-text">{errors.supplierName}</span>}
             </div>
             <div className="form-group">
-              <label>GST Category</label>
+              <label>Supplier Type <span className="required">*</span></label>
               <select
-                name="gstCategory"
-                value={formData.gstCategory}
+                name="supplierType"
+                value={formData.supplierType}
                 onChange={handleInputChange}
               >
-                {gstCategories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                {supplierTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
                 ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Supplier Group</label>
+              <select
+                name="supplierGroup"
+                value={formData.supplierGroup}
+                onChange={handleInputChange}
+              >
+                <option value="">Select Group</option>
+                {supplierGroups.map(group => (
+                  <option key={group} value={group}>{group}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Country <span className="required">*</span></label>
+              <select
+                name="country"
+                value={formData.country}
+                onChange={handleInputChange}
+              >
+                {countries.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Default Currency</label>
+              <select
+                name="defaultCurrency"
+                value={formData.defaultCurrency}
+                onChange={handleInputChange}
+              >
+                {currencies.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Language</label>
+              <select
+                name="language"
+                value={formData.language}
+                onChange={handleInputChange}
+              >
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="zh">Chinese</option>
+                <option value="ar">Arabic</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* Primary Contact Details */}
+        {/* Contact Details */}
         <div className="form-section">
           <div className="section-title">
-            <FaUser size={14} /> Primary Contact Details
+            <FaUser size={14} /> Contact Details
           </div>
           <div className="form-grid">
             <div className="form-group">
@@ -798,36 +863,57 @@ export default function AddSupplier() {
           </div>
         </div>
 
-        {/* Primary Address Details */}
+        {/* Address Details */}
         <div className="form-section">
           <div className="section-title">
-            <FaMapMarkerAlt size={14} /> Primary Address Details
-            <span className="badge-info">When you enter a GSTIN, the permanent address linked to it is autofilled.</span>
+            <FaMapMarkerAlt size={14} /> Address Details
           </div>
           <div className="form-grid">
             <div className="form-group full-width">
-              <div className="address-checkboxes">
-                <div className="checkbox-group">
-                  <input
-                    type="checkbox"
-                    id="isPrimaryAddress"
-                    name="isPrimaryAddress"
-                    checked={formData.isPrimaryAddress}
-                    onChange={handleInputChange}
-                  />
-                  <label htmlFor="isPrimaryAddress">Preferred Billing Address</label>
-                </div>
-                <div className="checkbox-group">
-                  <input
-                    type="checkbox"
-                    id="isShippingAddress"
-                    name="isShippingAddress"
-                    checked={formData.isShippingAddress}
-                    onChange={handleInputChange}
-                  />
-                  <label htmlFor="isShippingAddress">Preferred Shipping Address</label>
-                </div>
-              </div>
+              <label>Address Line 1 <span className="required">*</span></label>
+              <input
+                type="text"
+                name="addressLine1"
+                value={formData.addressLine1}
+                onChange={handleInputChange}
+                placeholder="Enter address line 1"
+                className={errors.addressLine1 ? 'error' : ''}
+              />
+              {errors.addressLine1 && <span className="error-text">{errors.addressLine1}</span>}
+            </div>
+            <div className="form-group full-width">
+              <label>Address Line 2</label>
+              <input
+                type="text"
+                name="addressLine2"
+                value={formData.addressLine2}
+                onChange={handleInputChange}
+                placeholder="Enter address line 2 (optional)"
+              />
+            </div>
+            <div className="form-group">
+              <label>City/Town <span className="required">*</span></label>
+              <input
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                placeholder="Enter city"
+                className={errors.city ? 'error' : ''}
+              />
+              {errors.city && <span className="error-text">{errors.city}</span>}
+            </div>
+            <div className="form-group">
+              <label>State/Province <span className="required">*</span></label>
+              <input
+                type="text"
+                name="state"
+                value={formData.state}
+                onChange={handleInputChange}
+                placeholder="Enter state"
+                className={errors.state ? 'error' : ''}
+              />
+              {errors.state && <span className="error-text">{errors.state}</span>}
             </div>
             <div className="form-group">
               <label>Postal Code <span className="required">*</span></label>
@@ -865,109 +951,150 @@ export default function AddSupplier() {
                 Change the Postal Code to autofill other addresses.
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Tax & Financial Details */}
+        <div className="form-section">
+          <div className="section-title">
+            <FaTag size={14} /> Tax & Financial Details
+          </div>
+          <div className="form-grid">
             <div className="form-group">
-              <label>City/Town <span className="required">*</span></label>
+              <label>Tax ID / GSTIN</label>
               <input
                 type="text"
-                name="city"
-                value={formData.city}
+                name="taxId"
+                value={formData.taxId}
                 onChange={handleInputChange}
-                placeholder="Enter city"
-                className={errors.city ? 'error' : ''}
-              />
-              {errors.city && <span className="error-text">{errors.city}</span>}
-            </div>
-            <div className="form-group full-width">
-              <label>Address Line 1 <span className="required">*</span></label>
-              <input
-                type="text"
-                name="addressLine1"
-                value={formData.addressLine1}
-                onChange={handleInputChange}
-                placeholder="Enter address line 1"
-                className={errors.addressLine1 ? 'error' : ''}
-              />
-              {errors.addressLine1 && <span className="error-text">{errors.addressLine1}</span>}
-            </div>
-            <div className="form-group full-width">
-              <label>Address Line 2</label>
-              <input
-                type="text"
-                name="addressLine2"
-                value={formData.addressLine2}
-                onChange={handleInputChange}
-                placeholder="Enter address line 2 (optional)"
+                placeholder="Enter tax ID"
               />
             </div>
             <div className="form-group">
-              <label>State/Province <span className="required">*</span></label>
-              <div className="suggestions-container">
-                <input
-                  type="text"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleStateChange}
-                  placeholder="Enter state"
-                  className={errors.state ? 'error' : ''}
-                />
-                {showStateSuggestions && (
-                  <div className="suggestions-list">
-                    {stateSuggestions.map(s => (
-                      <div 
-                        key={s} 
-                        className="suggestion-item"
-                        onClick={() => selectState(s)}
-                      >
-                        {s}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {errors.state && <span className="error-text">{errors.state}</span>}
-            </div>
-            <div className="form-group">
-              <label>Country <span className="required">*</span></label>
+              <label>Tax Category</label>
               <select
-                name="country"
-                value={formData.country}
+                name="taxCategory"
+                value={formData.taxCategory}
                 onChange={handleInputChange}
               >
-                {countries.map(c => (
-                  <option key={c} value={c}>{c}</option>
+                {taxCategories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
+            </div>
+            <div className="form-group">
+              <label>Payment Terms</label>
+              <select
+                name="paymentTerms"
+                value={formData.paymentTerms}
+                onChange={handleInputChange}
+              >
+                {paymentTerms.map(term => (
+                  <option key={term} value={term}>{term}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Default Price List</label>
+              <select
+                name="defaultPriceList"
+                value={formData.defaultPriceList}
+                onChange={handleInputChange}
+              >
+                {priceLists.map(pl => (
+                  <option key={pl} value={pl}>{pl}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group full-width">
+              <label>Default Bank Account</label>
+              <input
+                type="text"
+                name="defaultBankAccount"
+                value={formData.defaultBankAccount}
+                onChange={handleInputChange}
+                placeholder="Bank Name - Account Number"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Information */}
+        <div className="form-section">
+          <div className="section-title">
+            <FaInfoCircle size={14} /> Additional Information
+          </div>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Website</label>
+              <input
+                type="url"
+                name="website"
+                value={formData.website}
+                onChange={handleInputChange}
+                placeholder="https://www.example.com"
+              />
+            </div>
+            <div className="form-group full-width">
+              <label>Supplier Details</label>
+              <textarea
+                name="supplierDetails"
+                value={formData.supplierDetails}
+                onChange={handleInputChange}
+                placeholder="Additional notes about the supplier..."
+                rows={3}
+              />
+            </div>
+            <div className="form-group">
+              <div className="checkbox-group">
+                <input
+                  type="checkbox"
+                  name="isTransporter"
+                  checked={formData.isTransporter}
+                  onChange={handleInputChange}
+                  id="isTransporter"
+                />
+                <label htmlFor="isTransporter">Is Transporter</label>
+              </div>
+            </div>
+            <div className="form-group">
+              <div className="checkbox-group">
+                <input
+                  type="checkbox"
+                  name="isInternalSupplier"
+                  checked={formData.isInternalSupplier}
+                  onChange={handleInputChange}
+                  id="isInternalSupplier"
+                />
+                <label htmlFor="isInternalSupplier">Internal Supplier</label>
+              </div>
+            </div>
+            <div className="form-group">
+              <div className="checkbox-group">
+                <input
+                  type="checkbox"
+                  name="onHold"
+                  checked={formData.onHold}
+                  onChange={handleInputChange}
+                  id="onHold"
+                />
+                <label htmlFor="onHold">On Hold</label>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Form Actions */}
-        <div className="form-actions" style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '10px',
-          paddingTop: '12px',
-          borderTop: '1px solid var(--border-color, #e5e7eb)',
-          marginTop: '4px'
-        }}>
+        <div className="form-actions">
           <button type="button" className="btn-secondary" onClick={handleCancel}>
             Cancel
           </button>
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading && <FaSpinner className="spinning" />}
-            <FaSave size={14} /> Save Supplier
+          <button type="submit" className="btn-primary" disabled={loading || isSubmitting}>
+            {(loading || isSubmitting) && <FaSpinner className="spinning" />}
+            <FaSave size={14} /> {isSubmitting ? 'Saving...' : 'Save Supplier'}
           </button>
         </div>
       </form>
-
-      <style>{`
-        .spinning {
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
