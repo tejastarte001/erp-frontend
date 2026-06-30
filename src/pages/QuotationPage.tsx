@@ -1,11 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState,  } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FaSearch, FaPlus, FaEye, FaEdit, FaTrash, FaFilePdf, 
   FaFilter, FaCheckCircle, FaClock, FaTimesCircle,
-  FaPrint, FaFileAlt, FaExternalLinkAlt, FaDollarSign,
-  FaChartLine, FaTimes, FaArrowLeft, FaSave, FaSpinner,
-  FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt,
+  FaPrint, FaFileAlt, FaExternalLinkAlt, 
+  FaChartLine, FaTimes,  FaSave, FaSpinner,
+  FaEnvelope,
   FaUpload, FaImage
 } from 'react-icons/fa';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
@@ -41,7 +41,7 @@ interface Quotation {
 
 export default function Quotation() {
   const navigate = useNavigate();
-  const printRef = useRef<HTMLDivElement>(null);
+  // const printRef = useRef<HTMLDivElement>(null);
   
   let theme = 'light';
   try {

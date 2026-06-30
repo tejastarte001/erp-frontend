@@ -527,7 +527,7 @@ const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack }) => {
   const [opsPanelOpen, setOpsPanelOpen] = useState(true);
   const [withOperations, setWithOperations] = useState(false);
   const [itemToManufacture, setItemToManufacture] = useState("");
-  const [bomNo, setBomNo] = useState("");
+  const [, setBomNo] = useState("");
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
