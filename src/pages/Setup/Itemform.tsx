@@ -19,7 +19,7 @@ import {
   FaIndustry,
   FaClipboardCheck,
   FaLink,
-  FaSearch,
+  
 } from 'react-icons/fa';
 import "./ItemForm.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
@@ -120,6 +120,7 @@ function TextInput({
 }
 
 // Enhanced SelectInput with search functionality
+// Enhanced SelectInput with search functionality and fixed positioning
 function SelectInput({
   value,
   onChange,
@@ -136,15 +137,32 @@ function SelectInput({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const filteredOptions = options.filter(opt =>
     opt.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const selectedOption = options.find(opt => opt.value === value);
+
+  // Calculate dropdown position when opening
+  const calculateDropdownPosition = () => {
+    if (wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const dropdownHeight = Math.min(240, filteredOptions.length * 38 + 12);
+      
+      setDropdownPosition({
+        top: spaceBelow > dropdownHeight ? rect.bottom + 4 : rect.top - dropdownHeight - 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -161,6 +179,7 @@ function SelectInput({
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
+      calculateDropdownPosition();
     }
   }, [isOpen]);
 
@@ -172,6 +191,19 @@ function SelectInput({
       }
     }
   }, [highlightedIndex, isOpen]);
+
+  // Recalculate position on scroll or resize
+  useEffect(() => {
+    if (isOpen) {
+      const handleUpdate = () => calculateDropdownPosition();
+      window.addEventListener('scroll', handleUpdate, true);
+      window.addEventListener('resize', handleUpdate);
+      return () => {
+        window.removeEventListener('scroll', handleUpdate, true);
+        window.removeEventListener('resize', handleUpdate);
+      };
+    }
+  }, [isOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) {
@@ -215,6 +247,7 @@ function SelectInput({
   return (
     <div className="itf-select-container" ref={dropdownRef}>
       <div
+        ref={wrapperRef}
         className={`itf-select-wrapper ${isOpen ? 'itf-select-open' : ''}`}
         onClick={() => setIsOpen(true)}
       >
@@ -259,7 +292,18 @@ function SelectInput({
       </div>
 
       {isOpen && (
-        <div className="itf-select-dropdown" ref={listRef}>
+        <div
+          className="itf-select-dropdown"
+          ref={listRef}
+          style={{
+            position: 'fixed',
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+            maxHeight: '240px',
+            zIndex: 9999,
+          }}
+        >
           {loading ? (
             <div className="itf-select-loading">
               <FaSpinner className="spinning" size={16} />
@@ -324,79 +368,46 @@ function InlineTable({
   return (
     <>
       <div className="itf-table-block">
-        <table className="itf-inline-table">
-          <thead>
-            <tr>
-              <th className="itf-ith itf-ith-check"><input type="checkbox" className="itf-checkbox" /></th>
-              <th className="itf-ith itf-ith-no">No.</th>
-              {columns.map((c) => (
-                <th key={c.key} className="itf-ith">
-                  {c.label} {c.required && <span className="itf-req">*</span>}
+        <div className="itf-table-scroll-wrapper">
+          <table className="itf-inline-table">
+            <thead>
+              <tr>
+                <th className="itf-ith itf-ith-check"><input type="checkbox" className="itf-checkbox" /></th>
+                <th className="itf-ith itf-ith-no">No.</th>
+                {columns.map((c) => (
+                  <th key={c.key} className="itf-ith">
+                    {c.label} {c.required && <span className="itf-req">*</span>}
+                  </th>
+                ))}
+                <th className="itf-ith itf-ith-act">
+                  <SettingsIcon />
                 </th>
-              ))}
-              <th className="itf-ith itf-ith-act">
-                <SettingsIcon />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr><td colSpan={columns.length + 3} className="itf-empty-row">No rows</td></tr>
-            ) : (
-              rows.map((row, i) => (
-                <tr key={row.id} className="itf-itr">
-                  <td className="itf-itd"><input type="checkbox" className="itf-checkbox" /></td>
-                  <td className="itf-itd itf-itd-no">{i + 1}</td>
-                  {columns.map((c) => (
-                    <td key={c.key} className="itf-itd">
-                      {renderCell(row, c.key, () => {})}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr><td colSpan={columns.length + 3} className="itf-empty-row">No rows</td></tr>
+              ) : (
+                rows.map((row, i) => (
+                  <tr key={row.id} className="itf-itr">
+                    <td className="itf-itd"><input type="checkbox" className="itf-checkbox" /></td>
+                    <td className="itf-itd itf-itd-no">{i + 1}</td>
+                    {columns.map((c) => (
+                      <td key={c.key} className="itf-itd itf-cell-with-dropdown">
+                        {renderCell(row, c.key, () => {})}
+                      </td>
+                    ))}
+                    <td className="itf-itd">
+                      <button className="itf-remove-row" onClick={() => onRemoveRow(row.id)}>×</button>
                     </td>
-                  ))}
-                  <td className="itf-itd">
-                    <button className="itf-remove-row" onClick={() => onRemoveRow(row.id)}>×</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       <button className="itf-add-row" onClick={onAddRow}><FaPlus size={10} /> Add row</button>
-    </>
-  );
-}
-
-function CommentsActivity() {
-  const [comment, setComment] = useState("");
-  return (
-    <>
-      <div className="itf-divider" />
-      <section className="itf-section">
-        <SectionTitle>Comments</SectionTitle>
-        <div className="itf-comment-row">
-          <div className="itf-comment-avatar">TT</div>
-          <input
-            className="itf-comment-input"
-            placeholder="Type a reply / comment"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
-        </div>
-      </section>
-      <div className="itf-divider" />
-      <section className="itf-section itf-section-activity">
-        <div className="itf-activity-header">
-          <SectionTitle>Activity</SectionTitle>
-          <button className="itf-new-email-btn">+ New Email</button>
-        </div>
-        <ul className="itf-activity-list">
-          <li>You created this · <span className="itf-activity-time">5 hours ago</span></li>
-          <li>You last edited this · <span className="itf-activity-time">5 hours ago</span></li>
-        </ul>
-        <button className="itf-activity-collapse">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
-        </button>
-      </section>
     </>
   );
 }
@@ -554,8 +565,6 @@ function DetailsTab({ form, setForm }: { form: any; setForm: (f: any) => void })
           </div>
         </div>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -604,16 +613,109 @@ function AccountingTab({ form, setForm }: { form: any; setForm: (f: any) => void
           </div>
         </div>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
 
-function UOMTab() {
-  const [rows, setRows] = useState<TableRow[]>([
-    { id: "1", uom: "Nos", conversionFactor: "1" },
-  ]);
+
+
+// In the UOMTab component, update the state and logic:
+
+function UOMTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
+  // Initialize with the default UOM from the form
+  const [rows, setRows] = useState<TableRow[]>(() => {
+    // If we have a default UOM from the form, use it
+    if (form.defaultUOM) {
+      return [{ id: "1", uom: form.defaultUOM, conversionFactor: "1" }];
+    }
+    return [{ id: "1", uom: "Nos", conversionFactor: "1" }];
+  });
+
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const [uoms, setUoms] = useState<UOM[]>([]);
+  const [loadingUoms, setLoadingUoms] = useState(false);
+
+  useEffect(() => {
+    const fetchUoms = async () => {
+      setLoadingUoms(true);
+      try {
+        const response = await api.get("/uom");
+        if (response.data.success === 1) {
+          setUoms(response.data.data.records || []);
+        }
+      } catch (err) {
+        console.error('Error fetching UOMs:', err);
+        toast.error('Failed to load UOMs');
+      } finally {
+        setLoadingUoms(false);
+      }
+    };
+    fetchUoms();
+  }, []);
+
+  // Update rows when form.defaultUOM changes
+  useEffect(() => {
+    if (form.defaultUOM && rows.length > 0) {
+      // Only update if the first row doesn't have a UOM or is empty
+      if (!rows[0].uom || rows[0].uom === "") {
+        setRows([{ id: rows[0].id, uom: form.defaultUOM, conversionFactor: "1" }]);
+      }
+    }
+  }, [form.defaultUOM]);
+
+  const uomOptions = uoms
+    .filter(uom => uom.enabled === 1)
+    .map(uom => ({
+      label: uom.uom_name + (uom.symbol ? ` (${uom.symbol})` : ''),
+      value: uom.uom_name
+    }));
+
+  const getUOMLabel = (value: string) => {
+    const option = uomOptions.find(opt => opt.value === value);
+    return option ? option.label : value;
+  };
+
+  const handleUOMChange = (rowId: string, value: string) => {
+    setRows(rows.map(row =>
+      row.id === rowId ? { ...row, uom: value } : row
+    ));
+    // Exit edit mode after selection
+    setEditingRowId(null);
+  };
+
+  const handleConversionChange = (rowId: string, value: string) => {
+    setRows(rows.map(row =>
+      row.id === rowId ? { ...row, conversionFactor: value } : row
+    ));
+  };
+
+  const handleRowClick = (rowId: string) => {
+    setEditingRowId(rowId);
+  };
+
+  const handleAddRow = () => {
+    const newRow = makeRow(["uom", "conversionFactor"]);
+    setRows([...rows, newRow]);
+    // Automatically enter edit mode for the new row
+    setEditingRowId(newRow.id);
+  };
+
+  // Determine if we're in view mode (when the item is disabled)
+  const isViewMode = form?.disabled === true;
+
+  // Check if we should show view mode for a specific row
+  const shouldShowViewMode = (rowId: string) => {
+    // If the item is disabled, always show view mode
+    if (isViewMode) return true;
+    // If this row is being edited, show dropdown
+    if (editingRowId === rowId) return false;
+    // For the first row with default UOM, show view mode
+    const rowIndex = rows.findIndex(r => r.id === rowId);
+    if (rowIndex === 0 && form.defaultUOM) return true;
+    // For other rows, show view mode if they have a value
+    const row = rows.find(r => r.id === rowId);
+    return row && row.uom && row.uom !== "";
+  };
 
   return (
     <>
@@ -629,17 +731,91 @@ function UOMTab() {
             { key: "conversionFactor", label: "Conversion Factor" },
           ]}
           rows={rows}
-          onAddRow={() => setRows([...rows, makeRow(["uom","conversionFactor"])])}
-          onRemoveRow={(id) => setRows(rows.filter((r) => r.id !== id))}
-          renderCell={(row, col) => (
-            <input className="itf-cell-input" defaultValue={row[col]} />
-          )}
+          onAddRow={handleAddRow}
+          onRemoveRow={(id) => {
+            // Don't allow removing the last row
+            if (rows.length > 1) {
+              setRows(rows.filter((r) => r.id !== id));
+              if (editingRowId === id) setEditingRowId(null);
+            }
+          }}
+          renderCell={(row, col) => {
+            if (col === "uom") {
+              const showView = shouldShowViewMode(row.id);
+              
+              if (showView) {
+                return (
+                  <div 
+                    className="itf-view-text itf-clickable-view"
+                    onClick={() => {
+                      // Allow editing by clicking on view mode (if not in view-only mode)
+                      if (!isViewMode) {
+                        setEditingRowId(row.id);
+                      }
+                    }}
+                    style={{ cursor: isViewMode ? 'default' : 'pointer' }}
+                  >
+                    {row.uom ? getUOMLabel(row.uom) : "—"}
+                    
+                  </div>
+                );
+              }
+              
+              return (
+                <SelectInput
+                  value={row.uom || ""}
+                  onChange={(v) => handleUOMChange(row.id, v)}
+                  options={uomOptions}
+                  loading={loadingUoms}
+                  placeholder="Search for a UOM..."
+                />
+              );
+            }
+            if (col === "conversionFactor") {
+              const showView = shouldShowViewMode(row.id);
+              
+              if (showView) {
+                return (
+                  <div 
+                    className="itf-view-text itf-clickable-view"
+                    onClick={() => {
+                      if (!isViewMode) {
+                        setEditingRowId(row.id);
+                      }
+                    }}
+                    style={{ cursor: isViewMode ? 'default' : 'pointer' }}
+                  >
+                    {row.conversionFactor || "—"}
+                  </div>
+                );
+              }
+              
+              return (
+                <input
+                  className="itf-cell-input"
+                  value={row.conversionFactor || ""}
+                  onChange={(e) => handleConversionChange(row.id, e.target.value)}
+                  placeholder="Enter conversion factor"
+                  type="number"
+                  step="0.001"
+                  onBlur={() => {
+                    // Exit edit mode when clicking away, but only if the row has a value
+                    if (row.uom && row.uom !== "") {
+                      setEditingRowId(null);
+                    }
+                  }}
+                  autoFocus
+                />
+              );
+            }
+            return null;
+          }}
         />
       </section>
-      <CommentsActivity />
     </>
   );
 }
+
 
 function TaxTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
   const [taxes, setTaxes] = useState<TableRow[]>([]);
@@ -688,8 +864,6 @@ function TaxTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
           </div>
         </div>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -790,8 +964,6 @@ function InventoryTab({ form, setForm }: { form: any; setForm: (f: any) => void 
           />
         </Field>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -850,8 +1022,6 @@ function PurchasingTab({ form, setForm }: { form: any; setForm: (f: any) => void
           </Field>
         </div>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -899,8 +1069,6 @@ function SalesTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
           />
         </Field>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -930,7 +1098,6 @@ function ManufacturingTab({ form, setForm }: { form: any; setForm: (f: any) => v
           </div>
         </div>
       </section>
-      <CommentsActivity />
     </>
   );
 }
@@ -942,7 +1109,6 @@ function QualityTab() {
         <SectionTitle>Quality</SectionTitle>
         <div className="itf-empty-state">No quality inspection templates configured.</div>
       </section>
-      <CommentsActivity />
     </>
   );
 }
@@ -958,7 +1124,6 @@ function PricingTab() {
           <button className="itf-add-price-btn">+ Add Price</button>
         </div>
       </section>
-      <CommentsActivity />
     </>
   );
 }
@@ -1062,8 +1227,6 @@ function ConnectionsTab() {
           <div className="itf-conn-group" />
         </div>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -1268,7 +1431,7 @@ export default function ItemForm() {
     switch (activeTab) {
       case 0: return <DetailsTab {...tabProps} />;
       case 1: return <AccountingTab {...tabProps} />;
-      case 2: return <UOMTab />;
+      case 2: return <UOMTab {...tabProps} />;
       case 3: return <TaxTab {...tabProps} />;
       case 4: return <InventoryTab {...tabProps} />;
       case 5: return <PurchasingTab {...tabProps} />;

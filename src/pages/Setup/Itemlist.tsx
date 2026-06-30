@@ -174,9 +174,9 @@ export default function ItemList() {
     });
   };
 
-  const handleAddItem = () => {
-    navigate('/item/new');
-  };
+const handleAddItem = () => {
+  setShowModal(true);  // This opens the quick add modal instead of navigating
+};
 
   return (
     <div className={`itl-page ${theme}`}>
