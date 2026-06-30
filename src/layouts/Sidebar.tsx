@@ -34,38 +34,11 @@ export default function Sidebar({
   });
 
   // Update module based on current path
-  useEffect(() => {
-    const path = location.pathname;
-    
-    if (path === '/home' || path === '/dashboard') {
-      return;
-    }
-    
-    if (path.startsWith('/bom') || path.startsWith('/work-order') || 
-        path.startsWith('/job-card') || path.startsWith('/stock-entry') || 
-        path.startsWith('/material-planning') || path.startsWith('/quality')) {
-      setCurrentModule('manufacturing');
-    } else if (path.startsWith('/item-list') || path.startsWith('/item-group') || 
-               path.startsWith('/item-attribute') || path.startsWith('/brand') || 
-               path.startsWith('/warehouse') || path.startsWith('/uom') || 
-               path.startsWith('/uom-conversion') || path.startsWith('/serial-no') || 
-               path.startsWith('/batch-no') || path.startsWith('/serial-batch-bundle') ||
-               path.startsWith('/stock')) {
-      setCurrentModule('setup');
-    } else if (path.startsWith('/sales-order') || path.startsWith('/sales-invoice') || 
-               path.startsWith('/delivery-note') || path.startsWith('/customers') ||
-               path.startsWith('/quotation')) {
-      setCurrentModule('sales');
-    } else if (path.startsWith('/company') || path.startsWith('/letter-head')) {
-      setCurrentModule('organization');
-    } else if (path.startsWith('/reports')) {
-      setCurrentModule('reports');
-    } else if (path.startsWith('/tools')) {
-      setCurrentModule('tools');
-    } else if (path.startsWith('/settings')) {
-      setCurrentModule('system');
-    }
-  }, [location.pathname, setCurrentModule]);
+ useEffect(() => {
+  if (location.pathname === "/home") {
+    setCurrentModule("home");
+  }
+}, [location.pathname, setCurrentModule]);
 
   // Save expanded categories to localStorage
   useEffect(() => {
@@ -159,6 +132,9 @@ export default function Sidebar({
         { title: 'Item Attribute', icon: <TagIcon />, path: '/item-attribute' },
         { title: 'Brand', icon: <BrandIcon />, path: '/brand' },
         { title: 'Warehouse', icon: <WarehouseIcon />, path: '/warehouse' },
+        { title: 'Workstation', icon: <WarehouseIcon />, path: '/Workstation' },
+        { title: 'Operations', icon: <WarehouseIcon />, path: '/operations' },
+
         { title: 'Unit of Measure (UOM)', icon: <RulerIcon />, path: '/uom' },
         // { title: 'UOM Conversion Factor', icon: <RepeatIcon />, path: '/uom-conversion' },
         // { title: 'Serial No', icon: <HashIcon />, path: '/serial-no' },
@@ -224,19 +200,20 @@ export default function Sidebar({
   ];
 
   // Filter categories based on current module
-  const getFilteredCategories = () => {
-    if (currentModule === 'home') {
-      return allMenuCategories.filter(cat => 
-        cat.module === 'home' || cat.module === 'system'
-      );
-    } else {
-      return allMenuCategories.filter(cat => 
-        cat.module === 'home' || 
-        cat.module === currentModule || 
-        cat.module === 'system'
-      );
-    }
-  };
+const getFilteredCategories = () => {
+  if (currentModule === 'home') {
+    return allMenuCategories.filter(cat =>
+      cat.module === 'home' || cat.module === 'system'
+    );
+  } else {
+    return allMenuCategories.filter(cat =>
+      cat.module === 'home' ||
+      cat.module === currentModule ||
+      cat.module === 'system'
+    );
+  }
+};
+
 
   const menuCategories = getFilteredCategories();
 

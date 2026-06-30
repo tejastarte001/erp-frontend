@@ -184,7 +184,7 @@ export default function BrandList() {
   return (
     <div className={`bl-page ${theme}`}>
       {/* Stats Cards */}
-      <div className="bl-stats-container">
+      {/* <div className="bl-stats-container">
         {stats.map((stat, index) => (
           <div key={index} className="bl-stat-card" style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}cc 100%)` }}>
             <div className="bl-stat-icon">{stat.icon}</div>
@@ -194,7 +194,7 @@ export default function BrandList() {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* Search and Filter Bar */}
       <div className="bl-filter-bar">

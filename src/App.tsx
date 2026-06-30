@@ -40,7 +40,7 @@ import LetterHeadList from "./pages/LetterHeadList";
 import AddLetterHeadForm from "./pages/AddLetterHeadForm";
 import QuotationPage from "./pages/QuotationPage";
 import CreateQuotationPage from "./pages/CreateQuotation";
-import WorkOrder from "./pages/WorkOrder";
+// import WorkOrder from "./pages/WorkOrder";
 
 import PriceList from "./pages/PriceList";
 import ItemPrice from "./pages/ItemPrice";
@@ -57,8 +57,14 @@ import NewSupplierQuotation from "./pages/NewSupplierQuotation";
 import SupplierQuotation from "./pages/SupplierQuotation";
 import PurchaseInvoice from "./pages/PurchaseInvoice";
 import NewPurchaseInvoice from "./pages/NewPurchaseInvoice";
+import WorkOrderForm from "./pages/WorkOrderForm";
+import WorkOrderList from "./pages/WorkOrder";
+import Workstation from "./pages/Workstation";
+import NewWorkstation from "./pages/NewWorkstation";
+import OperationListing from "./pages/Setup/OperationListing";
+import OperationQuickAdd from "./pages/Setup/OperationQuickAdd";
 
-
+OperationListing
 function App() {
   return (
     <AdminThemeProvider>
@@ -124,13 +130,32 @@ function App() {
               <Route path="/warehouse/new" element={<WarehouseForm />} />
               <Route path="/warehouse/:id" element={<WarehouseForm />} />
 
-              {/* Work Order Routes */}
-              <Route path="/work-order" element={<WorkOrder />} />
+              // In your router configuration
+<Route path="/work-order" element={<WorkOrderList />} />
+<Route path="/work-order/new" element={<WorkOrderForm />} />
+<Route path="/work-order/:id" element={<WorkOrderForm />} />
+
               {/* Brand Routes */}
               <Route path="/brand" element={<BrandList />} />
               <Route path="/brand/new" element={<BrandForm />} />
               <Route path="/brand/:id" element={<BrandForm />} />
 
+
+                            {/* NewWorkstation Routes */}
+                            <Route path="/NewWorkstation" element={<NewWorkstation />} />
+
+
+
+                            {/* operation Routes */}
+                            
+
+// In your router configuration:
+<Route path="/operations" element={<OperationListing />} />
+<Route path="/operation/new" element={<OperationQuickAdd />} />
+<Route path="/operation/:id" element={<OperationQuickAdd />} />
+<Route path="/operation/:id/edit" element={<OperationQuickAdd />} />
+
+              
               {/* UOM Routes */}
               <Route path="/uom" element={<UOMList />} />
               <Route path="/uom/new" element={<UOMForm />} />
@@ -138,6 +163,7 @@ function App() {
 
               <Route path="/bom" element={<BOMPage />} />
               <Route path="/bom/new" element={<NewBOMPage />} />
+              <Route path="/Workstation" element={<Workstation />} />
 
               <Route path="/settings" element={<Settings />} />
             </Route>
