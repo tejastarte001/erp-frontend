@@ -33,13 +33,6 @@ interface Warehouse {
   disabled: number;
 }
 
-interface WarehouseFormData {
-  name: string;
-  company: string;
-  account: string;
-  isGroup: boolean;
-}
-
 interface ApiResponse {
   success: number;
   data: {
@@ -67,12 +60,6 @@ export default function WarehouseList() {
   const [totalItems, setTotalItems] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
-  const [formData, setFormData] = useState<WarehouseFormData>({
-    name: "",
-    company: "",
-    account: "",
-    isGroup: false,
-  });
 
   // Fetch warehouses from API
   const fetchWarehouses = async () => {
@@ -176,28 +163,23 @@ export default function WarehouseList() {
     return pages;
   };
 
-  const handleOpenModal = () => {
-    setFormData({ name: "", company: "", account: "", isGroup: false });
-    setShowModal(true);
+  // Updated: Navigate to warehouse form for new warehouse
+  const handleAddWarehouse = () => {
+    navigate('/warehouse/new');
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setFormData({ name: "", company: "", account: "", isGroup: false });
+  // Updated: Navigate to warehouse form for editing
+  const handleEditWarehouse = (warehouse: Warehouse) => {
+    navigate(`/warehouse/${encodeURIComponent(warehouse.warehouse_name)}`, {
+      state: { warehouseData: warehouse }
+    });
   };
 
-  const handleSave = () => {
-    if (formData.name.trim()) {
-      navigate(`/warehouse/${encodeURIComponent(formData.name)}`);
-      handleCloseModal();
-    }
-  };
-
-  const handleEditFull = () => {
-    if (formData.name.trim()) {
-      navigate(`/warehouse/${encodeURIComponent(formData.name)}`);
-      handleCloseModal();
-    }
+  // Updated: Navigate to warehouse form for viewing
+  const handleViewWarehouse = (warehouse: Warehouse) => {
+    navigate(`/warehouse/${encodeURIComponent(warehouse.warehouse_name)}`, {
+      state: { warehouseData: warehouse }
+    });
   };
 
   const handleDelete = (item: Warehouse) => {
@@ -242,19 +224,6 @@ export default function WarehouseList() {
 
   return (
     <div className={`wl-page ${theme}`}>
-      {/* Stats Cards - Uncomment if needed */}
-      {/* <div className="wl-stats-container">
-        {stats.map((stat, index) => (
-          <div key={index} className="wl-stat-card" style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}cc 100%)` }}>
-            <div className="wl-stat-icon">{stat.icon}</div>
-            <div className="wl-stat-content">
-              <p className="wl-stat-title">{stat.title}</p>
-              <p className="wl-stat-value">{stat.value}</p>
-            </div>
-          </div>
-        ))}
-      </div> */}
-
       {/* Search and Filter Bar */}
       <div className="wl-filter-bar">
         <div className="wl-filter-left">
@@ -295,7 +264,7 @@ export default function WarehouseList() {
             Created On
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
-          <button className="wl-btn-primary" onClick={handleOpenModal}>
+          <button className="wl-btn-primary" onClick={handleAddWarehouse}>
             <FaPlus size={12} />
             Add Warehouse
           </button>
@@ -405,14 +374,14 @@ export default function WarehouseList() {
                         <div className="wl-action-buttons">
                           <button 
                             className="wl-action-btn wl-action-view" 
-                            onClick={(e) => { e.stopPropagation(); handleRowClick(row); }}
+                            onClick={(e) => { e.stopPropagation(); handleViewWarehouse(row); }}
                             title="View"
                           >
                             <FaEye size={12} />
                           </button>
                           <button 
                             className="wl-action-btn wl-action-edit" 
-                            onClick={(e) => { e.stopPropagation(); handleRowClick(row); }}
+                            onClick={(e) => { e.stopPropagation(); handleEditWarehouse(row); }}
                             title="Edit"
                           >
                             <FaEdit size={12} />
@@ -499,83 +468,6 @@ export default function WarehouseList() {
             </div>
           </div>
         </>
-      )}
-
-      {/* New Warehouse Modal */}
-      {showModal && (
-        <div className="wl-modal-overlay" onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
-          <div className="wl-modal">
-            <div className="wl-modal-header">
-              <div className="wl-modal-header-left">
-                <div className="wl-modal-icon">
-                  <FaWarehouse size={16} />
-                </div>
-                <span className="wl-modal-title">New Warehouse</span>
-              </div>
-              <button className="wl-modal-close" onClick={handleCloseModal}>
-                <FaTimes size={16} />
-              </button>
-            </div>
-
-            <div className="wl-modal-body">
-              <div className="wl-field">
-                <label className="wl-label">Warehouse Name <span className="wl-req">*</span></label>
-                <input
-                  className="wl-input"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  autoFocus
-                  placeholder="Enter warehouse name"
-                />
-              </div>
-
-              <div className="wl-field">
-                <label className="wl-label">Company</label>
-                <input
-                  className="wl-input"
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  placeholder="Enter company name"
-                />
-              </div>
-
-              <div className="wl-field">
-                <label className="wl-label">Account</label>
-                <input
-                  className="wl-input"
-                  value={formData.account}
-                  onChange={(e) => setFormData({ ...formData, account: e.target.value })}
-                  placeholder="Enter account name"
-                />
-              </div>
-
-              <div className="wl-field">
-                <label className="wl-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.isGroup}
-                    onChange={(e) => setFormData({ ...formData, isGroup: e.target.checked })}
-                    className="wl-checkbox"
-                  />
-                  Is Group Warehouse
-                </label>
-              </div>
-            </div>
-
-            <div className="wl-modal-footer">
-              <button className="wl-btn-edit-full" onClick={handleEditFull}>
-                <FaEdit size={12} /> Edit Full Form
-              </button>
-              <button 
-                className="wl-btn-save" 
-                onClick={handleSave}
-                disabled={!formData.name.trim()}
-              >
-                <FaCheck size={12} /> Save
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Delete Confirmation Modal */}
