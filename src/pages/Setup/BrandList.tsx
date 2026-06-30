@@ -84,13 +84,6 @@ export default function BrandList() {
     validCurrentPage * itemsPerPage
   );
 
-  // Stats
-  const stats = [
-    { title: 'Total Brands', value: brands.length, icon: <FaTag />, color: '#6366f1' },
-    { title: 'Active Brands', value: brands.length, icon: <FaTag />, color: '#10b981' },
-    { title: 'With Description', value: brands.filter(b => b.description).length, icon: <FaTag />, color: '#f59e0b' },
-    { title: 'Total Products', value: brands.length * 5, icon: <FaTag />, color: '#8b5cf6' },
-  ];
 
   const toggleAll = () => {
     if (allChecked) {

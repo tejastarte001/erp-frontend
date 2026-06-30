@@ -40,7 +40,7 @@ import LetterHeadList from "./pages/LetterHeadList";
 import AddLetterHeadForm from "./pages/AddLetterHeadForm";
 import QuotationPage from "./pages/QuotationPage";
 import CreateQuotationPage from "./pages/CreateQuotation";
-// import WorkOrder from "./pages/WorkOrder";
+
 
 import PriceList from "./pages/PriceList";
 import ItemPrice from "./pages/ItemPrice";
@@ -64,7 +64,7 @@ import NewWorkstation from "./pages/NewWorkstation";
 import OperationListing from "./pages/Setup/OperationListing";
 import OperationQuickAdd from "./pages/Setup/OperationQuickAdd";
 
-OperationListing
+
 function App() {
   return (
     <AdminThemeProvider>
@@ -76,28 +76,28 @@ function App() {
 
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
-                          <Route path="/sales-order" element={<SalesOrder />} />
-            <Route path="/sales-invoice" element={<SalesInvoice />} />
-            <Route path="/sales-order/new" element={<CreateSalesOrder />} />
-            <Route path="/sales-invoice/new" element={<CreateSalesInvoice />} />
-            <Route path="/quotation" element={<QuotationPage />} />
-            <Route path="/quotation/new" element={<CreateQuotationPage />} />
-            <Route path="/price-list" element={<PriceList />} />
-            <Route path="/item-price" element={<ItemPrice />} />
-            <Route path="/pricing-rule" element={<PricingRule />} />
-            <Route path="/coupon-codes" element={<CouponCode />} />
-            <Route path="/supplier" element={<Supplier />} />
-           <Route path="/supplier/new" element={<AddSupplier />} />
-           <Route path="/supplier-group" element={<SupplierGroup />} />
-            <Route path="/contacts" element={<Contacts />} />
-            <Route path="/material-request" element={<MaterialRequest />} />
-            <Route path="/purchase-order" element={<PurchaseOrder />} />
-            <Route path="/request-for-quotation" element={<RequestForQuotation />} />
-            <Route path="/supplier-quotation" element={<SupplierQuotation />} />
-            <Route path="/supplier-quotation/new" element={<NewSupplierQuotation />} />
-            <Route path="/purchase-invoice" element={<PurchaseInvoice />} />
-            <Route path="/purchase-invoice/new" element={<NewPurchaseInvoice />} />
-            {/* <Route path="/sales" element={<SalesPage />} />
+              <Route path="/sales-order" element={<SalesOrder />} />
+              <Route path="/sales-invoice" element={<SalesInvoice />} />
+              <Route path="/sales-order/new" element={<CreateSalesOrder />} />
+              <Route path="/sales-invoice/new" element={<CreateSalesInvoice />} />
+              <Route path="/quotation" element={<QuotationPage />} />
+              <Route path="/quotation/new" element={<CreateQuotationPage />} />
+              <Route path="/price-list" element={<PriceList />} />
+              <Route path="/item-price" element={<ItemPrice />} />
+              <Route path="/pricing-rule" element={<PricingRule />} />
+              <Route path="/coupon-codes" element={<CouponCode />} />
+              <Route path="/supplier" element={<Supplier />} />
+              <Route path="/supplier/new" element={<AddSupplier />} />
+              <Route path="/supplier-group" element={<SupplierGroup />} />
+              <Route path="/contacts" element={<Contacts />} />
+              <Route path="/material-request" element={<MaterialRequest />} />
+              <Route path="/purchase-order" element={<PurchaseOrder />} />
+              <Route path="/request-for-quotation" element={<RequestForQuotation />} />
+              <Route path="/supplier-quotation" element={<SupplierQuotation />} />
+              <Route path="/supplier-quotation/new" element={<NewSupplierQuotation />} />
+              <Route path="/purchase-invoice" element={<PurchaseInvoice />} />
+              <Route path="/purchase-invoice/new" element={<NewPurchaseInvoice />} />
+              {/* <Route path="/sales" element={<SalesPage />} />
             <Route path="/purchase" element={<PurchasePage />} />
             <Route path="/inventory" element={<InventoryPage />} />
             <Route path="/production" element={<ProductionPage />} />
@@ -117,13 +117,13 @@ function App() {
               <Route path="/item-attribute/new" element={<ItemAttributeForm />} />
               <Route path="/item-attribute/:id" element={<ItemAttributeForm />} />
 
-            {/* Organization Routes */}
-            <Route path="/company" element={<CompanyList />} />
-            <Route path="/company/new" element={<AddCompanyForm />} />
-            <Route path="/company/:id" element={<AddCompanyForm />} />
-            <Route path="/letter-head" element={<LetterHeadList />} />
-            <Route path="/letter-head/new" element={<AddLetterHeadForm />} />
-            <Route path="/letter-head/:id" element={<AddLetterHeadForm />} />
+              {/* Organization Routes */}
+              <Route path="/company" element={<CompanyList />} />
+              <Route path="/company/new" element={<AddCompanyForm />} />
+              <Route path="/company/:id" element={<AddCompanyForm />} />
+              <Route path="/letter-head" element={<LetterHeadList />} />
+              <Route path="/letter-head/new" element={<AddLetterHeadForm />} />
+              <Route path="/letter-head/:id" element={<AddLetterHeadForm />} />
 
               {/* Warehouse Routes */}
               <Route path="/warehouse" element={<WarehouseList />} />
@@ -131,9 +131,9 @@ function App() {
               <Route path="/warehouse/:id" element={<WarehouseForm />} />
 
               // In your router configuration
-<Route path="/work-order" element={<WorkOrderList />} />
-<Route path="/work-order/new" element={<WorkOrderForm />} />
-<Route path="/work-order/:id" element={<WorkOrderForm />} />
+              <Route path="/work-order" element={<WorkOrderList />} />
+              <Route path="/work-order/new" element={<WorkOrderForm />} />
+              <Route path="/work-order/:id" element={<WorkOrderForm />} />
 
               {/* Brand Routes */}
               <Route path="/brand" element={<BrandList />} />

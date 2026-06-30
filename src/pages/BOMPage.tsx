@@ -391,43 +391,7 @@ const BOMPage: React.FC = () => {
             </div>
           )}
 
-          {/* ── Stats Cards ───────────────────────────────────────────────── */}
-          <div className="bom-stats-container">
-            <div className="bom-stat-card" style={{ background: 'linear-gradient(135deg, #6366f1, #818cf8)' }}>
-              <div className="bom-stat-icon"><FileStack size={20} /></div>
-              <div className="bom-stat-content">
-                <div className="bom-stat-title">Total BOMs</div>
-                <div className="bom-stat-value">{totalRecords}</div>
-              </div>
-            </div>
-            <div className="bom-stat-card" style={{ background: 'linear-gradient(135deg, #10b981, #34d399)' }}>
-              <div className="bom-stat-icon"><Check size={20} /></div>
-              <div className="bom-stat-content">
-                <div className="bom-stat-title">Active</div>
-                <div className="bom-stat-value">
-                  {bomData.filter(b => b.is_active === 1).length}
-                </div>
-              </div>
-            </div>
-            <div className="bom-stat-card" style={{ background: 'linear-gradient(135deg, #f59e0b, #fbbf24)' }}>
-              <div className="bom-stat-icon"><FileStack size={20} /></div>
-              <div className="bom-stat-content">
-                <div className="bom-stat-title">Draft</div>
-                <div className="bom-stat-value">
-                  {bomData.filter(b => b.is_active === 0).length}
-                </div>
-              </div>
-            </div>
-            <div className="bom-stat-card" style={{ background: 'linear-gradient(135deg, #3b82f6, #60a5fa)' }}>
-              <div className="bom-stat-icon"><FileStack size={20} /></div>
-              <div className="bom-stat-content">
-                <div className="bom-stat-title">Total Cost</div>
-                <div className="bom-stat-value">
-                  ₹ {bomData.reduce((sum, b) => sum + b.total_cost, 0).toFixed(0)}
-                </div>
-              </div>
-            </div>
-          </div>
+          
 
           {/* ── Search and Filter Bar ─────────────────────────────────────── */}
           <div className="bom-filter-bar">

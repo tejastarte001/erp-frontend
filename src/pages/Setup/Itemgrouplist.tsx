@@ -11,10 +11,6 @@ import {
   FaEye,
   FaEdit,
   FaTrash,
-  FaFolder,
-  FaFolderOpen,
-  FaTags,
-  FaChartPie,
   FaPlus,
 } from 'react-icons/fa';
 import "./ItemGroupList.css";
@@ -147,16 +143,7 @@ export default function ItemGroupList() {
     validCurrentPage * itemsPerPage
   );
 
-  // Stats
-  const totalGroups = itemGroups.filter(item => item.isGroup).length;
-  const totalItemsCount = itemGroups.filter(item => !item.isGroup).length;
 
-  const stats = [
-    { title: 'Total', value: itemGroups.length, icon: <FaFolder />, color: '#6366f1' },
-    { title: 'Parent Groups', value: totalGroups, icon: <FaFolderOpen />, color: '#10b981' },
-    { title: 'Sub Items', value: totalItemsCount, icon: <FaTags />, color: '#f59e0b' },
-    { title: 'Categories', value: Math.ceil(itemGroups.length / 2), icon: <FaChartPie />, color: '#3b82f6' },
-  ];
 
   const toggleAll = () => {
     if (allChecked) {
