@@ -1,3 +1,4 @@
+/* LoginPage.css */
 * {
   margin: 0;
   padding: 0;
@@ -50,13 +51,16 @@ html, body, #root {
   margin-bottom: 16px;
 }
 
-.login-logo svg {
-  width: 56px;
-  height: 56px;
-  padding: 12px;
-  background: var(--primary-gradient, #5c7cba);
-  border-radius: 12px;
-  stroke: white;
+.login-logo-image {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.login-logo-image:hover {
+  transform: scale(1.05);
 }
 
 .login-header h1 {
@@ -106,18 +110,25 @@ html, body, #root {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .input-icon {
   position: absolute;
   left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   pointer-events: none;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
 }
 
 .form-group input {
   width: 100%;
   height: 44px;
-  padding: 0 12px 0 40px;
+  padding: 0 44px 0 42px !important;
   border: 1px solid var(--border-color, #dce1e8);
   border-radius: 8px;
   font-size: 14px;
@@ -126,6 +137,7 @@ html, body, #root {
   font-family: inherit;
   background: var(--input-bg, #ffffff);
   color: var(--text-primary, #1f2d3d);
+  box-sizing: border-box;
 }
 
 .form-group input:focus {
@@ -140,18 +152,22 @@ html, body, #root {
 /* Password Toggle */
 .password-toggle {
   position: absolute;
-  right: 12px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
+  padding: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
 }
 
 .password-toggle:hover {
@@ -160,6 +176,14 @@ html, body, #root {
 
 .password-toggle svg {
   display: block;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.password-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Form Options */
@@ -308,6 +332,10 @@ html, body, #root {
   border-color: rgba(239, 68, 68, 0.3);
 }
 
+.dark-theme .password-toggle:hover {
+  background: var(--nav-hover, #334155);
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .login-card {
@@ -316,6 +344,11 @@ html, body, #root {
 
   .login-header h1 {
     font-size: 20px;
+  }
+
+  .login-logo-image {
+    width: 56px;
+    height: 56px;
   }
 
   .form-options {

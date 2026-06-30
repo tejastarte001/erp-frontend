@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   FaArrowLeft,
   FaSave,
@@ -19,28 +19,12 @@ import {
   FaIndustry,
   FaClipboardCheck,
   FaLink,
+  
 } from 'react-icons/fa';
 import "./ItemForm.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
 import toast from "react-hot-toast";
-
-// type Tab =
-//   | "Details"
-//   | "Accounting"
-//   | "UOM"
-//   | "Tax"
-//   | "Inventory"
-//   | "Purchasing"
-//   | "Sales"
-//   | "Manufacturing"
-//   | "Quality"
-//   | "Pricing"
-//   | "Connections";
-
-// const TABS: Tab[] = [
-//   "Details","Accounting","UOM","Tax","Inventory",
-//   "Purchasing","Sales","Manufacturing","Quality","Pricing","Connections",
-// ];
+import api from '../../services/api';
 
 interface TableRow { id: string; [key: string]: string }
 
@@ -55,6 +39,46 @@ interface ValidationError {
   label: string;
   message: string;
   tabIndex: number;
+}
+
+interface ItemData {
+  id: number;
+  item_code: string;
+  item_name: string;
+  item_group: string;
+  stock_uom: string;
+  is_stock_item: number;
+  is_fixed_asset: number;
+  is_sales_item: number;
+  is_purchase_item: number;
+  disabled: number;
+  description: string;
+  brand: string | null;
+  valuation_method: string;
+  creation: string;
+  modified: string;
+  hsn_sac?: string;
+}
+
+interface ItemGroup {
+  id: number;
+  item_group_name: string;
+  parent_item_group: string;
+  is_group: number;
+  image: string | null;
+  creation: string;
+  modified: string;
+}
+
+interface UOM {
+  id: number;
+  uom_name: string;
+  symbol: string;
+  common_code: string;
+  category: string;
+  enabled: number;
+  must_be_whole_number: number;
+  creation: string;
 }
 
 /* ── Shared sub-components ─────────────────────────── */
@@ -95,16 +119,221 @@ function TextInput({
   );
 }
 
+// Enhanced SelectInput with search functionality
+// Enhanced SelectInput with search functionality and fixed positioning
 function SelectInput({
-  value, onChange, options,
+  value,
+  onChange,
+  options,
+  placeholder = "Search or select...",
+  loading = false,
 }: {
-  value: string; onChange?: (v: string) => void; options: string[];
+  value: string;
+  onChange?: (v: string) => void;
+  options: { label: string; value: string }[];
+  placeholder?: string;
+  loading?: boolean;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const filteredOptions = options.filter(opt =>
+    opt.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const selectedOption = options.find(opt => opt.value === value);
+
+  // Calculate dropdown position when opening
+  const calculateDropdownPosition = () => {
+    if (wrapperRef.current) {
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const dropdownHeight = Math.min(240, filteredOptions.length * 38 + 12);
+      
+      setDropdownPosition({
+        top: spaceBelow > dropdownHeight ? rect.bottom + 4 : rect.top - dropdownHeight - 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearchTerm("");
+        setHighlightedIndex(-1);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+      calculateDropdownPosition();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && listRef.current && highlightedIndex >= 0) {
+      const item = listRef.current.children[highlightedIndex] as HTMLElement;
+      if (item) {
+        item.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex, isOpen]);
+
+  // Recalculate position on scroll or resize
+  useEffect(() => {
+    if (isOpen) {
+      const handleUpdate = () => calculateDropdownPosition();
+      window.addEventListener('scroll', handleUpdate, true);
+      window.addEventListener('resize', handleUpdate);
+      return () => {
+        window.removeEventListener('scroll', handleUpdate, true);
+        window.removeEventListener('resize', handleUpdate);
+      };
+    }
+  }, [isOpen]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === "Enter" || e.key === "ArrowDown") {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex(prev =>
+          prev < filteredOptions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
+          const selected = filteredOptions[highlightedIndex];
+          onChange?.(selected.value);
+          setSearchTerm("");
+          setIsOpen(false);
+          setHighlightedIndex(-1);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsOpen(false);
+        setSearchTerm("");
+        setHighlightedIndex(-1);
+        break;
+    }
+  };
+
   return (
-    <select className="itf-select" value={value} onChange={(e) => onChange?.(e.target.value)}>
-      <option value=""></option>
-      {options.map((o) => <option key={o} value={o}>{o}</option>)}
-    </select>
+    <div className="itf-select-container" ref={dropdownRef}>
+      <div
+        ref={wrapperRef}
+        className={`itf-select-wrapper ${isOpen ? 'itf-select-open' : ''}`}
+        onClick={() => setIsOpen(true)}
+      >
+        <input
+          ref={inputRef}
+          type="text"
+          className="itf-select-input"
+          value={isOpen ? searchTerm : (selectedOption?.label || "")}
+          onChange={(e) => {
+            if (isOpen) {
+              setSearchTerm(e.target.value);
+              setHighlightedIndex(-1);
+            }
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={selectedOption?.label || placeholder}
+          onFocus={() => setIsOpen(true)}
+          readOnly={!isOpen}
+        />
+        <span className="itf-select-arrow">
+          {loading ? (
+            <FaSpinner className="spinning" size={12} />
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </span>
+        {isOpen && searchTerm && (
+          <button
+            className="itf-select-clear"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSearchTerm("");
+              setHighlightedIndex(-1);
+              if (inputRef.current) inputRef.current.focus();
+            }}
+          >
+            ×
+          </button>
+        )}
+      </div>
+
+      {isOpen && (
+        <div
+          className="itf-select-dropdown"
+          ref={listRef}
+          style={{
+            position: 'fixed',
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            width: dropdownPosition.width,
+            maxHeight: '240px',
+            zIndex: 9999,
+          }}
+        >
+          {loading ? (
+            <div className="itf-select-loading">
+              <FaSpinner className="spinning" size={16} />
+              <span>Loading...</span>
+            </div>
+          ) : filteredOptions.length === 0 ? (
+            <div className="itf-select-empty">No options found</div>
+          ) : (
+            filteredOptions.map((opt, index) => (
+              <div
+                key={opt.value}
+                className={`itf-select-option ${index === highlightedIndex ? 'itf-select-option-highlighted' : ''}`}
+                onClick={() => {
+                  onChange?.(opt.value);
+                  setSearchTerm("");
+                  setIsOpen(false);
+                  setHighlightedIndex(-1);
+                }}
+                onMouseEnter={() => setHighlightedIndex(index)}
+              >
+                {opt.label}
+                {opt.value === value && (
+                  <span className="itf-select-option-check">✓</span>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -139,79 +368,46 @@ function InlineTable({
   return (
     <>
       <div className="itf-table-block">
-        <table className="itf-inline-table">
-          <thead>
-            <tr>
-              <th className="itf-ith itf-ith-check"><input type="checkbox" className="itf-checkbox" /></th>
-              <th className="itf-ith itf-ith-no">No.</th>
-              {columns.map((c) => (
-                <th key={c.key} className="itf-ith">
-                  {c.label} {c.required && <span className="itf-req">*</span>}
+        <div className="itf-table-scroll-wrapper">
+          <table className="itf-inline-table">
+            <thead>
+              <tr>
+                <th className="itf-ith itf-ith-check"><input type="checkbox" className="itf-checkbox" /></th>
+                <th className="itf-ith itf-ith-no">No.</th>
+                {columns.map((c) => (
+                  <th key={c.key} className="itf-ith">
+                    {c.label} {c.required && <span className="itf-req">*</span>}
+                  </th>
+                ))}
+                <th className="itf-ith itf-ith-act">
+                  <SettingsIcon />
                 </th>
-              ))}
-              <th className="itf-ith itf-ith-act">
-                <SettingsIcon />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr><td colSpan={columns.length + 3} className="itf-empty-row">No rows</td></tr>
-            ) : (
-              rows.map((row, i) => (
-                <tr key={row.id} className="itf-itr">
-                  <td className="itf-itd"><input type="checkbox" className="itf-checkbox" /></td>
-                  <td className="itf-itd itf-itd-no">{i + 1}</td>
-                  {columns.map((c) => (
-                    <td key={c.key} className="itf-itd">
-                      {renderCell(row, c.key, () => {})}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr><td colSpan={columns.length + 3} className="itf-empty-row">No rows</td></tr>
+              ) : (
+                rows.map((row, i) => (
+                  <tr key={row.id} className="itf-itr">
+                    <td className="itf-itd"><input type="checkbox" className="itf-checkbox" /></td>
+                    <td className="itf-itd itf-itd-no">{i + 1}</td>
+                    {columns.map((c) => (
+                      <td key={c.key} className="itf-itd itf-cell-with-dropdown">
+                        {renderCell(row, c.key, () => {})}
+                      </td>
+                    ))}
+                    <td className="itf-itd">
+                      <button className="itf-remove-row" onClick={() => onRemoveRow(row.id)}>×</button>
                     </td>
-                  ))}
-                  <td className="itf-itd">
-                    <button className="itf-remove-row" onClick={() => onRemoveRow(row.id)}>×</button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       <button className="itf-add-row" onClick={onAddRow}><FaPlus size={10} /> Add row</button>
-    </>
-  );
-}
-
-function CommentsActivity() {
-  const [comment, setComment] = useState("");
-  return (
-    <>
-      <div className="itf-divider" />
-      <section className="itf-section">
-        <SectionTitle>Comments</SectionTitle>
-        <div className="itf-comment-row">
-          <div className="itf-comment-avatar">TT</div>
-          <input
-            className="itf-comment-input"
-            placeholder="Type a reply / comment"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
-        </div>
-      </section>
-      <div className="itf-divider" />
-      <section className="itf-section itf-section-activity">
-        <div className="itf-activity-header">
-          <SectionTitle>Activity</SectionTitle>
-          <button className="itf-new-email-btn">+ New Email</button>
-        </div>
-        <ul className="itf-activity-list">
-          <li>You created this · <span className="itf-activity-time">5 hours ago</span></li>
-          <li>You last edited this · <span className="itf-activity-time">5 hours ago</span></li>
-        </ul>
-        <button className="itf-activity-collapse">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"><polyline points="18 15 12 9 6 15"/></svg>
-        </button>
-      </section>
     </>
   );
 }
@@ -229,6 +425,67 @@ function SettingsIcon() {
 
 function DetailsTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
   const s = (k: string, v: any) => setForm({ ...form, [k]: v });
+  
+  // State for item groups
+  const [itemGroups, setItemGroups] = useState<ItemGroup[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+
+  // State for UOMs
+  const [uoms, setUoms] = useState<UOM[]>([]);
+  const [loadingUoms, setLoadingUoms] = useState(false);
+
+  // Fetch item groups on mount
+  useEffect(() => {
+    const fetchItemGroups = async () => {
+      setLoadingGroups(true);
+      try {
+        const response = await api.get("/item-group");
+        if (response.data.success === 1) {
+          setItemGroups(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching item groups:', err);
+        toast.error('Failed to load item groups');
+      } finally {
+        setLoadingGroups(false);
+      }
+    };
+    fetchItemGroups();
+  }, []);
+
+  // Fetch UOMs on mount
+  useEffect(() => {
+    const fetchUoms = async () => {
+      setLoadingUoms(true);
+      try {
+        const response = await api.get("/uom");
+        if (response.data.success === 1) {
+          setUoms(response.data.data.records || []);
+        }
+      } catch (err) {
+        console.error('Error fetching UOMs:', err);
+        toast.error('Failed to load UOMs');
+      } finally {
+        setLoadingUoms(false);
+      }
+    };
+    fetchUoms();
+  }, []);
+
+  // Convert item groups to select options format
+  const groupOptions = itemGroups.map(group => ({
+    label: group.item_group_name,
+    value: group.item_group_name
+  }));
+
+  // Convert UOMs to select options format
+  const uomOptions = uoms
+    .filter(uom => uom.enabled === 1)
+    .map(uom => ({
+      label: uom.uom_name + (uom.symbol ? ` (${uom.symbol})` : ''),
+      value: uom.uom_name
+    }));
+
   return (
     <>
       <section className="itf-section">
@@ -238,13 +495,25 @@ function DetailsTab({ form, setForm }: { form: any; setForm: (f: any) => void })
               <TextInput value={form.itemName} onChange={(v) => s("itemName", v)} />
             </Field>
             <Field label="Item Group" required>
-              <TextInput value={form.itemGroup} onChange={(v) => s("itemGroup", v)} />
+              <SelectInput 
+                value={form.itemGroup} 
+                onChange={(v) => s("itemGroup", v)} 
+                options={groupOptions}
+                loading={loadingGroups}
+                placeholder="Search for an item group..."
+              />
             </Field>
-            <Field label="HSN/SAC" required hint="You can search code by the description of the category.">
+            <Field label="HSN/SAC" hint="You can search code by the description of the category.">
               <TextInput value={form.hsnSac} onChange={(v) => s("hsnSac", v)} />
             </Field>
             <Field label="Default Unit of Measure" required>
-              <TextInput value={form.defaultUOM} onChange={(v) => s("defaultUOM", v)} />
+              <SelectInput 
+                value={form.defaultUOM} 
+                onChange={(v) => s("defaultUOM", v)} 
+                options={uomOptions}
+                loading={loadingUoms}
+                placeholder="Search for a UOM..."
+              />
             </Field>
           </div>
           <div className="itf-col">
@@ -296,8 +565,6 @@ function DetailsTab({ form, setForm }: { form: any; setForm: (f: any) => void })
           </div>
         </div>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -346,16 +613,109 @@ function AccountingTab({ form, setForm }: { form: any; setForm: (f: any) => void
           </div>
         </div>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
 
-function UOMTab() {
-  const [rows, setRows] = useState<TableRow[]>([
-    { id: "1", uom: "Nos", conversionFactor: "1" },
-  ]);
+
+
+// In the UOMTab component, update the state and logic:
+
+function UOMTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
+  // Initialize with the default UOM from the form
+  const [rows, setRows] = useState<TableRow[]>(() => {
+    // If we have a default UOM from the form, use it
+    if (form.defaultUOM) {
+      return [{ id: "1", uom: form.defaultUOM, conversionFactor: "1" }];
+    }
+    return [{ id: "1", uom: "Nos", conversionFactor: "1" }];
+  });
+
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const [uoms, setUoms] = useState<UOM[]>([]);
+  const [loadingUoms, setLoadingUoms] = useState(false);
+
+  useEffect(() => {
+    const fetchUoms = async () => {
+      setLoadingUoms(true);
+      try {
+        const response = await api.get("/uom");
+        if (response.data.success === 1) {
+          setUoms(response.data.data.records || []);
+        }
+      } catch (err) {
+        console.error('Error fetching UOMs:', err);
+        toast.error('Failed to load UOMs');
+      } finally {
+        setLoadingUoms(false);
+      }
+    };
+    fetchUoms();
+  }, []);
+
+  // Update rows when form.defaultUOM changes
+  useEffect(() => {
+    if (form.defaultUOM && rows.length > 0) {
+      // Only update if the first row doesn't have a UOM or is empty
+      if (!rows[0].uom || rows[0].uom === "") {
+        setRows([{ id: rows[0].id, uom: form.defaultUOM, conversionFactor: "1" }]);
+      }
+    }
+  }, [form.defaultUOM]);
+
+  const uomOptions = uoms
+    .filter(uom => uom.enabled === 1)
+    .map(uom => ({
+      label: uom.uom_name + (uom.symbol ? ` (${uom.symbol})` : ''),
+      value: uom.uom_name
+    }));
+
+  const getUOMLabel = (value: string) => {
+    const option = uomOptions.find(opt => opt.value === value);
+    return option ? option.label : value;
+  };
+
+  const handleUOMChange = (rowId: string, value: string) => {
+    setRows(rows.map(row =>
+      row.id === rowId ? { ...row, uom: value } : row
+    ));
+    // Exit edit mode after selection
+    setEditingRowId(null);
+  };
+
+  const handleConversionChange = (rowId: string, value: string) => {
+    setRows(rows.map(row =>
+      row.id === rowId ? { ...row, conversionFactor: value } : row
+    ));
+  };
+
+  const handleRowClick = (rowId: string) => {
+    setEditingRowId(rowId);
+  };
+
+  const handleAddRow = () => {
+    const newRow = makeRow(["uom", "conversionFactor"]);
+    setRows([...rows, newRow]);
+    // Automatically enter edit mode for the new row
+    setEditingRowId(newRow.id);
+  };
+
+  // Determine if we're in view mode (when the item is disabled)
+  const isViewMode = form?.disabled === true;
+
+  // Check if we should show view mode for a specific row
+  const shouldShowViewMode = (rowId: string) => {
+    // If the item is disabled, always show view mode
+    if (isViewMode) return true;
+    // If this row is being edited, show dropdown
+    if (editingRowId === rowId) return false;
+    // For the first row with default UOM, show view mode
+    const rowIndex = rows.findIndex(r => r.id === rowId);
+    if (rowIndex === 0 && form.defaultUOM) return true;
+    // For other rows, show view mode if they have a value
+    const row = rows.find(r => r.id === rowId);
+    return row && row.uom && row.uom !== "";
+  };
 
   return (
     <>
@@ -371,17 +731,91 @@ function UOMTab() {
             { key: "conversionFactor", label: "Conversion Factor" },
           ]}
           rows={rows}
-          onAddRow={() => setRows([...rows, makeRow(["uom","conversionFactor"])])}
-          onRemoveRow={(id) => setRows(rows.filter((r) => r.id !== id))}
-          renderCell={(row, col) => (
-            <input className="itf-cell-input" defaultValue={row[col]} />
-          )}
+          onAddRow={handleAddRow}
+          onRemoveRow={(id) => {
+            // Don't allow removing the last row
+            if (rows.length > 1) {
+              setRows(rows.filter((r) => r.id !== id));
+              if (editingRowId === id) setEditingRowId(null);
+            }
+          }}
+          renderCell={(row, col) => {
+            if (col === "uom") {
+              const showView = shouldShowViewMode(row.id);
+              
+              if (showView) {
+                return (
+                  <div 
+                    className="itf-view-text itf-clickable-view"
+                    onClick={() => {
+                      // Allow editing by clicking on view mode (if not in view-only mode)
+                      if (!isViewMode) {
+                        setEditingRowId(row.id);
+                      }
+                    }}
+                    style={{ cursor: isViewMode ? 'default' : 'pointer' }}
+                  >
+                    {row.uom ? getUOMLabel(row.uom) : "—"}
+                    
+                  </div>
+                );
+              }
+              
+              return (
+                <SelectInput
+                  value={row.uom || ""}
+                  onChange={(v) => handleUOMChange(row.id, v)}
+                  options={uomOptions}
+                  loading={loadingUoms}
+                  placeholder="Search for a UOM..."
+                />
+              );
+            }
+            if (col === "conversionFactor") {
+              const showView = shouldShowViewMode(row.id);
+              
+              if (showView) {
+                return (
+                  <div 
+                    className="itf-view-text itf-clickable-view"
+                    onClick={() => {
+                      if (!isViewMode) {
+                        setEditingRowId(row.id);
+                      }
+                    }}
+                    style={{ cursor: isViewMode ? 'default' : 'pointer' }}
+                  >
+                    {row.conversionFactor || "—"}
+                  </div>
+                );
+              }
+              
+              return (
+                <input
+                  className="itf-cell-input"
+                  value={row.conversionFactor || ""}
+                  onChange={(e) => handleConversionChange(row.id, e.target.value)}
+                  placeholder="Enter conversion factor"
+                  type="number"
+                  step="0.001"
+                  onBlur={() => {
+                    // Exit edit mode when clicking away, but only if the row has a value
+                    if (row.uom && row.uom !== "") {
+                      setEditingRowId(null);
+                    }
+                  }}
+                  autoFocus
+                />
+              );
+            }
+            return null;
+          }}
         />
       </section>
-      <CommentsActivity />
     </>
   );
 }
+
 
 function TaxTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
   const [taxes, setTaxes] = useState<TableRow[]>([]);
@@ -430,8 +864,6 @@ function TaxTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
           </div>
         </div>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -454,7 +886,15 @@ function InventoryTab({ form, setForm }: { form: any; setForm: (f: any) => void 
         <div className="itf-two-col">
           <div className="itf-col">
             <Field label="Valuation Method">
-              <SelectInput value={form.valuationMethod ?? ""} onChange={(v) => s("valuationMethod", v)} options={["FIFO","Moving Average","LIFO"]} />
+              <SelectInput 
+                value={form.valuationMethod ?? ""} 
+                onChange={(v) => s("valuationMethod", v)} 
+                options={[
+                  { label: "FIFO", value: "FIFO" },
+                  { label: "Moving Average", value: "Moving Average" },
+                  { label: "LIFO", value: "LIFO" }
+                ]}
+              />
             </Field>
           </div>
           <div className="itf-col">
@@ -475,7 +915,16 @@ function InventoryTab({ form, setForm }: { form: any; setForm: (f: any) => void 
               <TextInput value={form.endOfLife ?? "31-12-2099"} onChange={(v) => s("endOfLife", v)} />
             </Field>
             <Field label="Default Material Request Type">
-              <SelectInput value={form.matReqType ?? "Purchase"} onChange={(v) => s("matReqType", v)} options={["Purchase","Manufacture","Transfer","Customer Provided"]} />
+              <SelectInput 
+                value={form.matReqType ?? "Purchase"} 
+                onChange={(v) => s("matReqType", v)} 
+                options={[
+                  { label: "Purchase", value: "Purchase" },
+                  { label: "Manufacture", value: "Manufacture" },
+                  { label: "Transfer", value: "Transfer" },
+                  { label: "Customer Provided", value: "Customer Provided" }
+                ]}
+              />
             </Field>
           </div>
           <div className="itf-col">
@@ -515,8 +964,6 @@ function InventoryTab({ form, setForm }: { form: any; setForm: (f: any) => void 
           />
         </Field>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -575,8 +1022,6 @@ function PurchasingTab({ form, setForm }: { form: any; setForm: (f: any) => void
           </Field>
         </div>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -624,8 +1069,6 @@ function SalesTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
           />
         </Field>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -655,7 +1098,6 @@ function ManufacturingTab({ form, setForm }: { form: any; setForm: (f: any) => v
           </div>
         </div>
       </section>
-      <CommentsActivity />
     </>
   );
 }
@@ -667,7 +1109,6 @@ function QualityTab() {
         <SectionTitle>Quality</SectionTitle>
         <div className="itf-empty-state">No quality inspection templates configured.</div>
       </section>
-      <CommentsActivity />
     </>
   );
 }
@@ -683,7 +1124,6 @@ function PricingTab() {
           <button className="itf-add-price-btn">+ Add Price</button>
         </div>
       </section>
-      <CommentsActivity />
     </>
   );
 }
@@ -787,8 +1227,6 @@ function ConnectionsTab() {
           <div className="itf-conn-group" />
         </div>
       </section>
-
-      <CommentsActivity />
     </>
   );
 }
@@ -798,13 +1236,15 @@ function ConnectionsTab() {
 export default function ItemForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme } = useAdminTheme();
-  const isNew = id === "new";
-  const itemId = isNew ? "" : decodeURIComponent(id ?? "");
-  const isEditMode = !isNew;
-
+  
+  const isNew = id === "new" || !id;
+  const itemCode = isNew ? "" : decodeURIComponent(id ?? "");
+  
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<number>(0);
-  const [, setIsDirty] = useState(isNew);
+  const [, setIsDirty] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
@@ -823,11 +1263,15 @@ export default function ItemForm() {
     { id: 10, name: 'Connections', icon: <FaLink size={14} /> },
   ];
 
+  // Get data from location state (from ItemList)
+  const itemData = location.state?.itemData as ItemData | undefined;
+  const prefillData = location.state?.prefill as any | undefined;
+
   const [form, setFormRaw] = useState({
-    itemName: isNew ? "" : itemId,
-    itemCode: isNew ? "" : "Door3",
-    itemGroup: isNew ? "" : "Products",
-    hsnSac: isNew ? "" : "010130",
+    itemName: "",
+    itemCode: "",
+    itemGroup: "",
+    hsnSac: "",
     defaultUOM: "Nos",
     disabled: false,
     maintainStock: true,
@@ -843,9 +1287,119 @@ export default function ItemForm() {
     includeInMfg: true,
     isSubcontracted: false,
     productionCapacity: "0",
+    brand: "",
+    description: "",
+    valuationMethod: "FIFO",
+    valuationRate: "0.00",
   });
 
   const setForm = (f: any) => { setFormRaw(f); setIsDirty(true); };
+
+  // Fetch item data if editing
+  useEffect(() => {
+    if (!isNew && itemCode) {
+      // If we have data from location state, use it
+      if (itemData) {
+        setFormRaw({
+          itemName: itemData.item_name || "",
+          itemCode: itemData.item_code || "",
+          itemGroup: itemData.item_group || "",
+          hsnSac: itemData.hsn_sac || "",
+          defaultUOM: itemData.stock_uom || "Nos",
+          disabled: itemData.disabled === 1,
+          maintainStock: itemData.is_stock_item === 1,
+          isFixedAsset: itemData.is_fixed_asset === 1,
+          allowSales: itemData.is_sales_item === 1,
+          allowPurchase: itemData.is_purchase_item === 1,
+          allowAltItem: false,
+          isCustomerProvided: false,
+          hasVariants: false,
+          overDelivery: "0.000",
+          overBilling: "0.000",
+          grantCommission: true,
+          includeInMfg: true,
+          isSubcontracted: false,
+          productionCapacity: "0",
+          brand: itemData.brand || "",
+          description: itemData.description || "",
+          valuationMethod: itemData.valuation_method || "FIFO",
+          valuationRate: "0.00",
+        });
+        setIsDirty(false);
+      } else {
+        // Fetch from API if no location state
+        fetchItemData();
+      }
+    } else if (isNew && prefillData) {
+      // Prefill from quick add
+      setFormRaw({
+        itemName: prefillData.itemName || "",
+        itemCode: prefillData.itemCode || "",
+        itemGroup: prefillData.itemGroup || "",
+        hsnSac: prefillData.hsnSac || "",
+        defaultUOM: prefillData.defaultUOM || "Nos",
+        disabled: false,
+        maintainStock: prefillData.maintainStock ?? true,
+        isFixedAsset: prefillData.isFixedAsset ?? false,
+        allowSales: true,
+        allowPurchase: true,
+        allowAltItem: false,
+        isCustomerProvided: false,
+        hasVariants: false,
+        overDelivery: "0.000",
+        overBilling: "0.000",
+        grantCommission: true,
+        includeInMfg: true,
+        isSubcontracted: false,
+        productionCapacity: "0",
+        brand: "",
+        description: "",
+        valuationMethod: "FIFO",
+        valuationRate: "0.00",
+      });
+    }
+  }, [isNew, itemCode, itemData, prefillData]);
+
+  const fetchItemData = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/item/${itemCode}`);
+      if (response.data.success === 1) {
+        const data = response.data.data;
+        setFormRaw({
+          itemName: data.item_name || "",
+          itemCode: data.item_code || "",
+          itemGroup: data.item_group || "",
+          hsnSac: data.hsn_sac || "",
+          defaultUOM: data.stock_uom || "Nos",
+          disabled: data.disabled === 1,
+          maintainStock: data.is_stock_item === 1,
+          isFixedAsset: data.is_fixed_asset === 1,
+          allowSales: data.is_sales_item === 1,
+          allowPurchase: data.is_purchase_item === 1,
+          allowAltItem: false,
+          isCustomerProvided: false,
+          hasVariants: false,
+          overDelivery: "0.000",
+          overBilling: "0.000",
+          grantCommission: true,
+          includeInMfg: true,
+          isSubcontracted: false,
+          productionCapacity: "0",
+          brand: data.brand || "",
+          description: data.description || "",
+          valuationMethod: data.valuation_method || "FIFO",
+          valuationRate: "0.00",
+        });
+        setIsDirty(false);
+      }
+    } catch (err) {
+      console.error('Error fetching item:', err);
+      toast.error('Failed to load item data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const tabProps = { form, setForm };
 
@@ -858,8 +1412,6 @@ export default function ItemForm() {
       allErrors.push({ field: 'itemName', label: 'Item Name', message: 'Item name is required', tabIndex: 0 });
     if (!form.itemGroup.trim())
       allErrors.push({ field: 'itemGroup', label: 'Item Group', message: 'Item group is required', tabIndex: 0 });
-    if (!form.hsnSac.trim())
-      allErrors.push({ field: 'hsnSac', label: 'HSN/SAC', message: 'HSN/SAC code is required', tabIndex: 0 });
     if (!form.defaultUOM.trim())
       allErrors.push({ field: 'defaultUOM', label: 'Default UOM', message: 'Default unit of measure is required', tabIndex: 0 });
 
@@ -879,7 +1431,7 @@ export default function ItemForm() {
     switch (activeTab) {
       case 0: return <DetailsTab {...tabProps} />;
       case 1: return <AccountingTab {...tabProps} />;
-      case 2: return <UOMTab />;
+      case 2: return <UOMTab {...tabProps} />;
       case 3: return <TaxTab {...tabProps} />;
       case 4: return <InventoryTab {...tabProps} />;
       case 5: return <PurchasingTab {...tabProps} />;
@@ -903,12 +1455,43 @@ export default function ItemForm() {
 
     setSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsDirty(false);
-      toast.success(isEditMode ? 'Item updated successfully!' : 'Item created successfully!');
-      navigate('/item-list');
-    } catch (err) {
-      toast.error('Failed to save item');
+      const payload = {
+        item_code: form.itemCode || form.itemName.toUpperCase().replace(/\s+/g, '-'),
+        item_name: form.itemName.trim(),
+        item_group: form.itemGroup.trim(),
+        stock_uom: form.defaultUOM.trim(),
+        description: form.description || form.itemName.trim(),
+        is_stock_item: form.maintainStock ? 1 : 0,
+        is_sales_item: form.allowSales ? 1 : 0,
+        is_purchase_item: form.allowPurchase ? 1 : 0,
+        brand: form.brand || null,
+        valuation_method: form.valuationMethod || "FIFO",
+        disabled: form.disabled ? 1 : 0,
+        is_fixed_asset: form.isFixedAsset ? 1 : 0,
+        hsn_sac: form.hsnSac || null,
+      };
+
+      let response;
+      if (isNew) {
+        response = await api.post('/item', payload);
+      } else {
+        response = await api.put(`/item/${itemCode}`, payload);
+      }
+
+      if (response.data && response.data.success === 1) {
+        setIsDirty(false);
+        toast.success(isNew ? 'Item created successfully!' : 'Item updated successfully!');
+        navigate('/item-list');
+      } else {
+        toast.error(response.data?.message || 'Failed to save item');
+      }
+    } catch (err: any) {
+      console.error('Error saving item:', err);
+      if (err.response?.status === 409) {
+        toast.error('An item with this code already exists');
+      } else {
+        toast.error(err.response?.data?.message || 'Failed to save item');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -916,6 +1499,17 @@ export default function ItemForm() {
 
   const allValidationErrors = getAllValidationErrors();
   const hasAnyErrors = allValidationErrors.length > 0;
+
+  if (loading) {
+    return (
+      <div className={`itf-page ${theme}`}>
+        <div className="itf-loading-state">
+          <FaSpinner className="spinning" size={32} />
+          <p>Loading item data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`itf-page ${theme}`}>
@@ -974,8 +1568,9 @@ export default function ItemForm() {
           <span className="itf-bc-sep">/</span>
           <span className="itf-bc-link" onClick={() => navigate("/item-list")}>Item</span>
           <span className="itf-bc-sep">/</span>
-          <span className="itf-bc-current">{isNew ? "New Item" : form.itemName}</span>
-          {!isNew && <span className="itf-status-pill enabled">Enabled</span>}
+          <span className="itf-bc-current">{isNew ? "New Item" : form.itemName || itemCode}</span>
+          {!isNew && !form.disabled && <span className="itf-status-pill enabled">Enabled</span>}
+          {!isNew && form.disabled && <span className="itf-status-pill disabled">Disabled</span>}
 
           {hasAnyErrors && (
             <div className="itf-error-badge">
@@ -1011,7 +1606,7 @@ export default function ItemForm() {
         </div>
       </div>
 
-      {/* Tab bar - styled like NewReservation */}
+      {/* Tab bar */}
       <div className="itf-tab-bar">
         <div className="itf-tabs-container">
           {tabs.map((tab) => {
@@ -1059,9 +1654,9 @@ export default function ItemForm() {
         {/* Right sidebar - only for existing items */}
         {!isNew && (
           <aside className="itf-sidebar">
-            <div className="itf-doc-avatar">{form.itemName.charAt(0).toUpperCase()}</div>
-            <div className="itf-doc-name">{form.itemName}</div>
-            <div className="itf-doc-id">{form.itemCode}</div>
+            <div className="itf-doc-avatar">{form.itemName.charAt(0).toUpperCase() || 'I'}</div>
+            <div className="itf-doc-name">{form.itemName || itemCode}</div>
+            <div className="itf-doc-id">{form.itemCode || itemCode}</div>
 
             <div className="itf-sidebar-actions">
               <button className="itf-sidebar-action">
@@ -1088,9 +1683,9 @@ export default function ItemForm() {
 
             <div className="itf-sidebar-meta">
               <div className="itf-meta-row"><span className="itf-meta-label">Last Edited By</span><span className="itf-meta-val">You</span></div>
-              <div className="itf-meta-time">5 hours ago</div>
+              <div className="itf-meta-time">Just now</div>
               <div className="itf-meta-row" style={{ marginTop: 12 }}><span className="itf-meta-label">Created By</span><span className="itf-meta-val">You</span></div>
-              <div className="itf-meta-time">5 hours ago</div>
+              <div className="itf-meta-time">Just now</div>
             </div>
           </aside>
         )}

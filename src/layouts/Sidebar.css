@@ -734,6 +734,7 @@ body .sidebar.minimized + .sidebar-toggle-btn {
     display: block;
   }
 
+  /* On mobile, minimized state should behave like full sidebar */
   .sidebar.minimized {
     width: 280px;
   }
@@ -750,7 +751,7 @@ body .sidebar.minimized + .sidebar-toggle-btn {
   .sidebar.minimized .user-name,
   .sidebar.minimized .user-email,
   .sidebar.minimized .search-shortcut {
-    display: flex;
+    display: flex; /* Show all content on mobile even in minimized state */
   }
   
   .sidebar.minimized .sidebar-header {
@@ -806,10 +807,12 @@ body .sidebar.minimized + .sidebar-toggle-btn {
     font-size: 12px;
   }
   
+  /* Hide toggle button on mobile */
   .sidebar-toggle-btn {
     display: none !important;
   }
   
+  /* Hide tooltips on mobile */
   .sidebar.minimized .nav-item .nav-tooltip {
     display: none !important;
   }
@@ -824,4 +827,50 @@ body .sidebar.minimized + .sidebar-toggle-btn {
   .sidebar-overlay {
     display: none !important;
   }
+}
+
+.module-indicator {
+  font-size: 10px;
+  color: var(--sidebar-text-secondary, #9CA3AF);
+  margin-top: 2px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+/* Logo Image Styles */
+.logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 4px;
+}
+
+/* For dark theme - adjust logo visibility if needed */
+.dark-theme .logo-image {
+  filter: brightness(1.1);
+}
+
+/* For minimized sidebar */
+.sidebar.minimized .logo-icon {
+  width: 32px;
+  height: 32px;
+  padding: 3px;
 }
