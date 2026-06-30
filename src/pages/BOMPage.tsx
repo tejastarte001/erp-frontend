@@ -47,6 +47,15 @@ interface BOMListResponse {
   };
 }
 
+interface BOMDetailResponse {
+  success: number;
+  data: {
+    bom: any;
+    items: any[];
+    operations: any[];
+  };
+}
+
 interface BOMRow {
   id: string;
   status: "Draft" | "Active" | "Disabled";
@@ -76,6 +85,7 @@ const BOMPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editBOMData, setEditBOMData] = useState<any>(null);
 
   // Data state
   const [bomData, setBomData] = useState<BOMRecord[]>([]);
@@ -101,23 +111,19 @@ const BOMPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Build query parameters
       const params = new URLSearchParams({
         page: String(currentPage),
         limit: String(itemsPerPage),
       });
 
-      // Add search if present
       if (searchTerm.trim()) {
         params.append('search', searchTerm.trim());
       }
 
-      // Add status filter
       if (statusFilter !== 'all') {
         params.append('status', statusFilter);
       }
 
-      // Add sort
       const sortMap: Record<string, string> = {
         'Created On': 'creation',
         'Last Updated On': 'modified',
@@ -139,6 +145,34 @@ const BOMPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Error fetching BOMs:', err);
+      if (err.response) {
+        setError(err.response.data?.message || `Server error: ${err.response.status}`);
+      } else if (err.request) {
+        setError('Network error. Please check your connection.');
+      } else {
+        setError('An unexpected error occurred.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── Fetch single BOM for editing ────────────────────────────────────────
+
+  const fetchBOMForEdit = async (bomId: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await api.get<BOMDetailResponse>(`/bom/${bomId}`);
+      
+      if (response.data.success === 1) {
+        setEditBOMData(response.data.data);
+        setShowNewBOM(true);
+      } else {
+        setError('Failed to load BOM data for editing');
+      }
+    } catch (err: any) {
+      console.error('Error fetching BOM:', err);
       if (err.response) {
         setError(err.response.data?.message || `Server error: ${err.response.status}`);
       } else if (err.request) {
@@ -203,19 +237,19 @@ const BOMPage: React.FC = () => {
 
   const transformToRows = (records: BOMRecord[]): BOMRow[] => {
     return records.map(record => ({
-      id: record.item,
+      id: String(record.id),
       status: record.is_active === 1 ? "Active" : "Disabled",
       itemToManufacture: record.item_name,
       isActive: record.is_active === 1,
       isDefault: record.is_default === 1,
       totalCost: `₹ ${record.total_cost.toFixed(2)}`,
-      hasVariants: false, // Not in API response
+      hasVariants: false,
       createdOn: new Date(record.creation).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric'
       }),
-      comments: 0, // Not in API response
+      comments: 0,
     }));
   };
 
@@ -280,16 +314,23 @@ const BOMPage: React.FC = () => {
   };
 
   const handleEdit = (row: BOMRow) => {
-    console.log("Edit BOM", row.id);
-    // Navigate to edit page or open modal
+    // Fetch full BOM data for editing
+    fetchBOMForEdit(Number(row.id));
   };
 
   const handleDelete = async (row: BOMRow) => {
     if (window.confirm(`Are you sure you want to delete BOM "${row.id}"?`)) {
       try {
-        const response = await api.delete(`/bom/${row.id}`);
+        // DELETE with id in payload (not in URL)
+        const response = await api.delete('/bom', { data: { id: Number(row.id) } });
         if (response.data.success === 1) {
           await fetchBOMs();
+          setSelectedRows(prev => {
+            const next = new Set(prev);
+            next.delete(Number(row.id));
+            return next;
+          });
+          alert('BOM deleted successfully');
         } else {
           setError('Failed to delete BOM');
         }
@@ -304,7 +345,16 @@ const BOMPage: React.FC = () => {
 
   return (
     <>
-      {showNewBOM && <NewBOMPage onBack={() => setShowNewBOM(false)} />}
+      {showNewBOM && (
+        <NewBOMPage 
+          onBack={() => {
+            setShowNewBOM(false);
+            setEditBOMData(null);
+            fetchBOMs();
+          }} 
+          editData={editBOMData}
+        />
+      )}
       {!showNewBOM && (
         <div className={`bom-page ${theme}`} ref={rootRef}>
           {/* ── Header ─────────────────────────────────────────────────────── */}
@@ -401,7 +451,10 @@ const BOMPage: React.FC = () => {
                   </div>
                 )}
               </button>
-              <button className="bom-btn-primary" onClick={() => setShowNewBOM(true)}>
+              <button className="bom-btn-primary" onClick={() => {
+                setEditBOMData(null);
+                setShowNewBOM(true);
+              }}>
                 <Plus size={12} />
                 Add BOM
               </button>
@@ -508,8 +561,8 @@ const BOMPage: React.FC = () => {
                           </span>
                         </td>
                         <td className="bom-td" style={{ fontWeight: 500 }}>{row.itemToManufacture}</td>
-                        <td className="bom-td">{bomData.find(b => b.item === row.id)?.quantity || '-'}</td>
-                        <td className="bom-td">{bomData.find(b => b.item === row.id)?.uom || '-'}</td>
+                        <td className="bom-td">{bomData.find(b => String(b.id) === row.id)?.quantity || '-'}</td>
+                        <td className="bom-td">{bomData.find(b => String(b.id) === row.id)?.uom || '-'}</td>
                         <td className="bom-td">
                           <CheckBadge checked={row.isActive} />
                         </td>

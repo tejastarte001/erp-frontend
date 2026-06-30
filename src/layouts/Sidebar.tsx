@@ -132,6 +132,9 @@ export default function Sidebar({
         { title: 'Item Attribute', icon: <TagIcon />, path: '/item-attribute' },
         { title: 'Brand', icon: <BrandIcon />, path: '/brand' },
         { title: 'Warehouse', icon: <WarehouseIcon />, path: '/warehouse' },
+        { title: 'Workstation', icon: <WarehouseIcon />, path: '/Workstation' },
+        { title: 'Operations', icon: <WarehouseIcon />, path: '/operations' },
+
         { title: 'Unit of Measure (UOM)', icon: <RulerIcon />, path: '/uom' },
         // { title: 'UOM Conversion Factor', icon: <RepeatIcon />, path: '/uom-conversion' },
         // { title: 'Serial No', icon: <HashIcon />, path: '/serial-no' },
