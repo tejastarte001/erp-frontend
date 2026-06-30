@@ -53,6 +53,7 @@ function App() {
             <Route path="/item-group/:id" element={<ItemGroupForm />} />
             <Route path="/stock-entry" element={<Stockentry />} />
             <Route path="/stock-entry/new" element={<StockentryForm />} />
+            <Route path="/stock-entry/:id" element={<StockentryForm />} />
             {/* Item Routes */}
             <Route path="/item-list" element={<Itemlist />} />
             <Route path="/item/:id" element={<ItemForm />} />
