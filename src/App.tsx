@@ -105,11 +105,13 @@ function App() {
             <Route path="/settings" element={<SettingsPage />} /> */}
               <Route path="/job-card" element={<JobCardManagement />} />
               <Route path="/job-cards/new" element={<JobCardForm />} />
+              <Route path="/job-cards/:id" element={<JobCardForm />} />
               {/* Item Group Routes */}
               <Route path="/item-group" element={<ItemGroupList />} />
               <Route path="/item-group/:id" element={<ItemGroupForm />} />
               <Route path="/stock-entry" element={<Stockentry />} />
               <Route path="/stock-entry/new" element={<StockentryForm />} />
+              <Route path="/stock-entry/:id" element={<StockentryForm />} />
               {/* Item Routes */}
               <Route path="/item-list" element={<Itemlist />} />
               <Route path="/item/:id" element={<ItemForm />} />
@@ -141,21 +143,21 @@ function App() {
               <Route path="/brand/:id" element={<BrandForm />} />
 
 
-                            {/* NewWorkstation Routes */}
-                            <Route path="/NewWorkstation" element={<NewWorkstation />} />
+              {/* NewWorkstation Routes */}
+              <Route path="/NewWorkstation" element={<NewWorkstation />} />
 
 
 
-                            {/* operation Routes */}
-                            
+              {/* operation Routes */}
+
 
 // In your router configuration:
-<Route path="/operations" element={<OperationListing />} />
-<Route path="/operation/new" element={<OperationQuickAdd />} />
-<Route path="/operation/:id" element={<OperationQuickAdd />} />
-<Route path="/operation/:id/edit" element={<OperationQuickAdd />} />
+              <Route path="/operations" element={<OperationListing />} />
+              <Route path="/operation/new" element={<OperationQuickAdd />} />
+              <Route path="/operation/:id" element={<OperationQuickAdd />} />
+              <Route path="/operation/:id/edit" element={<OperationQuickAdd />} />
 
-              
+
               {/* UOM Routes */}
               <Route path="/uom" element={<UOMList />} />
               <Route path="/uom/new" element={<UOMForm />} />

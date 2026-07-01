@@ -17,12 +17,11 @@ import {
 } from "react-icons/fa";
 import "./JobCardManagement.css";
 import { useAdminTheme } from "../admin-theme/AdminThemeContext";
-import api from "../services/api";
 
 type Status = "Open" | "Work In Progress" | "Completed" | "On Hold" | "Cancelled";
 
 interface JobCard {
-  id: number;
+  id: string;
   job_card_id: string;
   work_order: string;
   operation: string;
@@ -32,6 +31,10 @@ interface JobCard {
   company: string;
   status: Status;
   created_on: string;
+  expected_start_date?: string | null;
+  expected_end_date?: string | null;
+  actual_start_date?: string | null;
+  actual_end_date?: string | null;
 }
 
 interface JobCardDisplay {
@@ -47,16 +50,10 @@ interface JobCardDisplay {
   createdOn: string;
   progress: number;
   createdAgo: string;
-}
-
-interface ApiResponse {
-  success: number;
-  data: {
-    total: number;
-    page: number;
-    limit: number;
-    records: JobCard[];
-  };
+  expectedStartDate: Date | null;
+  expectedEndDate: Date | null;
+  actualStartDate: Date | null;
+  actualEndDate: Date | null;
 }
 
 const STATUS_CLASS: Record<Status, string> = {
@@ -75,6 +72,81 @@ const STATUS_LABELS: Record<Status, string> = {
   Cancelled: "Cancelled",
 };
 
+// ─── local storage (no API) ────────────────────────────────────────────
+// Must match the exact key/shape used by JobCardForm.tsx so both stay in sync.
+
+const JOB_CARDS_STORAGE_KEY = "job_cards";
+const JOB_CARDS_UPDATE_EVENT = "job-cards-updated";
+
+const readAllJobCardsLocally = (): JobCard[] => {
+  try {
+    const raw = localStorage.getItem(JOB_CARDS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (err) {
+    console.error("Failed to read job cards from local storage:", err);
+    return [];
+  }
+};
+
+const writeAllJobCardsLocally = (cards: JobCard[]) => {
+  localStorage.setItem(JOB_CARDS_STORAGE_KEY, JSON.stringify(cards));
+  window.dispatchEvent(new Event(JOB_CARDS_UPDATE_EVENT));
+};
+
+// ─── timer helpers ─────────────────────────────────────────────────────
+
+const formatDuration = (ms: number): string => {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+};
+
+interface TimerInfo {
+  label: string;
+  colorVar: string;
+  pulsing: boolean;
+}
+
+const getTimerInfo = (row: JobCardDisplay, now: Date): TimerInfo => {
+  // Actively running — count down to the expected end date
+  if (row.actualStartDate && !row.actualEndDate) {
+    if (row.expectedEndDate) {
+      const diff = row.expectedEndDate.getTime() - now.getTime();
+      if (diff > 0) {
+        return { label: `Ends in ${formatDuration(diff)}`, colorVar: "var(--primary-color)", pulsing: true };
+      }
+      return { label: `Overdue by ${formatDuration(-diff)}`, colorVar: "var(--danger-color)", pulsing: true };
+    }
+    // No expected end date to count down to — fall back to elapsed time
+    const elapsed = now.getTime() - row.actualStartDate.getTime();
+    return { label: formatDuration(elapsed), colorVar: "var(--primary-color)", pulsing: true };
+  }
+
+  // Finished — show total time it took
+  if (row.actualStartDate && row.actualEndDate) {
+    const total = row.actualEndDate.getTime() - row.actualStartDate.getTime();
+    return { label: `Done in ${formatDuration(total)}`, colorVar: "var(--text-secondary)", pulsing: false };
+  }
+
+  // Not started yet — count down to scheduled start
+  if (row.expectedStartDate) {
+    const diff = row.expectedStartDate.getTime() - now.getTime();
+    if (diff > 0) {
+      return { label: `Starts in ${formatDuration(diff)}`, colorVar: "var(--text-secondary)", pulsing: false };
+    }
+    return { label: `Overdue by ${formatDuration(-diff)}`, colorVar: "var(--danger-color)", pulsing: false };
+  }
+
+  return { label: "-", colorVar: "var(--text-secondary)", pulsing: false };
+};
+
 export default function JobCardManagement() {
   const navigate = useNavigate();
   const { theme } = useAdminTheme();
@@ -89,14 +161,20 @@ export default function JobCardManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
-  const [, setTotalPages] = useState(1);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedItem, setSelectedItem] = useState<JobCardDisplay | null>(null);
+  const [now, setNow] = useState<Date>(() => new Date());
+
+  // Tick every second so the Timer column stays live without re-fetching data
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+    const nowDate = new Date();
+    const diffMs = nowDate.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
@@ -115,49 +193,60 @@ export default function JobCardManagement() {
     return Math.min(Math.round((completedQty / qty) * 100), 100);
   };
 
-  const fetchJobCards = async () => {
+  // ─── load from localStorage (no API) ──────────────────────────────────
+
+  const fetchJobCards = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get<ApiResponse>(`/job-card?page=${currentPage}&limit=${itemsPerPage}`);
+      const all = readAllJobCardsLocally();
 
-      if (response.data.success === 1 && response.data.data) {
-        const { records, total, page, limit } = response.data.data;
-        setTotalItems(total ?? 0);
-        setTotalPages(Math.ceil((total ?? 0) / (limit || itemsPerPage)));
-        setCurrentPage(page ?? 1);
+      const transformedData: JobCardDisplay[] = all.map((item) => ({
+        id: item.id,
+        jobCardId: item.job_card_id,
+        workOrder: item.work_order,
+        operation: item.operation,
+        workstation: item.workstation,
+        qty: item.qty_to_manufacture,
+        completedQty: item.total_completed_qty,
+        company: item.company,
+        status: item.status,
+        createdOn: item.created_on,
+        progress: calculateProgress(item.qty_to_manufacture, item.total_completed_qty),
+        createdAgo: formatDate(item.created_on),
+        expectedStartDate: item.expected_start_date ? new Date(item.expected_start_date) : null,
+        expectedEndDate: item.expected_end_date ? new Date(item.expected_end_date) : null,
+        actualStartDate: item.actual_start_date ? new Date(item.actual_start_date) : null,
+        actualEndDate: item.actual_end_date ? new Date(item.actual_end_date) : null,
+      }));
 
-        const transformedData: JobCardDisplay[] = (records ?? []).map((item: JobCard) => ({
-          id: item.id.toString(),
-          jobCardId: item.job_card_id,
-          workOrder: item.work_order,
-          operation: item.operation,
-          workstation: item.workstation,
-          qty: item.qty_to_manufacture,
-          completedQty: item.total_completed_qty,
-          company: item.company,
-          status: item.status,
-          createdOn: item.created_on,
-          progress: calculateProgress(item.qty_to_manufacture, item.total_completed_qty),
-          createdAgo: formatDate(item.created_on),
-        }));
+      // Newest first
+      transformedData.sort(
+        (a, b) => new Date(b.createdOn).getTime() - new Date(a.createdOn).getTime()
+      );
 
-        setJobCards(transformedData);
-      } else {
-        setJobCards([]);
-        setError("Failed to fetch job cards");
-      }
+      setTotalItems(transformedData.length);
+      setJobCards(transformedData);
     } catch (err) {
-      console.error("Error fetching job cards:", err);
-      setError("An error occurred while fetching job cards");
+      console.error("Error reading job cards from local storage:", err);
+      setError("An error occurred while loading job cards");
     } finally {
       setLoading(false);
     }
   };
 
+  // Initial load + live sync whenever the form (or another tab) saves a job card
   useEffect(() => {
     fetchJobCards();
-  }, [currentPage, itemsPerPage]);
+
+    window.addEventListener(JOB_CARDS_UPDATE_EVENT, fetchJobCards);
+    window.addEventListener("storage", fetchJobCards); // cross-tab sync
+
+    return () => {
+      window.removeEventListener(JOB_CARDS_UPDATE_EVENT, fetchJobCards);
+      window.removeEventListener("storage", fetchJobCards);
+    };
+  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -233,15 +322,15 @@ export default function JobCardManagement() {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (selectedItem) {
       try {
-        const response = await api.delete(`/job-card/${selectedItem.id}`);
-        if (response.data.success === 1) {
-          setShowDeleteConfirm(false);
-          setSelectedItem(null);
-          fetchJobCards();
-        }
+        const all = readAllJobCardsLocally();
+        const updated = all.filter((c) => c.id !== selectedItem.id);
+        writeAllJobCardsLocally(updated);
+        setShowDeleteConfirm(false);
+        setSelectedItem(null);
+        fetchJobCards();
       } catch (err) {
         console.error("Error deleting job card:", err);
         alert("Failed to delete job card");
@@ -382,6 +471,7 @@ export default function JobCardManagement() {
                   <th className="jc-th">Progress</th>
                   <th className="jc-th">Company</th>
                   <th className="jc-th">Status</th>
+                  <th className="jc-th">Timer</th>
                   <th className="jc-th jc-th-meta">
                     <span className="jc-count-label">{totalFilteredItems} of {totalItems}</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary, #9ca3af)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -393,7 +483,7 @@ export default function JobCardManagement() {
               <tbody>
                 {paginatedData.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="jc-empty-state">
+                    <td colSpan={11} className="jc-empty-state">
                       <div className="jc-empty-content">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -408,55 +498,85 @@ export default function JobCardManagement() {
                     </td>
                   </tr>
                 ) : (
-                  paginatedData.map((row) => (
-                    <tr
-                      key={row.id}
-                      className={`jc-tr ${selected.has(row.id) ? "jc-tr-selected" : ""}`}
-                      onClick={() => handleRowClick(row)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <td className="jc-td-check" onClick={(e) => { e.stopPropagation(); toggleRow(row.id); }}>
-                        <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleRow(row.id)} className="jc-checkbox" />
-                      </td>
-                      <td className="jc-td jc-td-id">{row.jobCardId}</td>
-                      <td className="jc-td jc-td-link">{row.workOrder}</td>
-                      <td className="jc-td">{row.operation}</td>
-                      <td className="jc-td">{row.workstation}</td>
-                      <td className="jc-td jc-td-number">{row.qty.toLocaleString()}</td>
-                      <td className="jc-td">
-                        <div className="jc-progress-container">
-                          <div className="jc-progress-bar">
-                            <div className="jc-progress-fill" style={{ width: `${row.progress}%` }} />
+                  paginatedData.map((row) => {
+                    const timer = getTimerInfo(row, now);
+                    return (
+                      <tr
+                        key={row.id}
+                        className={`jc-tr ${selected.has(row.id) ? "jc-tr-selected" : ""}`}
+                        onClick={() => handleRowClick(row)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <td className="jc-td-check" onClick={(e) => { e.stopPropagation(); toggleRow(row.id); }}>
+                          <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleRow(row.id)} className="jc-checkbox" />
+                        </td>
+                        <td className="jc-td jc-td-id">{row.jobCardId}</td>
+                        <td className="jc-td jc-td-link">{row.workOrder}</td>
+                        <td className="jc-td">{row.operation}</td>
+                        <td className="jc-td">{row.workstation}</td>
+                        <td className="jc-td jc-td-number">{row.qty.toLocaleString()}</td>
+                        <td className="jc-td">
+                          <div className="jc-progress-container">
+                            <div className="jc-progress-bar">
+                              <div className="jc-progress-fill" style={{ width: `${row.progress}%` }} />
+                            </div>
+                            <span className="jc-progress-text">{row.progress}%</span>
                           </div>
-                          <span className="jc-progress-text">{row.progress}%</span>
-                        </div>
-                      </td>
-                      <td className="jc-td jc-td-company">
-                        <FaBuilding size={10} className="jc-company-icon" />
-                        {row.company}
-                      </td>
-                      <td className="jc-td">
-                        <span className={`jc-status-badge ${STATUS_CLASS[row.status]}`}>
-                          {STATUS_LABELS[row.status]}
-                        </span>
-                      </td>
-                      <td className="jc-td jc-td-meta" onClick={(e) => e.stopPropagation()}>
-                        <span className="jc-ago">{row.createdAgo}</span>
-                        <span className="jc-dot">·</span>
-                        <div className="jc-action-buttons">
-                          <button className="jc-action-btn jc-action-view" onClick={(e) => { e.stopPropagation(); handleView(row); }} title="View">
-                            <FaEye size={12} />
-                          </button>
-                          <button className="jc-action-btn jc-action-edit" onClick={(e) => { e.stopPropagation(); handleEdit(row); }} title="Edit">
-                            <FaEdit size={12} />
-                          </button>
-                          <button className="jc-action-btn jc-action-delete" onClick={(e) => { e.stopPropagation(); handleDelete(row); }} title="Delete">
-                            <FaTrash size={12} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td className="jc-td jc-td-company">
+                          <FaBuilding size={10} className="jc-company-icon" />
+                          {row.company}
+                        </td>
+                        <td className="jc-td">
+                          <span className={`jc-status-badge ${STATUS_CLASS[row.status]}`}>
+                            {STATUS_LABELS[row.status]}
+                          </span>
+                        </td>
+                        <td className="jc-td">
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 5,
+                              fontSize: "0.82em",
+                              fontWeight: 500,
+                              color: timer.colorVar,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {timer.pulsing && (
+                              <span
+                                style={{
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: "50%",
+                                  backgroundColor: "var(--primary-color)",
+                                  display: "inline-block",
+                                  animation: "jc-timer-pulse 1.2s ease-in-out infinite",
+                                }}
+                              />
+                            )}
+                            {timer.label}
+                          </span>
+                        </td>
+                        <td className="jc-td jc-td-meta" onClick={(e) => e.stopPropagation()}>
+                          <span className="jc-ago">{row.createdAgo}</span>
+                          <span className="jc-dot">·</span>
+                          <div className="jc-action-buttons">
+                            <button className="jc-action-btn jc-action-view" onClick={(e) => { e.stopPropagation(); handleView(row); }} title="View">
+                              <FaEye size={12} />
+                            </button>
+                            <button className="jc-action-btn jc-action-edit" onClick={(e) => { e.stopPropagation(); handleEdit(row); }} title="Edit">
+                              <FaEdit size={12} />
+                            </button>
+                            <button className="jc-action-btn jc-action-delete" onClick={(e) => { e.stopPropagation(); handleDelete(row); }} title="Delete">
+                              <FaTrash size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -530,6 +650,14 @@ export default function JobCardManagement() {
           </div>
         </div>
       )}
+
+      {/* Pulse animation for the "running" timer dot */}
+      <style>{`
+        @keyframes jc-timer-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.35; transform: scale(0.7); }
+        }
+      `}</style>
     </div>
   );
 }
