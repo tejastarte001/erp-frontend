@@ -9,65 +9,23 @@ import {
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./JobCardForm.css";
+import api from "../../src/services/api";
 
-// ─── local storage (no API) ────────────────────────────────────────────
+// ─── date helpers ───────────────────────────────────────────────────────
 
-const JOB_CARDS_STORAGE_KEY = "job_cards";
-const JOB_CARDS_UPDATE_EVENT = "job-cards-updated";
+const pad2 = (n: number) => String(n).padStart(2, "0");
 
-const readAllJobCards = (): any[] => {
-  try {
-    const raw = localStorage.getItem(JOB_CARDS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (err) {
-    console.error("Failed to read job cards from local storage:", err);
-    return [];
-  }
+/** "YYYY-MM-DD" */
+const formatDateOnly = (d: Date | null): string | null => {
+  if (!d) return null;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 };
 
-const writeAllJobCards = (cards: any[]) => {
-  localStorage.setItem(JOB_CARDS_STORAGE_KEY, JSON.stringify(cards));
-  window.dispatchEvent(new Event(JOB_CARDS_UPDATE_EVENT));
+/** "YYYY-MM-DD HH:mm:ss" */
+const formatDateTime = (d: Date | null): string | null => {
+  if (!d) return null;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 };
-
-const generateJobCardId = (existing: any[]): string => {
-  let n = existing.length + 1;
-  let candidate = `JC-${String(n).padStart(5, "0")}`;
-  const ids = new Set(existing.map((c) => c.job_card_id));
-  while (ids.has(candidate)) {
-    n += 1;
-    candidate = `JC-${String(n).padStart(5, "0")}`;
-  }
-  return candidate;
-};
-
-/** Create a new job card, or update an existing one when `id` is provided. */
-const saveJobCardLocally = (data: any, id?: string): any => {
-  const all = readAllJobCards();
-
-  if (id) {
-    const idx = all.findIndex((c) => c.id === id);
-    if (idx !== -1) {
-      const updated = { ...all[idx], ...data };
-      all[idx] = updated;
-      writeAllJobCards(all);
-      return updated;
-    }
-  }
-
-  const newCard = {
-    ...data,
-    id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
-    job_card_id: generateJobCardId(all),
-    created_on: new Date().toISOString(),
-  };
-  all.push(newCard);
-  writeAllJobCards(all);
-  return newCard;
-};
-
-const getJobCardByIdLocally = (id: string): any | undefined =>
-  readAllJobCards().find((c) => c.id === id);
 
 // ─── interfaces ───────────────────────────────────────────────────────────
 
@@ -213,11 +171,18 @@ const JobCardForm: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [warnings, setWarnings] = useState<TabWarning>({});
   const [saving, setSaving] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
   const [formData, setFormData] = useState<JobCardFormData>(defaultFormData());
+
+  // The real numeric primary key from the backend (distinct from the
+  // human-readable docname in the URL, e.g. "WO 88"). This is what must be
+  // sent on PUT — sending the docname string to a numeric `id` column
+  // causes "Truncated incorrect DOUBLE value" on the backend.
+  const [recordId, setRecordId] = useState<number | string | null>(null);
 
   const tabs = [
     { id: 0, name: "Details", icon: <FaFileAlt size={14} /> },
@@ -229,25 +194,42 @@ const JobCardForm: React.FC = () => {
 
   // ─── load existing job card when editing ──────────────────────────────
   // Prefer data passed via navigation state (fast path from the list's row
-  // click); fall back to local storage directly by id (e.g. deep link or
-  // page refresh) since there is no API to re-fetch from.
+  // click); fall back to fetching the full list from the API and matching
+  // by `name` (e.g. a deep link or page refresh).
   useEffect(() => {
     if (isEditMode && id) {
       const state = location.state as { jobCard?: any };
       if (state?.jobCard) {
         loadJobCardIntoForm(state.jobCard);
       } else {
-        const stored = getJobCardByIdLocally(id);
-        if (stored) loadJobCardIntoForm(stored);
+        fetchJobCardById(id);
       }
     }
   }, [id]);
 
+  const fetchJobCardById = async (jobCardId: string) => {
+    try {
+      const response = await api.get("/job-card");
+      if (response.data.success === 1) {
+        const all = response.data.data || [];
+        const found = all.find(
+          (jc: any) => jc.name === jobCardId || String(jc.id) === jobCardId
+        );
+        if (found) loadJobCardIntoForm(found);
+      }
+    } catch (err: any) {
+      console.error("Error fetching job card:", err);
+      setApiError(err.response?.data?.message || "Failed to load job card");
+    }
+  };
+
   const loadJobCardIntoForm = (jc: any) => {
+    setRecordId(jc.id ?? null);
+
     setFormData((prev) => ({
       ...prev,
       work_order: jc.work_order || "",
-      qty_to_manufacture: jc.qty_to_manufacture || 0,
+      qty_to_manufacture: jc.requested_qty ?? jc.for_quantity ?? 0,
       company: jc.company || "",
       posting_date: jc.posting_date ? new Date(jc.posting_date) : new Date(),
       naming_series: jc.naming_series || prev.naming_series,
@@ -258,7 +240,6 @@ const JobCardForm: React.FC = () => {
       source_warehouse: jc.source_warehouse || "",
       workstation: jc.workstation || "",
       wip_warehouse: jc.wip_warehouse || "",
-      items: jc.items || [],
       quality_inspection_template: jc.quality_inspection_template || "",
       expected_start_date: jc.expected_start_date ? new Date(jc.expected_start_date) : null,
       expected_end_date: jc.expected_end_date ? new Date(jc.expected_end_date) : null,
@@ -266,15 +247,9 @@ const JobCardForm: React.FC = () => {
       hour_rate: jc.hour_rate || 0,
       actual_start_date: jc.actual_start_date ? new Date(jc.actual_start_date) : null,
       actual_end_date: jc.actual_end_date ? new Date(jc.actual_end_date) : null,
-      time_logs: (jc.time_logs || []).map((l: any) => ({
-        ...l,
-        from_time: l.from_time ? new Date(l.from_time) : null,
-        to_time: l.to_time ? new Date(l.to_time) : null,
-      })),
-      secondary_items: jc.secondary_items || [],
       remarks: jc.remarks || "",
       project: jc.project || "",
-      sequence_id: jc.sequence_id || "",
+      sequence_id: jc.sequence_id != null ? String(jc.sequence_id) : "",
       status: jc.status || "Open",
       is_corrective_job_card: !!jc.is_corrective_job_card,
       barcode: jc.barcode || "",
@@ -404,6 +379,8 @@ const JobCardForm: React.FC = () => {
   };
 
   // ─── raw material items (Tab 0) ───────────────────────────────────────
+  // NOTE: not yet sent to the API — /job-card has no child-table endpoint
+  // for items yet (mirrors how BOM components go to /bom-item separately).
 
   const addItem = () => {
     setFormData((prev) => ({ ...prev, items: [...prev.items, emptyMaterialItem()] }));
@@ -459,48 +436,87 @@ const JobCardForm: React.FC = () => {
     }));
   };
 
-  // ─── submit — saved to localStorage, no API ───────────────────────────
+  // ─── build API payload ─────────────────────────────────────────────────
 
-  const buildLocalPayload = () => ({
-    work_order: formData.work_order,
-    qty_to_manufacture: formData.qty_to_manufacture,
-    company: formData.company,
-    posting_date: formData.posting_date ? formData.posting_date.toISOString() : null,
-    naming_series: formData.naming_series,
-    pending_qty: formData.pending_qty,
-    total_completed_qty: formData.total_completed_qty,
-    operation: formData.operation,
-    workstation_type: formData.workstation_type,
-    source_warehouse: formData.source_warehouse,
-    workstation: formData.workstation,
-    wip_warehouse: formData.wip_warehouse,
-    items: formData.items,
-    quality_inspection_template: formData.quality_inspection_template,
+  const buildApiPayload = () => {
+    const timeRequired =
+      formData.expected_start_date && formData.expected_end_date
+        ? Math.max(
+            0,
+            Math.round(
+              (formData.expected_end_date.getTime() - formData.expected_start_date.getTime()) / 60000
+            )
+          )
+        : 0;
 
-    expected_start_date: formData.expected_start_date ? formData.expected_start_date.toISOString() : null,
-    expected_end_date: formData.expected_end_date ? formData.expected_end_date.toISOString() : null,
-    for_quantity: formData.for_quantity,
-    hour_rate: formData.hour_rate,
+    const totalTimeInMins = formData.time_logs.reduce((sum, log) => {
+      if (log.from_time && log.to_time) {
+        return sum + Math.max(0, Math.round((log.to_time.getTime() - log.from_time.getTime()) / 60000));
+      }
+      return sum;
+    }, 0);
 
-    actual_start_date: formData.actual_start_date ? formData.actual_start_date.toISOString() : null,
-    actual_end_date: formData.actual_end_date ? formData.actual_end_date.toISOString() : null,
-    time_logs: formData.time_logs.map((log) => ({
-      ...log,
-      from_time: log.from_time ? log.from_time.toISOString() : null,
-      to_time: log.to_time ? log.to_time.toISOString() : null,
-    })),
+    return {
+      work_order: formData.work_order,
+      production_item: "",
+      for_quantity: formData.for_quantity || formData.qty_to_manufacture,
+      bom_no: "",
+      company: formData.company,
+      naming_series: formData.naming_series,
+      posting_date: formatDateOnly(formData.posting_date),
+      finished_good: "",
+      semi_fg_bom: "",
+      pending_qty: formData.pending_qty,
+      process_loss_qty: 0,
+      total_completed_qty: formData.total_completed_qty,
+      transferred_qty: 0,
+      manufactured_qty: 0,
+      operation: formData.operation,
+      source_warehouse: formData.source_warehouse,
+      wip_warehouse: formData.wip_warehouse,
+      skip_material_transfer: 0,
+      backflush_from_wip_warehouse: 0,
+      workstation_type: formData.workstation_type,
+      workstation: formData.workstation,
+      target_warehouse: "",
+      quality_inspection_template: formData.quality_inspection_template,
+      quality_inspection: "",
+      expected_start_date: formatDateTime(formData.expected_start_date),
+      time_required: timeRequired,
+      expected_end_date: formatDateTime(formData.expected_end_date),
+      actual_start_date: formatDateTime(formData.actual_start_date),
+      total_time_in_mins: totalTimeInMins,
+      actual_end_date: formatDateTime(formData.actual_end_date),
+      for_job_card: "",
+      is_corrective_job_card: formData.is_corrective_job_card ? 1 : 0,
+      hour_rate: formData.hour_rate,
+      for_operation: formData.operation,
+      item_name: "",
+      requested_qty: formData.qty_to_manufacture,
+      is_paused: 0,
+      is_subcontracted: 0,
+      track_semi_finished_goods: 0,
+      project: formData.project,
+      remarks: formData.remarks,
+      status: formData.status,
+      operation_row_id: 1,
+      operation_row_number: 1,
+      operation_id: "",
+      sequence_id: formData.sequence_id ? parseInt(formData.sequence_id, 10) || 1 : 1,
+      serial_no: "",
+      serial_and_batch_bundle: "",
+      barcode: formData.barcode,
+      batch_no: "",
+      modified_by: "Administrator",
+      owner: "Administrator",
+      docstatus: 0,
+      idx: 0,
+    };
+  };
 
-    secondary_items: formData.secondary_items,
+  // ─── submit — POST/PUT /job-card ───────────────────────────────────────
 
-    remarks: formData.remarks,
-    project: formData.project,
-    sequence_id: formData.sequence_id,
-    status: formData.status,
-    is_corrective_job_card: formData.is_corrective_job_card,
-    barcode: formData.barcode,
-  });
-
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     const allErrors = getAllValidationErrors();
@@ -511,13 +527,33 @@ const JobCardForm: React.FC = () => {
     }
 
     setSaving(true);
+    setApiError(null);
+
     try {
-      const payload = buildLocalPayload();
-      saveJobCardLocally(payload, isEditMode ? id : undefined);
-      navigate("/job-card");
-    } catch (err) {
-      console.error("Error saving job card locally:", err);
-      alert("Failed to save job card");
+      const payload = buildApiPayload();
+
+      let response;
+      if (isEditMode && id) {
+        
+        response = await api.put("/job-card", { id: recordId ?? id, ...payload });
+      } else {
+        response = await api.post("/job-card", payload);
+      }
+
+      if (response.data.success !== 1) {
+        throw new Error(response.data?.message || "Failed to save job card");
+      }
+
+      navigate("/job-cards");
+    } catch (err: any) {
+      console.error("Error saving job card:", err);
+      if (err.response) {
+        setApiError(err.response.data?.message || `Server error: ${err.response.status}`);
+      } else if (err.request) {
+        setApiError("Network error. Please check your connection.");
+      } else {
+        setApiError(err.message || "Failed to save job card");
+      }
     } finally {
       setSaving(false);
     }
@@ -578,6 +614,13 @@ const JobCardForm: React.FC = () => {
           <h1 className="jcf-title">
             {isEditMode ? "Edit Job Card" : "New Job Card"}
           </h1>
+
+          {apiError && (
+            <div className="jcf-error-pill">
+              <FaExclamationTriangle size={11} />
+              {apiError}
+            </div>
+          )}
 
           {hasAnyErrors && (
             <div className="jcf-error-pill">
