@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { FaArrowLeft, FaSave, FaSpinner, FaTrash, FaEye, FaEdit } from 'react-icons/fa';
+import { FaArrowLeft, FaSave, FaSpinner, FaTrash,  FaEdit } from 'react-icons/fa';
 import "./OperationForm.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
 import api from '../../services/api';

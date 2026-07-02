@@ -1,5 +1,5 @@
 // WorkOrderForm.tsx - ERPNext-style tabbed Work Order form (Production Item / Configuration / More Info / Connections)
-import { useState, type FormEvent, useEffect } from "react";
+import { useState, type FormEvent, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   FaArrowLeft,
@@ -12,6 +12,7 @@ import {
   FaPlus,
   FaTrash,
   FaPaperPlane,
+  FaSearch,
 } from "react-icons/fa";
 import "./WorkOrderForm.css";
 import { useAdminTheme } from "../admin-theme/AdminThemeContext";
@@ -177,6 +178,30 @@ interface ValidationError {
   message: string;
 }
 
+// ─── Warehouse Types ────────────────────────────────────────────────────
+interface Warehouse {
+  id: number;
+  warehouse_name: string;
+  company: string | null;
+  parent_warehouse: string | null;
+  warehouse_type: string | null;
+  city: string | null;
+  state: string | null;
+  email_id: string | null;
+  phone_no: string | null;
+  disabled: number;
+}
+
+interface WarehouseResponse {
+  success: number;
+  data: {
+    total: number;
+    page: number;
+    limit: number;
+    records: Warehouse[];
+  };
+}
+
 const STATUS_OPTIONS: Status[] = ["Draft", "Not Started", "In Process", "Completed", "Stopped"];
 const STATUS_LABELS: Record<Status, string> = {
   Draft: "Draft",
@@ -276,6 +301,186 @@ interface ApiResponse {
   success: number;
   data: WorkOrderData;
   message?: string;
+}
+
+// ─── Warehouse Search Component ────────────────────────────────────────
+interface WarehouseSearchFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+  hint?: string;
+  className?: string;
+  error?: string;
+}
+
+function WarehouseSearchField({
+  label,
+  value,
+  onChange,
+  required = false,
+  disabled = false,
+  placeholder = "Search warehouse...",
+  hint,
+  className = "",
+  error,
+}: WarehouseSearchFieldProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [filteredWarehouses, setFilteredWarehouses] = useState<Warehouse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch warehouses on mount
+  useEffect(() => {
+    const fetchWarehouses = async () => {
+      setLoading(true);
+      setFetchError(null);
+      try {
+        const response = await api.get<WarehouseResponse>("/warehouse");
+        if (response.data.success === 1) {
+          const records = response.data.data.records || [];
+          setWarehouses(records);
+          setFilteredWarehouses(records);
+        } else {
+          setFetchError("Failed to load warehouses");
+        }
+      } catch (err) {
+        console.error("Error fetching warehouses:", err);
+        setFetchError("Could not load warehouse list");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchWarehouses();
+  }, []);
+
+  // Filter warehouses based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredWarehouses(warehouses);
+      return;
+    }
+    const term = searchTerm.toLowerCase().trim();
+    const filtered = warehouses.filter((w) =>
+      w.warehouse_name.toLowerCase().includes(term) ||
+      (w.company && w.company.toLowerCase().includes(term))
+    );
+    setFilteredWarehouses(filtered);
+  }, [searchTerm, warehouses]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectWarehouse = (warehouse: Warehouse) => {
+    onChange(warehouse.warehouse_name);
+    setSearchTerm(warehouse.warehouse_name);
+    setIsOpen(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+    onChange(val);
+    setIsOpen(true);
+  };
+
+  const handleFocus = () => {
+    if (!disabled) {
+      setSearchTerm(value);
+      setIsOpen(true);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <div className={`warehouse-search-field ${className}`} ref={wrapperRef}>
+      <label className="wof-label">
+        {label}
+        {required && <span className="wof-required"> *</span>}
+      </label>
+      <div className="warehouse-search-wrapper">
+        <div className="warehouse-search-input-wrap">
+          <FaSearch className="warehouse-search-icon" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={searchTerm || value}
+            onChange={handleInputChange}
+            onFocus={handleFocus}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled || loading}
+            className={`form-field warehouse-search-input ${error ? "field-error" : ""}`}
+          />
+          {loading && <FaSpinner className="warehouse-loading-spinner spinning" />}
+          {value && !disabled && (
+            <button
+              type="button"
+              className="warehouse-clear-btn"
+              onClick={() => {
+                onChange("");
+                setSearchTerm("");
+                setIsOpen(false);
+              }}
+              aria-label="Clear selection"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        {isOpen && !disabled && (
+          <div className="warehouse-dropdown">
+            {loading ? (
+              <div className="warehouse-dropdown-loading">Loading warehouses...</div>
+            ) : fetchError ? (
+              <div className="warehouse-dropdown-error">{fetchError}</div>
+            ) : filteredWarehouses.length === 0 ? (
+              <div className="warehouse-dropdown-empty">
+                {searchTerm ? "No warehouses found" : "No warehouses available"}
+              </div>
+            ) : (
+              <ul className="warehouse-dropdown-list">
+                {filteredWarehouses.map((warehouse) => (
+                  <li
+                    key={warehouse.id}
+                    className={`warehouse-dropdown-item ${value === warehouse.warehouse_name ? "selected" : ""}`}
+                    onClick={() => handleSelectWarehouse(warehouse)}
+                  >
+                    <div className="warehouse-item-name">{warehouse.warehouse_name}</div>
+                    {warehouse.company && (
+                      <div className="warehouse-item-company">{warehouse.company}</div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+      {hint && <span className="wof-hint">{hint}</span>}
+      {error && <div className="wof-error-msg">{error}</div>}
+    </div>
+  );
 }
 
 export default function WorkOrderForm() {
@@ -763,61 +968,61 @@ export default function WorkOrderForm() {
               <div className="wof-divider" />
               <span className="wof-section-title">Warehouse</span>
 
+              {/* ─── Warehouse Fields in 2-column grid ────────────────── */}
               <div className="wof-grid-2">
-                <div className="wof-field">
-                  <label className="wof-label">Source Warehouse</label>
-                  <input
-                    type="text"
-                    value={wo.source_warehouse}
-                    onChange={(e) => setField("source_warehouse", e.target.value)}
-                    className="form-field"
-                    placeholder="e.g. Stores - T"
-                    disabled={disabled}
-                  />
-                  <span className="wof-hint">This is a location where raw materials are available.</span>
-                </div>
-                <div className="wof-field">
-                  <label className="wof-label">
-                    Target Warehouse <span className="wof-required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={wo.target_warehouse}
-                    onChange={(e) => setField("target_warehouse", e.target.value)}
-                    className="form-field"
-                    placeholder="e.g. Finished Goods - T"
-                    disabled={disabled}
-                  />
-                  <span className="wof-hint">This is a location where final product is stored.</span>
-                </div>
-              </div>
-
-              <div className="wof-field">
-                <label className="wof-label">
-                  Work-in-Progress Warehouse <span className="wof-required">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={wo.wip_warehouse}
-                  onChange={(e) => setField("wip_warehouse", e.target.value)}
-                  className="form-field"
-                  placeholder="e.g. Work In Progress - T"
+                {/* Source Warehouse */}
+                <WarehouseSearchField
+                  label="Source Warehouse"
+                  value={wo.source_warehouse}
+                  onChange={(val) => setField("source_warehouse", val)}
                   disabled={disabled}
+                  placeholder="Search source warehouse..."
+                  hint="This is a location where raw materials are available."
                 />
-                <span className="wof-hint">This is a location where operations are executed.</span>
+
+                {/* Target Warehouse */}
+                <WarehouseSearchField
+                  label="Target Warehouse"
+                  value={wo.target_warehouse}
+                  onChange={(val) => setField("target_warehouse", val)}
+                  required={true}
+                  disabled={disabled}
+                  placeholder="Search target warehouse..."
+                  hint="This is a location where final product is stored."
+                  error={!wo.target_warehouse.trim() ? "Target warehouse is required" : ""}
+                />
               </div>
 
-              <div className="wof-field">
-                <label className="wof-label">Transfer Material Against</label>
-                <select
-                  value={wo.transfer_material_against}
-                  onChange={(e) => setField("transfer_material_against", e.target.value as "Work Order" | "Job Card")}
-                  className="form-field"
+              <div className="wof-grid-2">
+                {/* WIP Warehouse */}
+                <WarehouseSearchField
+                  label="Work-in-Progress Warehouse"
+                  value={wo.wip_warehouse}
+                  onChange={(val) => setField("wip_warehouse", val)}
+                  required={!wo.skip_material_transfer}
                   disabled={disabled}
-                >
-                  <option value="Work Order">Work Order</option>
-                  <option value="Job Card">Job Card</option>
-                </select>
+                  placeholder="Search WIP warehouse..."
+                  hint="This is a location where operations are executed."
+                  error={
+                    !wo.wip_warehouse.trim() && !wo.skip_material_transfer
+                      ? "WIP warehouse is required"
+                      : ""
+                  }
+                />
+
+                {/* Transfer Material Against */}
+                <div className="wof-field">
+                  <label className="wof-label">Transfer Material Against</label>
+                  <select
+                    value={wo.transfer_material_against}
+                    onChange={(e) => setField("transfer_material_against", e.target.value as "Work Order" | "Job Card")}
+                    className="form-field"
+                    disabled={disabled}
+                  >
+                    <option value="Work Order">Work Order</option>
+                    <option value="Job Card">Job Card</option>
+                  </select>
+                </div>
               </div>
 
               <div className="wof-divider" />
@@ -1245,199 +1450,199 @@ export default function WorkOrderForm() {
                   min="0"
                   step="0.01"
                   disabled={disabled}
-                  />
-                </div>
+                />
               </div>
-            )}
+            </div>
+          )}
 
-            {/* ════════════════════ TAB 3: MORE INFO ════════════════════ */}
-            {activeTab === "more_info" && (
-              <div className="wof-card">
-                <span className="wof-section-title wof-section-title-flush">Production Item Info</span>
+          {/* ════════════════════ TAB 3: MORE INFO ════════════════════ */}
+          {activeTab === "more_info" && (
+            <div className="wof-card">
+              <span className="wof-section-title wof-section-title-flush">Production Item Info</span>
 
-                <div className="wof-field" style={{ marginTop: 14 }}>
-                  <label className="wof-label">Item Name</label>
+              <div className="wof-field" style={{ marginTop: 14 }}>
+                <label className="wof-label">Item Name</label>
+                <input
+                  type="text"
+                  value={wo.item_name}
+                  onChange={(e) => setField("item_name", e.target.value)}
+                  className="form-field"
+                  placeholder="e.g. FRP Box"
+                  disabled={disabled}
+                />
+              </div>
+
+              <div className="wof-grid-2">
+                <div className="wof-field">
+                  <label className="wof-label">Stock UOM</label>
                   <input
                     type="text"
-                    value={wo.item_name}
-                    onChange={(e) => setField("item_name", e.target.value)}
+                    value={wo.stock_uom}
+                    onChange={(e) => setField("stock_uom", e.target.value)}
                     className="form-field"
-                    placeholder="e.g. FRP Box"
+                    placeholder="e.g. Nos"
                     disabled={disabled}
                   />
                 </div>
-
-                <div className="wof-grid-2">
-                  <div className="wof-field">
-                    <label className="wof-label">Stock UOM</label>
-                    <input
-                      type="text"
-                      value={wo.stock_uom}
-                      onChange={(e) => setField("stock_uom", e.target.value)}
-                      className="form-field"
-                      placeholder="e.g. Nos"
-                      disabled={disabled}
-                    />
-                  </div>
-                  <div className="wof-field">
-                    <label className="wof-label">
-                      Status <span className="wof-required">*</span>
-                    </label>
-                    <input type="text" value={wo.status} className="form-field" disabled />
-                  </div>
+                <div className="wof-field">
+                  <label className="wof-label">
+                    Status <span className="wof-required">*</span>
+                  </label>
+                  <input type="text" value={wo.status} className="form-field" disabled />
                 </div>
+              </div>
 
-                <div className="wof-divider" />
-                <span className="wof-section-title wof-section-title-flush">Comments</span>
+              <div className="wof-divider" />
+              <span className="wof-section-title wof-section-title-flush">Comments</span>
 
-                <div className="wof-comment-input-row" style={{ marginTop: 12 }}>
-                  <div className="wof-comment-avatar">TT</div>
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="wof-comment-input"
-                    placeholder="Type a reply / comment"
-                    disabled={submitting || loading}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddComment();
-                      }
+              <div className="wof-comment-input-row" style={{ marginTop: 12 }}>
+                <div className="wof-comment-avatar">TT</div>
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="wof-comment-input"
+                  placeholder="Type a reply / comment"
+                  disabled={submitting || loading}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddComment();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="wof-comment-send"
+                  onClick={handleAddComment}
+                  disabled={submitting || loading || !newComment.trim()}
+                >
+                  <FaPaperPlane size={11} />
+                </button>
+              </div>
+
+              {wo.comments.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  {wo.comments.map((c) => (
+                    <div key={c.id} className="wof-comment-row">
+                      <div className="wof-comment-avatar">{c.author.slice(0, 2).toUpperCase()}</div>
+                      <div>
+                        <span className="wof-comment-author">
+                          {c.author} <span className="wof-comment-time">· {c.time}</span>
+                        </span>
+                        <div className="wof-comment-text">{c.text}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="wof-divider" />
+              <div className="wof-activity-header">
+                <span className="wof-section-title wof-activity-title">Activity</span>
+              </div>
+              <ul className="wof-activity-list">
+                {wo.activity.length === 0 && <li className="wof-activity-item">No activity yet.</li>}
+                {wo.activity.map((a) => (
+                  <li key={a.id} className="wof-activity-item">
+                    {a.text} <span className="wof-activity-time">· {a.time}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* ════════════════════ TAB 4: CONNECTIONS ════════════════════ */}
+          {activeTab === "connections" && (
+            <div className="wof-card">
+              <div className="wof-progress-block">
+                <div className="wof-progress-bar">
+                  <div
+                    className="wof-progress-fill"
+                    style={{ width: `${Math.min(100, Math.max(0, wo.items_produced_pct))}%` }}
+                  />
+                </div>
+                <span className="wof-progress-label">
+                  {wo.manufactured_qty || 0} items produced
+                </span>
+              </div>
+
+              <div className="wof-progress-block">
+                <div className="wof-progress-bar">
+                  <div
+                    className="wof-progress-fill"
+                    style={{
+                      width:
+                        wo.operations.length > 0
+                          ? `${(wo.completed_operations.length / wo.operations.length) * 100}%`
+                          : "0%",
                     }}
                   />
-                  <button
-                    type="button"
-                    className="wof-comment-send"
-                    onClick={handleAddComment}
-                    disabled={submitting || loading || !newComment.trim()}
-                  >
-                    <FaPaperPlane size={11} />
-                  </button>
                 </div>
-
-                {wo.comments.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    {wo.comments.map((c) => (
-                      <div key={c.id} className="wof-comment-row">
-                        <div className="wof-comment-avatar">{c.author.slice(0, 2).toUpperCase()}</div>
-                        <div>
-                          <span className="wof-comment-author">
-                            {c.author} <span className="wof-comment-time">· {c.time}</span>
-                          </span>
-                          <div className="wof-comment-text">{c.text}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="wof-divider" />
-                <div className="wof-activity-header">
-                  <span className="wof-section-title wof-activity-title">Activity</span>
-                </div>
-                <ul className="wof-activity-list">
-                  {wo.activity.length === 0 && <li className="wof-activity-item">No activity yet.</li>}
-                  {wo.activity.map((a) => (
-                    <li key={a.id} className="wof-activity-item">
-                      {a.text} <span className="wof-activity-time">· {a.time}</span>
-                    </li>
-                  ))}
-                </ul>
+                <span className="wof-progress-label">
+                  Completed Operations:{" "}
+                  <strong>{wo.completed_operations.length > 0 ? wo.completed_operations.join(", ") : "None"}</strong>
+                </span>
               </div>
-            )}
 
-            {/* ════════════════════ TAB 4: CONNECTIONS ════════════════════ */}
-            {activeTab === "connections" && (
-              <div className="wof-card">
-                <div className="wof-progress-block">
-                  <div className="wof-progress-bar">
-                    <div
-                      className="wof-progress-fill"
-                      style={{ width: `${Math.min(100, Math.max(0, wo.items_produced_pct))}%` }}
-                    />
+              <div className="wof-divider" />
+
+              <div className="wof-connections-grid">
+                <div>
+                  <span className="wof-section-title wof-section-title-flush">Transactions</span>
+                  <div className="wof-connection-row">
+                    <span>Stock Entry</span>
+                    <span className="wof-connection-count">{wo.stock_entry_count}</span>
                   </div>
-                  <span className="wof-progress-label">
-                    {wo.manufactured_qty || 0} items produced
-                  </span>
+                  <div className="wof-connection-row">
+                    <span>Job Card</span>
+                    <span className="wof-connection-count">{wo.job_card_count}</span>
+                  </div>
+                  <div className="wof-connection-row">
+                    <span>Pick List</span>
+                    <span className="wof-connection-count">{wo.pick_list_count}</span>
+                  </div>
                 </div>
 
-                <div className="wof-progress-block">
-                  <div className="wof-progress-bar">
-                    <div
-                      className="wof-progress-fill"
-                      style={{
-                        width:
-                          wo.operations.length > 0
-                            ? `${(wo.completed_operations.length / wo.operations.length) * 100}%`
-                            : "0%",
-                      }}
-                    />
+                <div>
+                  <span className="wof-section-title wof-section-title-flush">Reference</span>
+                  <div className="wof-connection-row">
+                    <span>Serial No</span>
+                    <span className="wof-connection-count">{wo.serial_no_count || "+"}</span>
                   </div>
-                  <span className="wof-progress-label">
-                    Completed Operations:{" "}
-                    <strong>{wo.completed_operations.length > 0 ? wo.completed_operations.join(", ") : "None"}</strong>
-                  </span>
+                  <div className="wof-connection-row">
+                    <span>Batch</span>
+                    <span className="wof-connection-count">{wo.batch_count || "+"}</span>
+                  </div>
+                  <div className="wof-connection-row">
+                    <span>Material Request</span>
+                    <span className="wof-connection-count">{wo.material_request_count || "+"}</span>
+                  </div>
                 </div>
 
-                <div className="wof-divider" />
-
-                <div className="wof-connections-grid">
-                  <div>
-                    <span className="wof-section-title wof-section-title-flush">Transactions</span>
-                    <div className="wof-connection-row">
-                      <span>Stock Entry</span>
-                      <span className="wof-connection-count">{wo.stock_entry_count}</span>
-                    </div>
-                    <div className="wof-connection-row">
-                      <span>Job Card</span>
-                      <span className="wof-connection-count">{wo.job_card_count}</span>
-                    </div>
-                    <div className="wof-connection-row">
-                      <span>Pick List</span>
-                      <span className="wof-connection-count">{wo.pick_list_count}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="wof-section-title wof-section-title-flush">Reference</span>
-                    <div className="wof-connection-row">
-                      <span>Serial No</span>
-                      <span className="wof-connection-count">{wo.serial_no_count || "+"}</span>
-                    </div>
-                    <div className="wof-connection-row">
-                      <span>Batch</span>
-                      <span className="wof-connection-count">{wo.batch_count || "+"}</span>
-                    </div>
-                    <div className="wof-connection-row">
-                      <span>Material Request</span>
-                      <span className="wof-connection-count">{wo.material_request_count || "+"}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="wof-section-title wof-section-title-flush">Stock Reservation</span>
-                    <div className="wof-connection-row">
-                      <span>Stock Reservation Entry</span>
-                    </div>
+                <div>
+                  <span className="wof-section-title wof-section-title-flush">Stock Reservation</span>
+                  <div className="wof-connection-row">
+                    <span>Stock Reservation Entry</span>
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* ─── Footer ────────────────────────────────────────────────── */}
-            <div className="wof-footer">
-              <button type="button" onClick={() => navigate("/work-order")} className="cancel-btn" disabled={submitting}>
-                Cancel
-              </button>
-              <button type="submit" disabled={submitting} className="submit-btn">
-                {submitting && <FaSpinner className="spinning" />}
-                <FaSave size={12} />
-                {isNew ? "Create" : "Update"}
-              </button>
             </div>
-          </form>
-        </div>
+          )}
+
+          {/* ─── Footer ────────────────────────────────────────────────── */}
+          <div className="wof-footer">
+            <button type="button" onClick={() => navigate("/work-order")} className="cancel-btn" disabled={submitting}>
+              Cancel
+            </button>
+            <button type="submit" disabled={submitting} className="submit-btn">
+              {submitting && <FaSpinner className="spinning" />}
+              <FaSave size={12} />
+              {isNew ? "Create" : "Update"}
+            </button>
+          </div>
+        </form>
       </div>
-    );
-  }
+    </div>
+  );
+}

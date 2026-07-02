@@ -16,7 +16,7 @@ import {
   InfoIcon,
   Save,
   Plus,
-  Building2,
+
 } from "lucide-react";
 import "./Newbompage.css";
 import api from '../../src/services/api';
@@ -69,20 +69,6 @@ interface ValidationError {
   tabId: TabId;
 }
 
-interface BOMData {
-  item: string;
-  item_name: string;
-  company: string;
-  quantity: number;
-  uom: string;
-  is_active: number;
-  is_default: number;
-  description: string;
-  owner: string;
-  modified_by: string;
-  default_source_warehouse?: string;
-  default_target_warehouse?: string;
-}
 
 interface BOMItemData {
   item_code: string;
@@ -620,7 +606,7 @@ const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack, editData }) => {
   const [opsPanelOpen, setOpsPanelOpen] = useState(true);
   const [withOperations, setWithOperations] = useState(false);
   const [itemToManufacture, setItemToManufacture] = useState("");
-  const [bomNo, setBomNo] = useState("");
+  const [, setBomNo] = useState("");
   const [bomId, setBomId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -664,7 +650,7 @@ const NewBOMPage: React.FC<NewBOMPageProps> = ({ onBack, editData }) => {
 
   // ─── Fetch Warehouses ──────────────────────────────────────────────────────
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [warehousesLoading, setWarehousesLoading] = useState(false);
+  const [, setWarehousesLoading] = useState(false);
 
   // ─── Load edit data ──────────────────────────────────────────────────────
 

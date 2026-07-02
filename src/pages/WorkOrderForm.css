@@ -1,4 +1,4 @@
-/* WorkOrderForm.css */
+/* WorkOrderForm.css - Complete file */
 
 /* ─── Container ───────────────────────────────────────────────────────── */
 .wof-page {
@@ -685,10 +685,6 @@
   animation: spin 0.8s linear infinite;
 }
 
-
-/* Add to WorkOrderForm.css */
-
-/* ── Loading State ───────────────────────────────────────── */
 .wof-loading {
   display: flex;
   align-items: center;
@@ -701,7 +697,6 @@
   border: 1px solid var(--border-color, #e5e7eb);
 }
 
-/* ── Update Grid for 3 columns if needed ────────────────── */
 .wof-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -709,9 +704,6 @@
   margin-bottom: 18px;
 }
 
-/* Add to WorkOrderForm.css */
-
-/* ─── Edit Button ─────────────────────────────────────────── */
 .wof-edit-btn {
   display: flex;
   align-items: center;
@@ -734,20 +726,12 @@
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
-/* Dark theme override */
 .dark-theme .wof-edit-btn {
   background: var(--primary-color, #3b82f6);
 }
 
 .dark-theme .wof-edit-btn:hover {
   background: var(--primary-hover, #2563eb);
-}
-
-@media (max-width: 768px) {
-  .wof-grid-3 {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
 }
 
 @keyframes spin {
@@ -769,7 +753,8 @@
 
 /* ─── Responsive ──────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .wof-grid-2 {
+  .wof-grid-2,
+  .wof-grid-3 {
     grid-template-columns: 1fr;
     gap: 0;
   }
@@ -890,12 +875,6 @@
   }
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   ADDITIONS for tabbed Work Order UI (Production Item / Configuration /
-   More Info / Connections). Append this block to the bottom of the
-   existing WorkOrderForm.css — nothing here overrides prior rules.
-   ════════════════════════════════════════════════════════════════════ */
-
 /* ─── Tabs ────────────────────────────────────────────────────────────── */
 .wof-tabs {
   display: flex;
@@ -938,7 +917,7 @@
   border-radius: 2px 2px 0 0;
 }
 
-/* ─── Section title variant (no bottom border, used inline) ─────────── */
+/* ─── Section title variant ─────────────────────────── */
 .wof-section-title-flush {
   border-bottom: none;
   margin-bottom: 0;
@@ -982,7 +961,7 @@
   opacity: 0.6;
 }
 
-/* ─── Select field (matches .form-field look) ────────────────────────── */
+/* ─── Select field ────────────────────────────────────────── */
 select.form-field {
   appearance: none;
   cursor: pointer;
@@ -993,7 +972,7 @@ select.form-field {
   background-repeat: no-repeat;
 }
 
-/* ─── Editable tables (Operations / Required Items) ──────────────────── */
+/* ─── Editable tables ──────────────────────────────────── */
 .wof-table-header {
   display: flex;
   align-items: center;
@@ -1099,7 +1078,7 @@ select.form-field {
   cursor: not-allowed;
 }
 
-/* ─── Connections tab: progress bars ──────────────────────────────────── */
+/* ─── Connections tab ──────────────────────────────────── */
 .wof-progress-block {
   margin-bottom: 18px;
 }
@@ -1125,7 +1104,6 @@ select.form-field {
   color: var(--text-primary);
 }
 
-/* ─── Connections tab: grid of transactions/reference/reservation ────── */
 .wof-connections-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1154,7 +1132,166 @@ select.form-field {
   border-radius: 12px;
 }
 
-/* ─── Responsive ──────────────────────────────────────────────────────── */
+/* ─── Warehouse Search Field ──────────────────────────────────────────── */
+.warehouse-search-field {
+  margin-bottom: 0;
+}
+
+.warehouse-search-wrapper {
+  position: relative;
+}
+
+.warehouse-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.warehouse-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.warehouse-search-input {
+  padding-left: 36px !important;
+  padding-right: 36px !important;
+}
+
+.warehouse-clear-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.warehouse-clear-btn:hover {
+  color: var(--text-primary);
+  background: var(--layout-bg);
+}
+
+.warehouse-loading-spinner {
+  position: absolute;
+  right: 12px;
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+/* ─── Warehouse Dropdown ───────────────────────────────────────────────── */
+.warehouse-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px var(--shadow-color);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.warehouse-dropdown-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+}
+
+.warehouse-dropdown-item {
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.12s;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.warehouse-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.warehouse-dropdown-item:hover {
+  background: color-mix(in srgb, var(--primary-color) 8%, var(--card-bg));
+}
+
+.warehouse-dropdown-item.selected {
+  background: color-mix(in srgb, var(--primary-color) 12%, var(--card-bg));
+}
+
+.warehouse-dropdown-item .warehouse-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.warehouse-dropdown-item .warehouse-item-company {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.warehouse-dropdown-loading,
+.warehouse-dropdown-empty,
+.warehouse-dropdown-error {
+  padding: 16px 14px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.warehouse-dropdown-error {
+  color: var(--danger-color);
+}
+
+/* ─── Scrollbar for dropdown ──────────────────────────────────────────── */
+.warehouse-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.warehouse-dropdown::-webkit-scrollbar-track {
+  background: var(--layout-bg);
+  border-radius: 0 10px 10px 0;
+}
+
+.warehouse-dropdown::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.warehouse-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* ─── Dark theme adjustments ──────────────────────────────────────────── */
+.dark-theme .warehouse-dropdown {
+  border-color: var(--border-color);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.dark-theme .warehouse-dropdown-item {
+  border-bottom-color: var(--border-color);
+}
+
+.dark-theme .warehouse-dropdown-item:hover {
+  background: color-mix(in srgb, var(--primary-color) 15%, var(--card-bg));
+}
+
+.dark-theme .warehouse-dropdown-item.selected {
+  background: color-mix(in srgb, var(--primary-color) 20%, var(--card-bg));
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .wof-connections-grid {
     grid-template-columns: 1fr;
@@ -1162,5 +1299,15 @@ select.form-field {
 
   .wof-tabs {
     gap: 16px;
+  }
+
+  .warehouse-dropdown {
+    max-height: 180px;
+  }
+}
+
+@media (max-width: 520px) {
+  .warehouse-dropdown {
+    max-height: 150px;
   }
 }
