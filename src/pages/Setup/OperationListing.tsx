@@ -9,9 +9,7 @@ import {
   FaAngleDoubleLeft,
   FaAngleDoubleRight,
   FaBoxes,
-  FaTags,
   FaCheckCircle,
-  FaTimesCircle,
   FaSpinner,
   FaEdit,
   FaTrash,
@@ -65,7 +63,7 @@ export default function OperationList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
-  const [sortField, setSortField] = useState<string>('creation');
+  const [sortField, ] = useState<string>('creation');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -148,7 +146,7 @@ export default function OperationList() {
   // Stats
   const totalActive = operations.filter(op => op.docstatus === 0).length;
   const totalSubmitted = operations.filter(op => op.docstatus === 1).length;
-  const totalCancelled = operations.filter(op => op.docstatus === 2).length;
+  // const totalCancelled = operations.filter(op => op.docstatus === 2).length;
   const uniqueWorkstations = [...new Set(operations.map(op => op.workstation))].length;
 
   const stats = [

@@ -11,9 +11,8 @@ import {
   FaEye,
   FaEdit,
   FaTrash,
-  FaWarehouse,
   FaPlus,
-  FaCheck,
+  
   FaSpinner,
 } from 'react-icons/fa';
 import "./WarehouseList.css";
@@ -52,7 +51,7 @@ export default function WarehouseList() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [allChecked, setAllChecked] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);

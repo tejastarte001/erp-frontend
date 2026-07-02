@@ -1,6 +1,6 @@
 // Workstation.tsx - Updated with proper API response handling
 
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import {
   FaSearch,
   FaFilter,
@@ -53,10 +53,10 @@ interface Workstation {
 interface ApiResponse {
   success: number;
   data: Workstation[] | {
-    total: number;
-    page: number;
-    limit: number;
-    records: Workstation[];
+    total?: number;
+    page?: number;
+    limit?: number;
+    records?: Workstation[];
   };
 }
 
@@ -66,7 +66,7 @@ export default function WorkstationList() {
   const [showNewWorkstation, setShowNewWorkstation] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedWorkstation, setSelectedWorkstation] = useState<Workstation | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [] = useState(false);
   const [editData, setEditData] = useState<Workstation | null>(null);
   
   const [workstations, setWorkstations] = useState<Workstation[]>([]);
@@ -353,7 +353,12 @@ export default function WorkstationList() {
             setEditData(null);
             fetchWorkstations();
           }}
-          editData={editData}
+          editData={editData ? {
+            ...editData,
+            _comments: editData._comments ?? '',
+            _assign: editData._assign ?? '',
+            _liked_by: editData._liked_by ?? '',
+          } : null}
         />
       )}
 

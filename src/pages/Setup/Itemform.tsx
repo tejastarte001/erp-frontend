@@ -18,7 +18,7 @@ import {
   FaShoppingCart,
   FaIndustry,
   FaClipboardCheck,
-  FaLink,
+  
   
 } from 'react-icons/fa';
 import "./ItemForm.css";
@@ -873,7 +873,7 @@ function TaxTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
 }
 
 function InventoryTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
-  const [barcodes, setBarcodes] = useState<TableRow[]>([]);
+  const [] = useState<TableRow[]>([]);
   const s = (k: string, v: any) => setForm({ ...form, [k]: v });
 
   return (
@@ -1572,8 +1572,7 @@ function QualityTab({ form, setForm }: { form: any; setForm: (f: any) => void })
   );
 }
 
-function PricingTab({ form, setForm }: { form: any; setForm: (f: any) => void }) {
-  const s = (k: string, v: any) => setForm({ ...form, [k]: v });
+function PricingTab({  }: { form: any; setForm: (f: any) => void }) {
   
   // State for price list rows
   const [priceRows, setPriceRows] = useState<TableRow[]>([]);
@@ -1615,7 +1614,7 @@ function PricingTab({ form, setForm }: { form: any; setForm: (f: any) => void })
   };
 
   // Helper to get currency for a price list
-  const getCurrencyForPriceList = (priceListName: string) => {
+  const getCurrencyForPriceList = () => {
     // This would ideally come from the API data
     // For now, we'll default to INR or you can fetch from the price list data
     return "INR";
@@ -1623,7 +1622,7 @@ function PricingTab({ form, setForm }: { form: any; setForm: (f: any) => void })
 
   const handlePriceListChange = (rowId: string, value: string) => {
     setPriceRows(prev => prev.map(row => 
-      row.id === rowId ? { ...row, priceList: value, currency: getCurrencyForPriceList(value) } : row
+      row.id === rowId ? { ...row, priceList: value, currency: getCurrencyForPriceList() } : row
     ));
     setEditingRowId(null);
     setEditingField(null);
