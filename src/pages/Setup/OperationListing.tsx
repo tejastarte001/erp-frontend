@@ -21,6 +21,7 @@ import {
 import "./OperationListing.css";
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
 import api from '../../services/api';
+import { PageLoader } from "../components/PageLoader";
 
 interface Operation {
   id: number;
@@ -473,6 +474,18 @@ export default function OperationList() {
   const getOperationType = (operation: Operation) => {
     return operation.is_corrective_operation === 1 ? 'Corrective' : 'Standard';
   };
+
+    // ─── Loading Screen ─────────────────────────────────────────────────────
+    if (loading) {
+      return (
+        <div className={`p-6 max-w-7xl mx-auto ${theme}`}>
+          <PageLoader
+            message="Loading Setup & Operation List..." 
+            //subtitle="Calculating bill of materials, operations rates, and component structures"
+          />
+        </div>
+      );
+    }
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
