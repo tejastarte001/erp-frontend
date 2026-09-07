@@ -396,7 +396,6 @@ export default function OperationForm() {
   const isViewMode = mode === 'view';
   const isEditMode = mode === 'edit' || mode === 'view';
   const isNewMode = mode === 'new';
-  const title = isNewMode ? 'Add New Operation' : isViewMode ? 'View Operation' : 'Edit Operation';
 
   // ─── Loading Screen ─────────────────────────────────────────────────────
   if (loading) {

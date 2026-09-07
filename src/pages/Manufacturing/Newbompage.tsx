@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   ArrowLeft,
-  Home,
+
   ChevronRight,
   X,
   Trash2,

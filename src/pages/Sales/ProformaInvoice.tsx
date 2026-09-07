@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  FaSearch, FaPlus, FaEye, FaTrash, FaFilePdf, FaPrint,
-  FaFilter, FaCheckCircle, FaClock, FaTimesCircle,
-  FaFileAlt, FaExternalLinkAlt,
+  FaSearch,  FaEye, FaTrash, FaFilePdf, FaPrint,
+  FaFilter, 
   FaChartLine, FaTimes, FaSpinner, FaBoxOpen, FaEnvelope,
-  FaFileInvoice, FaBuilding, FaBan, FaCalendarAlt,
+  FaCalendarAlt,
   FaChevronLeft, FaChevronRight, FaAngleDoubleLeft, FaAngleDoubleRight
 } from 'react-icons/fa';
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
@@ -195,18 +194,7 @@ const numberToIndianWords = (value: number): string => {
   return out.trim();
 };
 
-const formatPrintDate = (date: string, formatFn?: (date: string) => string): string => {
-  if (!date) return '';
-  if (formatFn) {
-    return formatFn(date);
-  }
-  const d = new Date(date);
-  if (isNaN(d.getTime())) return date;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = d.toLocaleString('en-US', { month: 'short' });
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}-${month}-${year}`;
-};
+
 
 const escapeHtml = (val: unknown): string => {
   const s = val === null || val === undefined ? '' : String(val);
@@ -280,7 +268,7 @@ const useDebounce = (value: string, delay: number) => {
 export default function ProformaInvoice() {
   const navigate = useNavigate();
 
-  const { theme, formatDate, getApiDateFormat } = useAdminTheme();
+  const { theme, formatDate,  } = useAdminTheme();
 
   const [filterText, setFilterText] = useState('');
   const [selectedOrderType, setSelectedOrderType] = useState('All');
@@ -325,9 +313,7 @@ export default function ProformaInvoice() {
     return formatDate(dateString);
   };
 
-  const toApiDateFormat = (date: Date) => {
-    return getApiDateFormat(date);
-  };
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

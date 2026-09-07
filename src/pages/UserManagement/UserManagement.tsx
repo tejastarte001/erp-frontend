@@ -6,7 +6,6 @@ import {
   FaPlus,
   FaEdit,
   FaTrash,
-  FaSpinner,
   FaTimes,
   FaChevronLeft,
   FaChevronRight,

@@ -101,7 +101,6 @@ import InventoryDetail from "./pages/Manufacturing/InventoryDetail";
 import ProformaInvoice from "./pages/Sales/ProformaInvoice";
 import CreateProformaInvoice from "./pages/Sales/CreateProformaInvoice";
 import ItemBulkUpload from "./pages/Setup/Itembulkupload";
-import RolePermissions from "./pages/UserManagement/RoleForm";
 
 function App() {
   return (

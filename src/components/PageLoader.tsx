@@ -1,4 +1,3 @@
-import React from 'react';
 import './PageLoader.css';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext';
 

@@ -293,7 +293,7 @@ export default function PurchaseInvoiceForm() {
 
   // ── UI state ────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(false);
+  const [, setPageLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -2693,8 +2693,6 @@ export default function PurchaseInvoiceForm() {
                     </thead>
                     <tbody>
                       {items.map((row, i) => {
-                        const tax = findTaxById(taxes, row.tax_id || 1);
-                        const taxDisplay = tax ? tax.tax_type : `${row.tax_rate || 0}%`;
                         return (
                           <tr key={row.id} className={`pif-itr ${(row.unbilled_qty || 0) === 0 ? 'pif-itr--zero' : ''}`}>
                             <td className="pif-itd pif-itd-no">{i + 1}</td>
