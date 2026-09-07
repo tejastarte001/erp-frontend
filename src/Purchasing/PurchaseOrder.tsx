@@ -241,7 +241,7 @@ export default function PurchaseOrder() {
   // Data & loading
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [fetching, setFetching] = useState(true);
+  const [, setFetching] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
   // Pagination (server‑side)

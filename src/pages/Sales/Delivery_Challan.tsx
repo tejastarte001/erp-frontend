@@ -243,7 +243,7 @@ const DeliveryChallans: React.FC = () => {
   const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const printWindowRef = useRef<Window | null>(null);
   
-  const { theme, formatDate, getApiDateFormat } = useAdminTheme();
+  const { theme, formatDate, } = useAdminTheme();
   
   // ===== STATE =====
   const [searchTerm, setSearchTerm] = useState('');
@@ -280,9 +280,6 @@ const DeliveryChallans: React.FC = () => {
     return formatDate(dateString);
   };
 
-  const toApiDateFormat = (date: Date) => {
-    return getApiDateFormat(date);
-  };
 
   // ─── Fetch Company Details ──────────────────────────────
   const fetchCompanyDetails = async () => {

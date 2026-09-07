@@ -389,15 +389,7 @@ export default function LeadManagement() {
 
   // ─── Local filtering for search (client-side search only) ────────────
 
-  const filteredData = leads.filter((item) => {
-    const matchesSearch =
-      item.leadName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.organizationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
+
 
   // ✅ Pagination calculations - SERVER SIDE
   const totalFilteredItems = totalItems;

@@ -4514,7 +4514,6 @@ if (isEditMode && id) {
   const subTotal = getTotalAmount();
   const totalTax = getTotalTax();
 
-  const pageTitle = isViewMode ? 'View Sales Bill' : isEditMode ? 'Edit Sales Bill' : 'Create Sales Bill';
   const displayBillNumber = isExistingRecord ? (existingInvoiceNumber || billNumber) : billNumber;
 
   return (

@@ -225,7 +225,7 @@ export default function PurchaseInvoice() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<PurchaseInvoice | null>(null);
   const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
+  const [, setFetching] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
   // Pagination states

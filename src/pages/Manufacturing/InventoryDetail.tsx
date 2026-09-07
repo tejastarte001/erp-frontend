@@ -22,7 +22,6 @@ import {
   FaChevronUp,
   FaFileInvoice,
   FaReceipt,
-  FaSpinner,
   FaLayerGroup,
   FaCheck,
   FaTimes,
