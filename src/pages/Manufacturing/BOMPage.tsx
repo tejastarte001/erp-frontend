@@ -689,7 +689,7 @@ const BOMPage: React.FC = () => {
               onClick={() => handleTabChange('all')}
             >
               <FileStack size={14} />
-              All BOMs
+              All
               <span className="bom-tab-count">{tabCounts.total}</span>
             </button>
             <button
@@ -762,6 +762,7 @@ const BOMPage: React.FC = () => {
                   title="Filter by date range"
                 >
                   <Calendar size={14} />
+                  
                 </button>
                 {showDatePicker && (
                   <div className="bom-date-picker-popup">
@@ -846,7 +847,7 @@ const BOMPage: React.FC = () => {
                 )}
               </div>
 
-              <button className="bom-sort-btn" onClick={() => toggle(setSortOpen, sortOpen)}>
+             {/* <button className="bom-sort-btn" onClick={() => toggle(setSortOpen, sortOpen)}>
                 <ArrowUpDown size={12} />
                 {sortField}
                 <ChevronDown size={12} />
@@ -871,7 +872,7 @@ const BOMPage: React.FC = () => {
                     ))}
                   </div>
                 )}
-              </button>
+              </button>*/}
               <button className="bom-btn-primary" onClick={() => {
                 setEditBOMData(null);
                 setShowNewBOM(true);
@@ -1050,7 +1051,7 @@ const BOMPage: React.FC = () => {
                 <div className="bom-mobile-list-header">
                   <div className="bom-mobile-th-primary">
                     <span className="bom-mobile-th-cell bom-mobile-th-id">BOM ID</span>
-                    <span className="bom-mobile-th-cell bom-mobile-th-type">Type</span>
+                    <span className="bom-mobile-th-cell bom-mobile-th-item">Item to Manufacture</span>
                   </div>
                   <div className="bom-mobile-th-right">
                     <span className="bom-count-label">
@@ -1073,7 +1074,7 @@ const BOMPage: React.FC = () => {
                       key={row.id}
                       className={`bom-mobile-card ${isExpanded ? 'bom-mobile-card-expanded' : ''}`}
                     >
-                      {/* Mobile Header: Only shows BOM ID and Type by default + Dropdown button */}
+                      {/* Mobile Header: Only shows BOM ID and Item to Manufacture by default + Dropdown button */}
                       <div 
                         className="bom-mobile-card-header"
                         onClick={() => toggleRowExpand(row.id)}
@@ -1091,12 +1092,8 @@ const BOMPage: React.FC = () => {
                           >
                             {row.id}
                           </a>
-                          <span className={`bom-type-badge ${row.type === 'Internal' ? 'bom-type--internal' : 'bom-type--external'}`}>
-                            {row.type === 'Internal' ? (
-                              <><Box size={12} /> Product</>
-                            ) : (
-                              <><Wrench size={12} /> Service</>
-                            )}
+                          <span className="bom-mobile-item-name" title={row.itemToManufacture}>
+                            {row.itemToManufacture}
                           </span>
                         </div>
 
@@ -1111,7 +1108,7 @@ const BOMPage: React.FC = () => {
                         </button>
                       </div>
 
-                      {/* Mobile Expanded Details: Shows Status, Item to Manufacture, Quantity, UOM, Total Cost, 1-8 of 8 & Actions */}
+                      {/* Mobile Expanded Details: Shows Status, Type, Quantity, UOM, Total Cost, 1-8 of 8 & Actions */}
                       {isExpanded && (
                         <div className="bom-mobile-card-details">
                           <div className="bom-mobile-detail-row">
@@ -1122,9 +1119,13 @@ const BOMPage: React.FC = () => {
                           </div>
 
                           <div className="bom-mobile-detail-row">
-                            <span className="bom-mobile-detail-label">Item to Manufacture</span>
-                            <span className="bom-mobile-detail-value" style={{ fontWeight: 600 }}>
-                              {row.itemToManufacture}
+                            <span className="bom-mobile-detail-label">Type</span>
+                            <span className={`bom-type-badge ${row.type === 'Internal' ? 'bom-type--internal' : 'bom-type--external'}`}>
+                              {row.type === 'Internal' ? (
+                                <><Box size={12} /> Product</>
+                              ) : (
+                                <><Wrench size={12} /> Service</>
+                              )}
                             </span>
                           </div>
 

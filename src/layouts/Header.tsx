@@ -267,7 +267,7 @@ export default function Header({ isSidebarOpen = false, onToggleSidebar }: Heade
   return (
     <header className={`header ${theme}`}>
        {/* 3 Dots Menu Button - Toggles Sidebar */}
-        <button 
+        {/*<button 
           type="button"
           className={`header-icon-btn three-dots-btn ${isSidebarOpen ? 'active' : ''}`}
           onClick={onToggleSidebar}
@@ -279,6 +279,20 @@ export default function Header({ isSidebarOpen = false, onToggleSidebar }: Heade
             <circle cx="12" cy="5" r="1.6" fill="currentColor"/>
             <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
             <circle cx="12" cy="19" r="1.6" fill="currentColor"/>
+          </svg>
+        </button>*/}
+        <button 
+          type="button"
+          className={`header-icon-btn three-dots-btn menu-toggle-btn ${isSidebarOpen ? 'active' : ''}`}
+          onClick={onToggleSidebar}
+          title={isSidebarOpen ? "Close sidebar menu" : "Open sidebar menu"}
+          aria-label={isSidebarOpen ? "Close sidebar menu" : "Open sidebar menu"}
+          aria-expanded={isSidebarOpen}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="4" y1="6" x2="20" y2="6"/>
+            <line x1="4" y1="12" x2="20" y2="12"/>
+            <line x1="4" y1="18" x2="20" y2="18"/>
           </svg>
         </button>
         

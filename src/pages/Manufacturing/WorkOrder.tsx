@@ -23,6 +23,7 @@ import {
   FaBox,
   FaWrench,
   FaList,
+  FaChevronDown,
 } from 'react-icons/fa';
 import "./WorkOrder.css";
 import { PageLoader } from "../components/PageLoader.tsx";
@@ -108,12 +109,11 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   internal: <FaBox size={11} />,
   external: <FaWrench size={11} />,
 };
-
+  
 export default function WorkOrderList() {
   const navigate = useNavigate();
   
-  // ✅ GET THE DATE FORMAT FUNCTION FROM CONTEXT
-  const { theme, formatDate } = useAdminTheme();
+  const { theme } = useAdminTheme();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,6 +134,22 @@ export default function WorkOrderList() {
   const [completionProgress] = useState<number>(0);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRowExpand = (id: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const pageSizeOptions = [10, 25, 50, 100];
   const dateFilterOptions = [
@@ -162,10 +178,10 @@ export default function WorkOrderList() {
     return `${Math.floor(diffDays / 365)} y`;
   };
 
-  // ✅ NEW: Format display date using context
   const formatDisplayDate = (dateString: string) => {
     if (!dateString) return '';
-    return formatDate(dateString);
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? dateString : date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   // ✅ NEW: Format date for API (YYYY-MM-DD)
@@ -406,10 +422,10 @@ export default function WorkOrderList() {
     return { daysInMonth, firstDayOfMonth };
   };
 
-  // ✅ UPDATED: Format date display using context
   const formatDateDisplay = (dateStr: string) => {
     if (!dateStr) return '';
-    return formatDate(dateStr);
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   const handlePrevMonth = () => {
@@ -788,7 +804,7 @@ export default function WorkOrderList() {
       {/* Table */}
       {!loading && !error && (
         <>
-          <div className="wo-table-wrap">
+          <div className="wo-table-wrap wo-desktop-table-wrap">
             <table className="wo-table">
               <thead>
                 <tr>
@@ -952,6 +968,207 @@ export default function WorkOrderList() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* ── Mobile UI List Section (max-width: 768px) ──────────────────── */}
+          <div className="wo-mobile-list-wrap">
+            {paginatedData.length === 0 ? (
+              <div className="wo-empty-state">
+                <div className="wo-empty-content">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                  <p>No {activeTab !== 'all' ? (activeTab === 'internal' ? 'product' : 'service') + ' ' : ''}work orders found</p>
+                  <span>Try adjusting your search criteria</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* ── Mobile UI Table Header / Title at Top ── */}
+                <div className="wo-mobile-list-header">
+                  <div className="wo-mobile-th-primary">
+                    <span className="wo-mobile-th-cell wo-mobile-th-id">WO #</span>
+                    <span className="wo-mobile-th-cell wo-mobile-th-item">Production Item</span>
+                  </div>
+                  <div className="wo-mobile-th-right">
+                    <span className="wo-count-label">
+                      {displayTotalItems > 0
+                        ? `${getStartIndex()}–${getEndIndex()}`
+                        : '0'}{' '}
+                      of {displayTotalItems}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="wo-mobile-cards">
+                  {paginatedData.map((row) => {
+                    const isExpanded = expandedRows.has(row.id);
+                    return (
+                      <div
+                        key={row.id}
+                        className={`wo-mobile-card ${isExpanded ? 'wo-mobile-card-expanded' : ''}`}
+                      >
+                        {/* Mobile Header: Only shows WO # and Production Item by default + Dropdown button */}
+                        <div 
+                          className="wo-mobile-card-header"
+                          onClick={() => toggleRowExpand(row.id)}
+                        >
+                          <div className="wo-mobile-card-primary">
+                            <span
+                              className="wo-mobile-id"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleView(row, e);
+                              }}
+                              title="View Work Order"
+                            >
+                              {row.name}
+                            </span>
+                            <span className="wo-mobile-item-name" title={row.productionItem}>
+                              {row.productionItem}
+                            </span>
+                          </div>
+
+                          {/* Dropdown Toggle Button */}
+                          <button
+                            type="button"
+                            className={`wo-mobile-dropdown-btn ${isExpanded ? 'expanded' : ''}`}
+                            onClick={(e) => toggleRowExpand(row.id, e)}
+                            aria-label={isExpanded ? "Collapse details" : "Expand details"}
+                          >
+                            <FaChevronDown size={14} className="wo-mobile-chevron" />
+                          </button>
+                        </div>
+
+                        {/* Mobile Expanded Details: Shows Type, Qty, Job Cards, Progress, Status, Planned Dates, 1-10 of 36 & Actions */}
+                        {isExpanded && (
+                          <div className="wo-mobile-card-details">
+                            <div className="wo-mobile-detail-row">
+                              <span className="wo-mobile-detail-label">Type</span>
+                              <span className={`wo-type-badge ${row.type === 'internal' ? 'wo-type--internal' : 'wo-type--external'}`}>
+                                {TYPE_ICONS[row.type]}
+                                {TYPE_LABELS[row.type]}
+                              </span>
+                            </div>
+
+                            <div className="wo-mobile-detail-row">
+                              <span className="wo-mobile-detail-label">Qty</span>
+                              <span className="wo-mobile-detail-value">{row.qty.toLocaleString()}</span>
+                            </div>
+
+                            <div className="wo-mobile-detail-row">
+                              <span className="wo-mobile-detail-label">Job Cards</span>
+                              <div className="wo-job-card-info">
+                                <span className="wo-job-card-text">
+                                  {row.completedJobCards}/{row.totalJobCards}
+                                </span>
+                                {row.totalJobCards > 0 && (
+                                  <div className="wo-job-card-bar">
+                                    <div 
+                                      className="wo-job-card-fill"
+                                      style={{ 
+                                        width: `${(row.completedJobCards / row.totalJobCards) * 100}%`,
+                                        backgroundColor: row.completedJobCards >= row.totalJobCards ? '#22c55e' : '#3b82f6'
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                                <button
+                                  className="wo-job-card-btn"
+                                  onClick={(e) => handleViewJobCards(row, e)}
+                                  title="View Job Cards"
+                                >
+                                  <FaFileAlt size={12} />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="wo-mobile-detail-row">
+                              <span className="wo-mobile-detail-label">Progress</span>
+                              <div className="wo-progress-container" style={{ minWidth: '120px' }}>
+                                <div className="wo-progress-bar">
+                                  <div 
+                                    className="wo-progress-fill" 
+                                    style={{ 
+                                      width: `${row.progress}%`,
+                                      backgroundColor: getProgressColor(row.progress)
+                                    }}
+                                  />
+                                </div>
+                                <span className="wo-progress-text" style={{ color: getProgressColor(row.progress) }}>
+                                  {row.progress}%
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="wo-mobile-detail-row">
+                              <span className="wo-mobile-detail-label">Status</span>
+                              <span className={`wo-status-badge ${STATUS_CLASS[row.status]}`}>
+                                {getStatusIcon(row.status)}
+                                {STATUS_LABELS[row.status]}
+                              </span>
+                            </div>
+
+                            <div className="wo-mobile-detail-row">
+                              <span className="wo-mobile-detail-label">Planned Dates</span>
+                              <div className="wo-date-range">
+                                <FaCalendarAlt size={12} style={{ color: 'var(--text-secondary)', marginRight: '4px' }} />
+                                <span>{row.displayStartDate || new Date(row.plannedStartDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                              </div>
+                            </div>
+
+                            {/* 1–10 of 36 count and Action buttons (View, Edit, Delete) */}
+                            <div className="wo-mobile-detail-footer">
+                              <div className="wo-mobile-detail-meta">
+                                <span className="wo-count-label">
+                                  {displayTotalItems > 0
+                                    ? `${getStartIndex()}–${getEndIndex()}`
+                                    : '0'}{' '}
+                                  of {displayTotalItems}
+                                </span>
+                              </div>
+
+                              <div className="wo-action-buttons">
+                                <button 
+                                  className="wo-action-btn wo-action-view" 
+                                  onClick={(e) => { e.stopPropagation(); handleView(row, e); }}
+                                  title="View"
+                                >
+                                  <FaEye size={12} />
+                                </button>
+                                <button 
+                                  className="wo-action-btn wo-action-edit" 
+                                  onClick={(e) => { e.stopPropagation(); handleEdit(row, e); }}
+                                  title="Edit"
+                                >
+                                  <FaEdit size={12} />
+                                </button>
+                                <button 
+                                  className="wo-action-btn wo-action-delete" 
+                                  onClick={(e) => { e.stopPropagation(); handleDelete(row, e); }}
+                                  title="Delete"
+                                  disabled={deletingId === row.id}
+                                >
+                                  {deletingId === row.id ? (
+                                    <FaSpinner className="spinning" size={12} />
+                                  ) : (
+                                    <FaTrash size={12} />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Pagination */}
