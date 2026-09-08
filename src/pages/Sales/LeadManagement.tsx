@@ -19,6 +19,7 @@ import "./LeadManagement.css";
 import { useAdminTheme } from "../../admin-theme/AdminThemeContext";
 import api from "../../services/api";
 import toast from 'react-hot-toast';
+import { PageLoader } from "../components/PageLoader";
 
 // ─── types ──────────────────────────────────────────────────────────────
 
@@ -388,15 +389,7 @@ export default function LeadManagement() {
 
   // ─── Local filtering for search (client-side search only) ────────────
 
-  const filteredData = leads.filter((item) => {
-    const matchesSearch =
-      item.leadName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.organizationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
+
 
   // ✅ Pagination calculations - SERVER SIDE
   const totalFilteredItems = totalItems;
@@ -526,6 +519,18 @@ export default function LeadManagement() {
     const option = statusOptions.find(opt => opt.value === statusFilter);
     return option ? option.label : 'Status *';
   };
+
+      // ─── Loading Screen ─────────────────────────────────────────────────────
+      if (loading) {
+        return (
+          <div className={`p-6 max-w-7xl mx-auto ${theme}`}>
+            <PageLoader 
+              message="Loading Sales & Lead List..." 
+              //subtitle="Calculating bill of materials, operations rates, and component structures"
+            />
+          </div>
+        );
+      }
 
   return (
     <div className={`jc-page ${theme}`}>

@@ -35,6 +35,7 @@ import {
  
 } from 'react-icons/fa'; 
 import "./GRNForm.css"; 
+import { PageLoader } from '../components/PageLoader';
 import { useAdminTheme } from '../admin-theme/AdminThemeContext'; 
 import api from '../services/api'; 
  
@@ -2880,15 +2881,18 @@ export default function GRNForm() {
     );
   };
 
-  if (loading) { 
-    return ( 
-      <div className="grnf-page"> 
-        <div className="grnf-inner"> 
-          <div className="grnf-loading"><FaSpinner className="grnf-spinning" /> Loading GRN data...</div> 
-        </div> 
-      </div> 
-    ); 
-  } 
+  if (loading) {
+    return (
+      <div className={`grnf-page ${theme}`}>
+        <div className="grnf-inner">
+          <PageLoader 
+            message="Loading GRN From..." 
+            //subtitle="Synchronizing warehouse receipt entries, line item counts, and supplier records"
+          />
+        </div>
+      </div>
+    );
+  }
  
   return ( 
     <div className={`grnf-page ${theme}`}> 

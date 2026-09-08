@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  FaSearch, FaPlus, FaEye, FaTrash, FaFilePdf, FaPrint,
-  FaFilter, FaCheckCircle, FaClock, FaTimesCircle,
-  FaFileAlt, FaExternalLinkAlt,
+  FaSearch,  FaEye, FaTrash, FaFilePdf, FaPrint,
+  FaFilter, 
   FaChartLine, FaTimes, FaSpinner, FaBoxOpen, FaEnvelope,
   FaFileInvoice, FaBuilding, FaBan, FaCalendarAlt,
   FaChevronLeft, FaChevronRight, FaAngleDoubleLeft, FaAngleDoubleRight,
@@ -13,6 +12,7 @@ import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
 import toast from 'react-hot-toast';
 import './ProformaInvoice.css';
 import api from '../../services/api';
+import { PageLoader } from "../components/PageLoader.tsx";
 
 interface SalesOrderItem {
   id: string;
@@ -158,6 +158,7 @@ const generateFallbackOrderNumber = (index: number): string => {
   return `PI-${year}-${String(index + 1).padStart(5, '0')}`;
 };
 
+
 /* ─────────────────────── Amount-in-words helper ─────────────────────── */
 
 const ONES = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -194,18 +195,7 @@ const numberToIndianWords = (value: number): string => {
   return out.trim();
 };
 
-const formatPrintDate = (date: string, formatFn?: (date: string) => string): string => {
-  if (!date) return '';
-  if (formatFn) {
-    return formatFn(date);
-  }
-  const d = new Date(date);
-  if (isNaN(d.getTime())) return date;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = d.toLocaleString('en-US', { month: 'short' });
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}-${month}-${year}`;
-};
+
 
 const escapeHtml = (val: unknown): string => {
   const s = val === null || val === undefined ? '' : String(val);
@@ -318,7 +308,7 @@ const getInitials = (name: string): string => {
 export default function ProformaInvoice() {
   const navigate = useNavigate();
 
-  const { theme, formatDate, getApiDateFormat } = useAdminTheme();
+  const { theme, formatDate,  } = useAdminTheme();
 
   const [filterText, setFilterText] = useState('');
   const [selectedOrderType, setSelectedOrderType] = useState('All');
@@ -368,9 +358,7 @@ export default function ProformaInvoice() {
     return formatDate(dateString);
   };
 
-  const toApiDateFormat = (date: Date) => {
-    return getApiDateFormat(date);
-  };
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1270,6 +1258,18 @@ export default function ProformaInvoice() {
       setPrintLoadingId(null);
     }
   };
+
+      // ─── Loading Screen ─────────────────────────────────────────────────────
+      if (loading) {
+        return (
+          <div className={`p-6 max-w-7xl mx-auto ${theme}`}>
+            <PageLoader 
+              message="Loading Sales & Proforma Invoice List..." 
+              //subtitle="Calculating bill of materials, operations rates, and component structures"
+            />
+          </div>
+        );
+      }
 
   return (
     <div className={`proforma-page ${theme}-theme`}>

@@ -1,4 +1,5 @@
-// PurchaseBillForm.tsx - Modified with is_create_from_grn and grn_ids
+// PurchaseBillForm.tsx - FINAL FIXED tax calculation
+
 import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   FaSave, FaSpinner, FaArrowLeft,
@@ -17,6 +18,7 @@ import toast from 'react-hot-toast';
 import api from '../services/api';
 import './PurchaseBillForm.css';
 import { getUserRole } from '../utils/storage';
+import { PageLoader } from '../components/PageLoader';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +34,7 @@ interface POItem {
   received_qty: number;
   billed_amt: number;
   item_tax_rate?: string;
+  item_tax_id?: number;
 }
 
 interface PODetail {
@@ -62,6 +65,7 @@ interface GRNItem {
   uom: string;
   rate: number;
   amount: number;
+  tax_id?: number;
 }
 
 interface GRNRecord {
@@ -113,8 +117,8 @@ interface InvoiceItem {
   amount: number;
   grn_refs: string[];
   tax_rate: number;
-  HSN?: string;
   tax_id?: number;
+  HSN?: string;
   note?: string;
 }
 
@@ -157,7 +161,6 @@ const statusOptions = ['Draft', 'Submitted', 'Partially Paid', 'Fully Paid', 'Ov
 const billSourceOptions = ['GRN', 'Without GRN'] as const;
 type BillSource = typeof billSourceOptions[number];
 
-
 const makeRowId = () => `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 const getItemTaxTemplate = (taxRate: number): string => {
@@ -169,6 +172,23 @@ const parseTaxRateFromTemplate = (template: string | null | undefined): number =
   if (!template) return 0;
   const match = template.match(/(\d+(?:\.\d+)?)\s*%/);
   return match ? parseFloat(match[1]) : 0;
+};
+
+// Helper function to get tax rate from tax_type string (e.g., "GST18" → 18)
+const getTaxRateFromType = (taxType: string): number => {
+  if (!taxType) return 0;
+  const match = taxType.match(/(\d+(?:\.\d+)?)/);
+  return match ? parseFloat(match[1]) : 0;
+};
+
+// Helper function to find tax by tax_id
+const findTaxById = (taxes: Tax[], taxId: number): Tax | undefined => {
+  return taxes.find(t => t.tax_id === taxId);
+};
+
+// Helper function to find tax by rate
+const findTaxByRate = (taxes: Tax[], rate: number): Tax | undefined => {
+  return taxes.find(t => getTaxRateFromType(t.tax_type) === rate);
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -198,8 +218,7 @@ export default function PurchaseInvoiceForm() {
     sgst: 0,
     gstTotal: 0,
     grandTotal: 0,
-    // NEW: GRN related fields
-    isCreateFromGrn: 0, // 0 or 1
+    isCreateFromGrn: 0,
     grnIds: [] as number[],
   });
 
@@ -274,7 +293,7 @@ export default function PurchaseInvoiceForm() {
 
   // ── UI state ────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(false);
+  const [, setPageLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [showValidationSummary, setShowValidationSummary] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -317,7 +336,6 @@ export default function PurchaseInvoiceForm() {
         await fetchSuppliers();
         setShowAddSupplierPopup(false);
         resetNewSupplierForm();
-        // Auto-select the newly created supplier
         const newSupplierData = response.data.data;
         if (newSupplierData) {
           const supplierName = newSupplierData.supplier_name || newSupplier.supplier_name.trim();
@@ -375,8 +393,7 @@ export default function PurchaseInvoiceForm() {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  // ─── EDIT-MODE BINDING FIX: resolve the supplier once BOTH the invoice load
-  //     and the supplier list have finished
+  // ─── EDIT-MODE BINDING FIX ──────────────────────────────────────────────
   useEffect(() => {
     if (pendingSupplierId != null && suppliers.length > 0) {
       const supplier = suppliers.find(s => s.id === pendingSupplierId);
@@ -388,7 +405,6 @@ export default function PurchaseInvoiceForm() {
     }
   }, [pendingSupplierId, suppliers]);
 
-  // ─── Same fix for warehouse ──────────────────────────────────────────────
   useEffect(() => {
     if (pendingWarehouseId != null && warehouses.length > 0) {
       const wh = warehouses.find(w => w.id === pendingWarehouseId);
@@ -397,17 +413,17 @@ export default function PurchaseInvoiceForm() {
     }
   }, [pendingWarehouseId, warehouses]);
 
-  // ─── Calculate GST ──────────────────────────────────────────────────────────
+  // ─── Calculate GST - AUTOMATICALLY recalculates when items change ──────────
   useEffect(() => {
-    calculateGST();
-  }, [items, formData.deliveryCharges]);
-
-  const calculateGST = () => {
     const subTotal = items.reduce((s, r) => s + (r.amount || 0), 0);
-    const taxTotal = items.reduce((s, r) => s + ((r.amount || 0) * (r.tax_rate || 0)) / 100, 0);
+    const taxTotal = items.reduce((s, r) => {
+      const amount = r.amount || 0;
+      const rate = r.tax_rate || 0;
+      return s + (amount * rate) / 100;
+    }, 0);
     const cgstAmount = taxTotal / 2;
     const sgstAmount = taxTotal / 2;
-    const grandTotal = subTotal + taxTotal + formData.deliveryCharges;
+    const grandTotal = subTotal + taxTotal + (formData.deliveryCharges || 0);
 
     setFormData(prev => ({
       ...prev,
@@ -416,7 +432,7 @@ export default function PurchaseInvoiceForm() {
       gstTotal: taxTotal,
       grandTotal,
     }));
-  };
+  }, [items, formData.deliveryCharges]);
 
   // ─── Rebuild items whenever the PO / selected-GRN set changes (GRN mode) ───
   useEffect(() => {
@@ -600,7 +616,6 @@ export default function PurchaseInvoiceForm() {
     setItems([]);
     setGrnSearch('');
     setPoSearch('');
-    // Reset GRN fields in formData
     setFormData(prev => ({
       ...prev,
       isCreateFromGrn: 0,
@@ -637,10 +652,8 @@ export default function PurchaseInvoiceForm() {
       return next;
     });
     
-    // Update formData.grnIds to match selectedGRNIds
     const updatedGrnIds = Array.from(selectedGRNIds);
     if (selectedGRNIds.has(grnId)) {
-      // Removed - filter it out
       const newGrnIds = updatedGrnIds.filter(id => id !== grnId);
       setFormData(prev => ({
         ...prev,
@@ -648,7 +661,6 @@ export default function PurchaseInvoiceForm() {
         isCreateFromGrn: newGrnIds.length > 0 ? 1 : 0,
       }));
     } else {
-      // Added - include it
       const newGrnIds = [...updatedGrnIds, grnId];
       setFormData(prev => ({
         ...prev,
@@ -675,10 +687,8 @@ export default function PurchaseInvoiceForm() {
       }
       setLinkedGRNsForPO(grnSummaries || []);
 
-      // auto-include every GRN linked to this PO; user can uncheck any of them
       const grnIds = (grnSummaries || []).map(g => g.id);
       setSelectedGRNIds(new Set(grnIds));
-      // Update formData with GRN ids
       setFormData(prev => ({
         ...prev,
         grnIds: grnIds,
@@ -703,7 +713,6 @@ export default function PurchaseInvoiceForm() {
       if (poDetail) {
         setSelectedPO(poDetail);
         buildInvoiceItemsFromPOOnly(poDetail);
-        // No GRNs selected in this mode
         setFormData(prev => ({
           ...prev,
           isCreateFromGrn: 0,
@@ -768,10 +777,7 @@ export default function PurchaseInvoiceForm() {
         const unbilledQty = Math.max(0, totalReceived - alreadyBilledQty);
         const taxRate = parseFloat(pi.item_tax_rate || '0') || 0;
 
-        const tax = (taxes || []).find(t => {
-          const rate = parseInt((t.tax_type || '').replace('GST', ''));
-          return rate === taxRate;
-        });
+        const tax = findTaxByRate(taxes, taxRate);
 
         return {
           id: makeRowId(),
@@ -805,7 +811,7 @@ export default function PurchaseInvoiceForm() {
         const billableQty = gi.accepted_qty || gi.received_qty || 0;
         const key = gi.item_code || `item-${gi.item_id}`;
         if (!merged[key]) {
-          const tax = (taxes || []).find(t => t.tax_id === 1);
+          const tax = findTaxById(taxes, gi.tax_id || 1);
           merged[key] = {
             id: makeRowId(),
             grn_item_id: gi.id,
@@ -821,7 +827,7 @@ export default function PurchaseInvoiceForm() {
             bill_qty: billableQty,
             amount: Math.round(billableQty * (gi.rate || 0) * 100) / 100,
             grn_refs: grn.grn_number ? [grn.grn_number] : [],
-            tax_rate: 0,
+            tax_rate: tax ? getTaxRateFromType(tax.tax_type) : 0,
             tax_id: tax?.tax_id || 1,
             note: '',
           };
@@ -844,7 +850,7 @@ export default function PurchaseInvoiceForm() {
   const buildInvoiceItemsFromPOOnly = (poDetail: PODetail) => {
     const invoiceRows: InvoiceItem[] = (poDetail.items || []).map(pi => {
       const taxRate = parseFloat(pi.item_tax_rate || '0') || 0;
-      const tax = (taxes || []).find(t => parseInt((t.tax_type || '').replace('GST', '')) === taxRate);
+      const tax = findTaxByRate(taxes, taxRate);
       return {
         id: makeRowId(),
         po_item_id: pi.id,
@@ -884,7 +890,7 @@ export default function PurchaseInvoiceForm() {
       amount: 0,
       grn_refs: [],
       tax_rate: 0,
-      tax_id: 1,
+      tax_id: 4, // Default to GST0
       note: '',
     };
     setItems([...items, newItem]);
@@ -911,9 +917,24 @@ export default function PurchaseInvoiceForm() {
     }));
   };
 
+  // ─── Handle tax change for an item ────────────────────────────────────────
+  const handleTaxChange = (rowId: string, taxId: number) => {
+    const tax = findTaxById(taxes, taxId);
+    const taxRate = tax ? getTaxRateFromType(tax.tax_type) : 0;
+    
+    setItems(prev => prev.map(item => {
+      if (item.id !== rowId) return item;
+      return {
+        ...item,
+        tax_id: taxId,
+        tax_rate: taxRate,
+      };
+    }));
+  };
+
   const handleSelectItem = (item: Item, rowId: string) => {
-    const tax = (taxes || []).find(t => t.tax_id === item.tax_id);
-    const taxRate = tax ? parseInt((tax.tax_type || '').replace('GST', '')) : 0;
+    const tax = findTaxById(taxes, item.tax_id);
+    const taxRate = tax ? getTaxRateFromType(tax.tax_type) : 0;
 
     setItems(prev => prev.map(row => {
       if (row.id !== rowId) return row;
@@ -956,16 +977,12 @@ export default function PurchaseInvoiceForm() {
       if (res.data?.success === 1) {
         const inv = res.data.data;
 
-
-        // ── NEW: Read is_create_from_grn and grn_ids from API ──
         const isCreateFromGrn = inv.is_create_from_grn || 0;
         const grnIds = inv.grn_ids || [];
 
-        // ── BILL SOURCE FIX: determine bill source from is_create_from_grn ──
         const resolvedBillSource: BillSource = isCreateFromGrn === 1 ? 'GRN' : 'Without GRN';
 
         const itemsFromApi: any[] = Array.isArray(inv.items) ? inv.items : [];
-
 
         setFormData(prev => ({
           ...prev,
@@ -976,39 +993,34 @@ export default function PurchaseInvoiceForm() {
           billDate: inv.bill_date ? inv.bill_date.split('T')[0] : '',
           notes: inv.remarks || '',
           billSource: resolvedBillSource,
-          // NEW: Set GRN fields
           isCreateFromGrn: isCreateFromGrn,
           grnIds: grnIds,
         }));
 
+        if (grnIds.length > 0) {
+          setSelectedGRNIds(new Set(grnIds));
 
-       // Restore selected GRN IDs
-if (grnIds.length > 0) {
-  setSelectedGRNIds(new Set(grnIds));
+          const missingIds = grnIds.filter(
+            (gid: string | number) => !grnDetailCache[Number(gid)]
+          );
 
-  // Load GRN details for these IDs
-  const missingIds = grnIds.filter(
-    (gid: string | number) => !grnDetailCache[Number(gid)]
-  );
+          if (missingIds.length) {
+            const fetched = await Promise.all(
+              missingIds.map((gid: string | number) =>
+                fetchGRNDetail(Number(gid))
+              )
+            );
 
-  if (missingIds.length) {
-    const fetched = await Promise.all(
-      missingIds.map((gid: string | number) =>
-        fetchGRNDetail(Number(gid))
-      )
-    );
+            const nextCache = { ...grnDetailCache };
 
-    const nextCache = { ...grnDetailCache };
+            fetched.forEach((g) => {
+              if (g) nextCache[g.id] = g;
+            });
 
-    fetched.forEach((g) => {
-      if (g) nextCache[g.id] = g;
-    });
+            setGrnDetailCache(nextCache);
+          }
+        }
 
-    setGrnDetailCache(nextCache);
-  }
-}
-
-        // Supplier: resolved once the supplier list itself has loaded
         if (inv.supplier != null) {
           setPendingSupplierId(Number(inv.supplier));
         } else if (inv.supplier_name) {
@@ -1020,6 +1032,9 @@ if (grnIds.length > 0) {
             const resolvedTaxRate = it.item_tax_rate
               ? parseFloat(it.item_tax_rate)
               : (it.tax_rate ?? parseTaxRateFromTemplate(it.item_tax_template));
+
+            const tax = findTaxById(taxes, it.tax_id || 1);
+            const taxRate = tax ? getTaxRateFromType(tax.tax_type) : resolvedTaxRate;
 
             return {
               id: makeRowId(),
@@ -1038,14 +1053,13 @@ if (grnIds.length > 0) {
               bill_qty: it.qty || 0,
               amount: it.amount || 0,
               grn_refs: it.grn_refs || [],
-              tax_rate: resolvedTaxRate || 0,
+              tax_rate: taxRate,
               tax_id: it.tax_id || 1,
               HSN: it.hsn_code || it.HSN || '',
               note: it.note || '',
             };
           });
           setItems(rows);
-
 
           const firstWarehouse = itemsFromApi.find((it: any) => it.warehouse)?.warehouse;
           if (firstWarehouse != null) {
@@ -1063,7 +1077,11 @@ if (grnIds.length > 0) {
 
   // ─── Computed totals ────────────────────────────────────────────────────────
   const subTotal = items.reduce((s, r) => s + (r.amount || 0), 0);
-  const totalTax = items.reduce((s, r) => s + ((r.amount || 0) * (r.tax_rate || 0)) / 100, 0);
+  const totalTax = items.reduce((s, r) => {
+    const amount = r.amount || 0;
+    const rate = r.tax_rate || 0;
+    return s + (amount * rate) / 100;
+  }, 0);
   const cgstAmount = totalTax / 2;
   const sgstAmount = totalTax / 2;
   const grandTotal = subTotal + totalTax + formData.deliveryCharges;
@@ -1652,7 +1670,6 @@ if (grnIds.length > 0) {
           overflow: 'hidden',
         }}
       >
-        {/* ─── Scrollable supplier list ─── */}
         <div
           className="pif-supplier-dropdown-list"
           style={{
@@ -1699,7 +1716,6 @@ if (grnIds.length > 0) {
           )}
         </div>
 
-        {/* ─── "+ Add New Supplier" footer ─── */}
         <div 
           className="pif-supplier-dropdown-footer" 
           style={{
@@ -1756,7 +1772,6 @@ if (grnIds.length > 0) {
     e.preventDefault();
     setApiError(null);
 
-    // FIX: Ensure supplier is selected before submitting
     if (!selectedSupplier && !isEdit) {
       toast.error('Please select a supplier');
       return;
@@ -1779,7 +1794,6 @@ if (grnIds.length > 0) {
     const now = new Date();
     const postingTime = now.toTimeString().slice(0, 8);
     
-    // FIX: Ensure supplier ID is properly set - use selectedSupplier.id
     const supplierId = selectedSupplier?.id;
     if (!supplierId && !isEdit) {
       setApiError('Supplier is required');
@@ -1814,34 +1828,35 @@ if (grnIds.length > 0) {
       outstanding_amount: grandTotal,
       status: formData.status,
       remarks: formData.notes || '',
-
-      // ── NEW: Use is_create_from_grn and grn_ids instead of bill_source ──
       is_create_from_grn: formData.isCreateFromGrn,
       grn_ids: formData.isCreateFromGrn === 1 ? formData.grnIds : [],
-
-      // ── PO linkage at header level, where available ──
-      // purchase_order: selectedPO?.id || undefined,
-
-      items: billableItems.map((r, idx) => ({
-        ...(isEdit && r.db_item_id ? { id: r.db_item_id } : {}),
-        name: `item-${idx + 1}`,
-        item_id: r.item_id ?? undefined,
-        po_detail: r.po_item_id ?? undefined,
-        pr_detail: r.grn_item_id ?? undefined,
-        item_code: r.item_code || '',
-        item_name: r.item_name || '',
-        warehouse: resolvedWarehouseId,
-        qty: r.bill_qty || 0,
-        uom: r.uom || 'Nos',
-        rate: r.rate || 0,
-        ordered_rate: r.ordered_rate || 0,
-        amount: r.amount || 0,
-        item_tax_rate: String(r.tax_rate || 0),
-        item_tax_template: getItemTaxTemplate(r.tax_rate || 0),
-        tax_id: r.tax_id || undefined,
-        hsn_code: r.HSN || undefined,
-        note: r.note || undefined,
-      })),
+      
+      items: billableItems.map((r, idx) => {
+        const catalogItem = itemsList.find(item => item.id === r.item_id);
+        const itemTaxId = catalogItem?.tax_id || r.tax_id || 1;
+        
+        return {
+          ...(isEdit && r.db_item_id ? { id: r.db_item_id } : {}),
+          name: `item-${idx + 1}`,
+          item_id: r.item_id ?? undefined,
+          po_detail: r.po_item_id ?? undefined,
+          pr_detail: r.grn_item_id ?? undefined,
+          item_code: r.item_code || '',
+          item_name: r.item_name || '',
+          warehouse: resolvedWarehouseId,
+          qty: r.bill_qty || 0,
+          uom: r.uom || 'Nos',
+          rate: r.rate || 0,
+          ordered_rate: r.ordered_rate || 0,
+          amount: r.amount || 0,
+          item_tax_rate: String(r.tax_rate || 0),
+          item_tax_template: getItemTaxTemplate(r.tax_rate || 0),
+          tax_id: r.tax_id || undefined,
+          item_tax_id: itemTaxId,
+          hsn_code: r.HSN || undefined,
+          note: r.note || undefined,
+        };
+      }),
     };
 
     try {
@@ -1881,14 +1896,14 @@ if (grnIds.length > 0) {
     navigate('/purchase-invoice');
   };
 
-  // ─── Render ────────────────────────────────────────────────────────────────
-  if (pageLoading) {
+ // ─── Loading Screen ─────────────────────────────────────────────────────
+  if (loading) {
     return (
-      <div className="pif-page">
-        <div className="pif-inner pif-loading">
-          <FaSpinner className="spinning" size={24} />
-          <span>Loading invoice…</span>
-        </div>
+      <div className="p-6 max-w-7xl mx-auto">
+        <PageLoader 
+          message="Loading Purchasing & Purchase Bill..." 
+          //subtitle="Calculating bill of materials, operations rates, and component structures"
+        />
       </div>
     );
   }
@@ -1967,7 +1982,7 @@ if (grnIds.length > 0) {
             <FaArrowLeft size={9} /> Back
           </button>
           <div className="header-title">
-            <h1>{isEdit ? `${formData.invoiceNumber || 'Edit Purchase Bill'}` : 'New Purchase Bill'}</h1>
+            {/*<h1>{isEdit ? `${formData.invoiceNumber || 'Edit Purchase Bill'}` : 'New Purchase Bill'}</h1>*/}
           </div>
           <button type="button" onClick={handlePrint} className="print-btn" disabled={items.length === 0}>
             <FaPrint size={12} /> Print
@@ -2026,28 +2041,32 @@ if (grnIds.length > 0) {
                 <th>Ordered Rate</th>
                 <th>Rate</th>
                 <th>Amount</th>
-                <th>Tax%</th>
+                <th>Tax</th>
                 <th>Note</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((item, i) => (
-                <tr key={item.id}>
-                  <td>{i + 1}</td>
-                  <td>{item.item_code || ''}</td>
-                  <td>{item.item_name || ''}</td>
-                  <td>{item.HSN || '-'}</td>
-                  <td className="text-right">{item.ordered_qty || 0}</td>
-                  <td className="text-right">{item.total_received_qty || 0}</td>
-                  <td className="text-right">{item.bill_qty || 0}</td>
-                  <td>{item.uom || ''}</td>
-                  <td className="text-right">{item.ordered_rate ? item.ordered_rate.toFixed(2) : '-'}</td>
-                  <td className="text-right">{item.rate ? item.rate.toFixed(2) : '0.00'}</td>
-                  <td className="text-right">{item.amount ? item.amount.toFixed(2) : '0.00'}</td>
-                  <td className="text-right">{item.tax_rate || 0}%</td>
-                  <td>{item.note || '-'}</td>
-                </tr>
-              ))}
+              {items.map((item, i) => {
+                const tax = findTaxById(taxes, item.tax_id || 1);
+                const taxDisplay = tax ? tax.tax_type : `${item.tax_rate || 0}%`;
+                return (
+                  <tr key={item.id}>
+                    <td>{i + 1}</td>
+                    <td>{item.item_code || ''}</td>
+                    <td>{item.item_name || ''}</td>
+                    <td>{item.HSN || '-'}</td>
+                    <td className="text-right">{item.ordered_qty || 0}</td>
+                    <td className="text-right">{item.total_received_qty || 0}</td>
+                    <td className="text-right">{item.bill_qty || 0}</td>
+                    <td>{item.uom || ''}</td>
+                    <td className="text-right">{item.ordered_rate ? item.ordered_rate.toFixed(2) : '-'}</td>
+                    <td className="text-right">{item.rate ? item.rate.toFixed(2) : '0.00'}</td>
+                    <td className="text-right">{item.amount ? item.amount.toFixed(2) : '0.00'}</td>
+                    <td className="text-right">{taxDisplay}</td>
+                    <td>{item.note || '-'}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           <div className="totals">
@@ -2667,220 +2686,225 @@ if (grnIds.length > 0) {
                         <th className="pif-ith pif-ith-num">Ordered Rate</th>
                         <th className="pif-ith pif-ith-num">Rate</th>
                         <th className="pif-ith pif-ith-num">Amount</th>
-                        <th className="pif-ith pif-ith-num">Tax%</th>
+                        <th className="pif-ith pif-ith-num">Tax</th>
                         <th className="pif-ith pif-ith-note">Note</th>
                         {isManual && <th className="pif-ith">Action</th>}
                       </tr>
                     </thead>
                     <tbody>
-                      {items.map((row, i) => (
-                        <tr key={row.id} className={`pif-itr ${(row.unbilled_qty || 0) === 0 ? 'pif-itr--zero' : ''}`}>
-                          <td className="pif-itd pif-itd-no">{i + 1}</td>
-                          <td className="pif-itd" style={{ position: 'relative', overflow: 'visible' }}>
-                            {isManual ? (
-                              <div style={{ position: 'relative', width: '100%' }}>
+                      {items.map((row, i) => {
+                        return (
+                          <tr key={row.id} className={`pif-itr ${(row.unbilled_qty || 0) === 0 ? 'pif-itr--zero' : ''}`}>
+                            <td className="pif-itd pif-itd-no">{i + 1}</td>
+                            <td className="pif-itd" style={{ position: 'relative', overflow: 'visible' }}>
+                              {isManual ? (
+                                <div style={{ position: 'relative', width: '100%' }}>
+                                  <input
+                                    type="text"
+                                    value={row.item_code || ''}
+                                    onChange={e => {
+                                      setItemSearch(e.target.value);
+                                      setSelectedItemRowId(row.id);
+                                      setShowItemDropdown(true);
+                                      handleItemFieldChange(row.id, 'item_code', e.target.value);
+                                    }}
+                                    onFocus={() => {
+                                      setSelectedItemRowId(row.id);
+                                      setShowItemDropdown(true);
+                                      setItemSearch(row.item_code || '');
+                                    }}
+                                    onBlur={() => {
+                                      setTimeout(() => {
+                                        setShowItemDropdown(false);
+                                      }, 200);
+                                    }}
+                                    className="pif-cell-input"
+                                    placeholder="Search item..."
+                                    autoComplete="off"
+                                  />
+                                  {showItemDropdown && selectedItemRowId === row.id && (
+                                    <div className="pif-dropdown-wrapper">
+                                      <div className="pif-dropdown-down">
+                                        {filteredItems.length > 0 ? (
+                                          <ul className="pif-dropdown-list">
+                                            {filteredItems.map(item => {
+                                              const itemTax = findTaxById(taxes, item.tax_id);
+                                              return (
+                                                <li
+                                                  key={item.id}
+                                                  className="pif-dropdown-item"
+                                                  onMouseDown={(e) => {
+                                                    e.preventDefault();
+                                                    handleSelectItem(item, row.id);
+                                                  }}
+                                                >
+                                                  <div className="pif-dropdown-item-code">
+                                                    <span className="pif-item-code-highlight">{item.item_code || ''}</span>
+                                                  </div>
+                                                  <div className="pif-dropdown-item-name">{item.item_name || ''}</div>
+                                                  <div className="pif-dropdown-item-details">
+                                                    <span className="pif-item-rate">₹{item.standard_rate || 0}</span>
+                                                    <span className="pif-item-uom">{item.stock_uom || ''}</span>
+                                                    <span className="pif-item-group">{item.item_group || ''}</span>
+                                                    {itemTax && <span className="pif-item-tax">{itemTax.tax_type}</span>}
+                                                  </div>
+                                                </li>
+                                              );
+                                            })}
+                                          </ul>
+                                        ) : (
+                                          <div className="pif-dropdown-empty">
+                                            {itemSearch ? 'No items found' : 'Type to search items...'}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
                                 <input
                                   type="text"
                                   value={row.item_code || ''}
-                                  onChange={e => {
-                                    setItemSearch(e.target.value);
-                                    setSelectedItemRowId(row.id);
-                                    setShowItemDropdown(true);
-                                    handleItemFieldChange(row.id, 'item_code', e.target.value);
-                                  }}
-                                  onFocus={() => {
-                                    setSelectedItemRowId(row.id);
-                                    setShowItemDropdown(true);
-                                    setItemSearch(row.item_code || '');
-                                  }}
-                                  onBlur={() => {
-                                    setTimeout(() => {
-                                      setShowItemDropdown(false);
-                                    }, 200);
-                                  }}
+                                  onChange={e => handleItemFieldChange(row.id, 'item_code', e.target.value)}
                                   className="pif-cell-input"
-                                  placeholder="Search item..."
-                                  autoComplete="off"
+                                  placeholder="Item code"
                                 />
-                                {showItemDropdown && selectedItemRowId === row.id && (
-                                  <div className="pif-dropdown-wrapper">
-                                    <div className="pif-dropdown-down">
-                                      {filteredItems.length > 0 ? (
-                                        <ul className="pif-dropdown-list">
-                                          {filteredItems.map(item => (
-                                            <li
-                                              key={item.id}
-                                              className="pif-dropdown-item"
-                                              onMouseDown={(e) => {
-                                                e.preventDefault();
-                                                handleSelectItem(item, row.id);
-                                              }}
-                                            >
-                                              <div className="pif-dropdown-item-code">
-                                                <span className="pif-item-code-highlight">{item.item_code || ''}</span>
-                                              </div>
-                                              <div className="pif-dropdown-item-name">{item.item_name || ''}</div>
-                                              <div className="pif-dropdown-item-details">
-                                                <span className="pif-item-rate">₹{item.standard_rate || 0}</span>
-                                                <span className="pif-item-uom">{item.stock_uom || ''}</span>
-                                                <span className="pif-item-group">{item.item_group || ''}</span>
-                                              </div>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      ) : (
-                                        <div className="pif-dropdown-empty">
-                                          {itemSearch ? 'No items found' : 'Type to search items...'}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
+                              )}
+                            </td>
+                            <td className="pif-itd">
                               <input
                                 type="text"
-                                value={row.item_code || ''}
-                                onChange={e => handleItemFieldChange(row.id, 'item_code', e.target.value)}
+                                value={row.item_name || ''}
+                                onChange={e => handleItemFieldChange(row.id, 'item_name', e.target.value)}
                                 className="pif-cell-input"
-                                placeholder="Item code"
+                                placeholder="Item name"
                               />
-                            )}
-                          </td>
-                          <td className="pif-itd">
-                            <input
-                              type="text"
-                              value={row.item_name || ''}
-                              onChange={e => handleItemFieldChange(row.id, 'item_name', e.target.value)}
-                              className="pif-cell-input"
-                              placeholder="Item name"
-                            />
-                          </td>
-                          <td className="pif-itd">
-                            <input
-                              type="text"
-                              value={row.HSN || ''}
-                              onChange={e => handleItemFieldChange(row.id, 'HSN', e.target.value)}
-                              className="pif-cell-input"
-                              placeholder="HSN"
-                            />
-                          </td>
-                          <td className="pif-itd pif-itd-num">
-                            <span className="pif-cell-readonly">{row.ordered_qty || 0}</span>
-                          </td>
-                          <td className="pif-itd pif-itd-num">
-                            <span className="pif-cell-readonly">{row.total_received_qty || 0}</span>
-                          </td>
-                          <td className="pif-itd pif-itd-num">
-                            {isManual ? (
+                            </td>
+                            <td className="pif-itd">
+                              <input
+                                type="text"
+                                value={row.HSN || ''}
+                                onChange={e => handleItemFieldChange(row.id, 'HSN', e.target.value)}
+                                className="pif-cell-input"
+                                placeholder="HSN"
+                              />
+                            </td>
+                            <td className="pif-itd pif-itd-num">
+                              <span className="pif-cell-readonly">{row.ordered_qty || 0}</span>
+                            </td>
+                            <td className="pif-itd pif-itd-num">
+                              <span className="pif-cell-readonly">{row.total_received_qty || 0}</span>
+                            </td>
+                            <td className="pif-itd pif-itd-num">
+                              {isManual ? (
+                                <input
+                                  type="number"
+                                  value={row.bill_qty || 0}
+                                  onChange={e => handleItemFieldChange(row.id, 'bill_qty', parseFloat(e.target.value) || 0)}
+                                  className="pif-cell-input pif-cell-number"
+                                  min="0"
+                                  step="any"
+                                />
+                              ) : (
+                                <input
+                                  type="number"
+                                  className="pif-cell-input pif-cell-number"
+                                  value={row.bill_qty || 0}
+                                  min={0}
+                                  max={row.unbilled_qty || 0}
+                                  step="any"
+                                  onChange={e => handleBillQtyChange(row.id, Number(e.target.value))}
+                                  disabled={(row.unbilled_qty || 0) === 0}
+                                  title={(row.unbilled_qty || 0) === 0 ? 'Already fully billed' : `Max: ${row.unbilled_qty || 0}`}
+                                />
+                              )}
+                            </td>
+                            <td className="pif-itd">
+                              <select
+                                value={row.uom || 'Nos'}
+                                onChange={e => handleItemFieldChange(row.id, 'uom', e.target.value)}
+                                className="pif-cell-input"
+                              >
+                                <option value="Nos">Nos</option>
+                                <option value="Kg">Kg</option>
+                                <option value="Ltr">Ltr</option>
+                                <option value="Mtr">Mtr</option>
+                                <option value="Pcs">Pcs</option>
+                                <option value="Meter">Meter</option>
+                                <option value="Gram">Gram</option>
+                              </select>
+                            </td>
+                            <td className="pif-itd pif-itd-num">
+                              <span className="pif-cell-readonly">
+                                {row.ordered_rate ? row.ordered_rate.toFixed(2) : '-'}
+                              </span>
+                            </td>
+                            <td className="pif-itd pif-itd-num">
                               <input
                                 type="number"
-                                value={row.bill_qty || 0}
-                                onChange={e => handleItemFieldChange(row.id, 'bill_qty', parseFloat(e.target.value) || 0)}
+                                value={row.rate || 0}
+                                onChange={e => handleItemFieldChange(row.id, 'rate', parseFloat(e.target.value) || 0)}
                                 className="pif-cell-input pif-cell-number"
                                 min="0"
-                                step="any"
+                                step="0.01"
                               />
-                            ) : (
-                              <input
-                                type="number"
-                                className="pif-cell-input pif-cell-number"
-                                value={row.bill_qty || 0}
-                                min={0}
-                                max={row.unbilled_qty || 0}
-                                step="any"
-                                onChange={e => handleBillQtyChange(row.id, Number(e.target.value))}
-                                disabled={(row.unbilled_qty || 0) === 0}
-                                title={(row.unbilled_qty || 0) === 0 ? 'Already fully billed' : `Max: ${row.unbilled_qty || 0}`}
-                              />
-                            )}
-                          </td>
-                          <td className="pif-itd">
-                            <select
-                              value={row.uom || 'Nos'}
-                              onChange={e => handleItemFieldChange(row.id, 'uom', e.target.value)}
-                              className="pif-cell-input"
-                            >
-                              <option value="Nos">Nos</option>
-                              <option value="Kg">Kg</option>
-                              <option value="Ltr">Ltr</option>
-                              <option value="Mtr">Mtr</option>
-                              <option value="Pcs">Pcs</option>
-                              <option value="Meter">Meter</option>
-                              <option value="Gram">Gram</option>
-                            </select>
-                          </td>
-                          <td className="pif-itd pif-itd-num">
-                            <span className="pif-cell-readonly">
-                              {row.ordered_rate ? row.ordered_rate.toFixed(2) : '-'}
-                            </span>
-                          </td>
-                          <td className="pif-itd pif-itd-num">
-                            <input
-                              type="number"
-                              value={row.rate || 0}
-                              onChange={e => handleItemFieldChange(row.id, 'rate', parseFloat(e.target.value) || 0)}
-                              className="pif-cell-input pif-cell-number"
-                              min="0"
-                              step="0.01"
-                            />
-                          </td>
-                          <td className="pif-itd pif-itd-num pif-amount">
-                            ₹ {(row.amount || 0).toFixed(2)}
-                          </td>
-                          <td className="pif-itd pif-itd-num">
-                            <select
-                              value={row.tax_rate || 0}
-                              onChange={e => handleItemFieldChange(row.id, 'tax_rate', parseFloat(e.target.value) || 0)}
-                              className="pif-cell-input"
-                            >
-                              {(taxes || []).map(tax => {
-                                const parsed = parseInt((tax.tax_type || '').replace('GST', ''));
-                                const rate = isNaN(parsed) ? 0 : parsed;
-                                return (
-                                  <option key={tax.tax_id} value={rate}>
-                                    {tax.tax_type || ''}
+                            </td>
+                            <td className="pif-itd pif-itd-num pif-amount">
+                              ₹ {(row.amount || 0).toFixed(2)}
+                            </td>
+                            <td className="pif-itd pif-itd-num">
+                              <select
+                                value={row.tax_id || 1}
+                                onChange={(e) => {
+                                  const taxId = parseInt(e.target.value);
+                                  handleTaxChange(row.id, taxId);
+                                }}
+                                className="pif-cell-input"
+                              >
+                                {(taxes || []).map(tax => (
+                                  <option key={tax.tax_id} value={tax.tax_id}>
+                                    {tax.tax_type || `GST${getTaxRateFromType(tax.tax_type)}%`}
                                   </option>
-                                );
-                              })}
-                            </select>
-                          </td>
-                          <td className="pif-itd pif-itd-note" style={{ position: 'relative' }}>
-                            <button
-                              type="button"
-                              className={`pif-note-btn ${row.note ? 'pif-note-btn--filled' : ''}`}
-                              onClick={() => setNotePopoverRowId(notePopoverRowId === row.id ? null : row.id)}
-                              title={row.note || 'Add note'}
-                            >
-                              <FaStickyNote size={12} />
-                            </button>
-                            {notePopoverRowId === row.id && (
-                              <div className="pif-note-popover">
-                                <textarea
-                                  className="pif-note-textarea"
-                                  value={row.note || ''}
-                                  onChange={e => handleItemFieldChange(row.id, 'note', e.target.value)}
-                                  onBlur={() => setTimeout(() => setNotePopoverRowId(null), 150)}
-                                  placeholder="e.g. Received 100kg metal of 3 roll"
-                                  rows={3}
-                                  autoFocus
-                                />
-                              </div>
-                            )}
-                          </td>
-                          {isManual && (
-                            <td className="pif-itd">
+                                ))}
+                              </select>
+                            </td>
+                            <td className="pif-itd pif-itd-note" style={{ position: 'relative' }}>
                               <button
                                 type="button"
-                                onClick={() => handleRemoveManualItem(row.id)}
-                                className="pif-remove-item-btn"
+                                className={`pif-note-btn ${row.note ? 'pif-note-btn--filled' : ''}`}
+                                onClick={() => setNotePopoverRowId(notePopoverRowId === row.id ? null : row.id)}
+                                title={row.note || 'Add note'}
                               >
-                                <FaTrash />
+                                <FaStickyNote size={12} />
                               </button>
+                              {notePopoverRowId === row.id && (
+                                <div className="pif-note-popover">
+                                  <textarea
+                                    className="pif-note-textarea"
+                                    value={row.note || ''}
+                                    onChange={e => handleItemFieldChange(row.id, 'note', e.target.value)}
+                                    onBlur={() => setTimeout(() => setNotePopoverRowId(null), 150)}
+                                    placeholder="e.g. Received 100kg metal of 3 roll"
+                                    rows={3}
+                                    autoFocus
+                                  />
+                                </div>
+                              )}
                             </td>
-                          )}
-                        </tr>
-                      ))}
+                            {isManual && (
+                              <td className="pif-itd">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveManualItem(row.id)}
+                                  className="pif-remove-item-btn"
+                                >
+                                  <FaTrash />
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

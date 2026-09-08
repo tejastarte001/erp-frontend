@@ -25,7 +25,7 @@ import "./BOMPage.css";
 import NewBOMPage from "./Newbompage";
 import { useAdminTheme } from "../../admin-theme/AdminThemeContext";
 import api from '../../services/api';
-
+import { PageLoader } from "../components/PageLoader.tsx";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const SORT_FIELDS = ["Created On", "Last Updated On", "ID", "Item to Manufacture"];
@@ -135,6 +135,23 @@ const BOMPage: React.FC = () => {
 
   // Toast notifications
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+
+    // Mobile list accordion state
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRowExpand = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -540,6 +557,18 @@ const BOMPage: React.FC = () => {
     openDeleteModal(row);
   };
 
+  // ─── Loading Screen ─────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className={`p-6 max-w-7xl mx-auto ${theme}`}>
+        <PageLoader 
+          message="Loading Manufacturing & BOMs..." 
+          //subtitle="Calculating bill of materials, operations rates, and component structures"
+        />
+      </div>
+    );
+  }
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
@@ -880,7 +909,8 @@ const BOMPage: React.FC = () => {
           )}
 
           {/* ── Table ──────────────────────────────────────────────────────── */}
-          <div className="bom-table-wrap">
+          {/*<div className="bom-table-wrap">*/}
+          <div className="bom-table-wrap bom-desktop-table-wrap">
             {loading ? (
               <div className="bom-loading-state">
                 <div className="bom-spinner"></div>
@@ -991,6 +1021,169 @@ const BOMPage: React.FC = () => {
                   )}
                 </tbody>
               </table>
+            )}
+          </div>
+
+           {/* ── Mobile UI List Section (max-width: 768px) ──────────────────── */}
+          <div className="bom-mobile-list-wrap">
+            {loading ? (
+              <div className="bom-loading-state">
+                <div className="bom-spinner"></div>
+                <p>Loading BOMs...</p>
+              </div>
+            ) : tableData.length === 0 ? (
+              <div className="bom-empty-state">
+                <div className="bom-empty-content">
+                  <FileStack size={48} />
+                  <p>No {activeTab !== 'all' ? activeTab + ' ' : ''}BOMs found</p>
+                  <span>
+                    {searchTerm || statusFilter !== 'all' || (fromDate && toDate)
+                      ? 'Try adjusting your search criteria' 
+                      : `Create your first ${activeTab !== 'all' ? activeTab + ' ' : ''}BOM by clicking "Add BOM"`}
+                  </span>
+                </div>
+              </div>
+            ) : (
+
+               <>
+                {/* ── Mobile UI Table Header / Title at Top ── */}
+                <div className="bom-mobile-list-header">
+                  <div className="bom-mobile-th-primary">
+                    <span className="bom-mobile-th-cell bom-mobile-th-id">BOM ID</span>
+                    <span className="bom-mobile-th-cell bom-mobile-th-type">Type</span>
+                  </div>
+                  <div className="bom-mobile-th-right">
+                    <span className="bom-count-label">
+                      {totalRecords > 0
+                        ? `${(validCurrentPage - 1) * itemsPerPage + 1}–${Math.min(
+                            validCurrentPage * itemsPerPage,
+                            totalRecords
+                          )}`
+                        : '0'}{' '}
+                      of {totalRecords}
+                    </span>
+                  </div>
+                </div>
+
+              <div className="bom-mobile-cards">
+                {tableData.map((row) => {
+                  const isExpanded = expandedRows.has(row.id);
+                  return (
+                    <div
+                      key={row.id}
+                      className={`bom-mobile-card ${isExpanded ? 'bom-mobile-card-expanded' : ''}`}
+                    >
+                      {/* Mobile Header: Only shows BOM ID and Type by default + Dropdown button */}
+                      <div 
+                        className="bom-mobile-card-header"
+                        onClick={() => toggleRowExpand(row.id)}
+                      >
+                        <div className="bom-mobile-card-primary">
+                          <a
+                            className="bom-mobile-id"
+                            href={`/bom/${row.id}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleView(row);
+                            }}
+                            title="View BOM Details"
+                          >
+                            {row.id}
+                          </a>
+                          <span className={`bom-type-badge ${row.type === 'Internal' ? 'bom-type--internal' : 'bom-type--external'}`}>
+                            {row.type === 'Internal' ? (
+                              <><Box size={12} /> Product</>
+                            ) : (
+                              <><Wrench size={12} /> Service</>
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Dropdown Toggle Button */}
+                        <button
+                          type="button"
+                          className={`bom-mobile-dropdown-btn ${isExpanded ? 'expanded' : ''}`}
+                          onClick={(e) => toggleRowExpand(row.id, e)}
+                          aria-label={isExpanded ? "Collapse details" : "Expand details"}
+                        >
+                          <ChevronDown size={16} className="bom-mobile-chevron" />
+                        </button>
+                      </div>
+
+                      {/* Mobile Expanded Details: Shows Status, Item to Manufacture, Quantity, UOM, Total Cost, 1-8 of 8 & Actions */}
+                      {isExpanded && (
+                        <div className="bom-mobile-card-details">
+                          <div className="bom-mobile-detail-row">
+                            <span className="bom-mobile-detail-label">Status</span>
+                            <span className={`bom-status-pill ${row.status === 'Active' ? 'bom-status--active' : 'bom-status--disabled'}`}>
+                              {row.status}
+                            </span>
+                          </div>
+
+                          <div className="bom-mobile-detail-row">
+                            <span className="bom-mobile-detail-label">Item to Manufacture</span>
+                            <span className="bom-mobile-detail-value" style={{ fontWeight: 600 }}>
+                              {row.itemToManufacture}
+                            </span>
+                          </div>
+
+                          <div className="bom-mobile-detail-row">
+                            <span className="bom-mobile-detail-label">Quantity</span>
+                            <span className="bom-mobile-detail-value">{row.quantity}</span>
+                          </div>
+
+                          <div className="bom-mobile-detail-row">
+                            <span className="bom-mobile-detail-label">UOM</span>
+                            <span className="bom-mobile-detail-value">{row.uom}</span>
+                          </div>
+
+                          <div className="bom-mobile-detail-row">
+                            <span className="bom-mobile-detail-label">Total Cost</span>
+                            <span className="bom-mobile-detail-value bom-cost">{row.totalCost}</span>
+                          </div>
+
+                          {/* 1–8 of 8 count and Action buttons (View, Edit, Delete) */}
+                          <div className="bom-mobile-detail-footer">
+                            <div className="bom-mobile-detail-meta">
+                              <span className="bom-count-label">
+                                {totalRecords > 0
+                                  ? `${(validCurrentPage - 1) * itemsPerPage + 1}–${Math.min(validCurrentPage * itemsPerPage, totalRecords)}`
+                                  : '0'} of {totalRecords}
+                              </span>
+                            </div>
+
+                            <div className="bom-action-buttons">
+                              <button 
+                                className="bom-action-btn bom-action-view" 
+                                onClick={(e) => { e.stopPropagation(); handleView(row); }}
+                                title="View"
+                              >
+                                <Eye size={12} />
+                              </button>
+                              <button 
+                                className="bom-action-btn bom-action-edit" 
+                                onClick={(e) => { e.stopPropagation(); handleEdit(row); }}
+                                title="Edit"
+                              >
+                                <Edit size={12} />
+                              </button>
+                              <button 
+                                className="bom-action-btn bom-action-delete" 
+                                onClick={(e) => { e.stopPropagation(); handleDelete(row); }}
+                                title="Delete"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+               </>
             )}
           </div>
 

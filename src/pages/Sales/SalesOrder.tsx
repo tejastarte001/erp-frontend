@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import './SalesOrder.css';
 import api from '../../services/api';
 import { FaFileInvoice } from 'react-icons/fa6';
+import { PageLoader } from '../components/PageLoader';
 
 interface SalesOrderItem {
   id: string;
@@ -169,18 +170,6 @@ const numberToIndianWords = (value: number): string => {
   return out.trim();
 };
 
-const formatPrintDate = (date: string, formatFn?: (date: string) => string): string => {
-  if (!date) return '';
-  if (formatFn) {
-    return formatFn(date);
-  }
-  const d = new Date(date);
-  if (isNaN(d.getTime())) return date;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = d.toLocaleString('en-US', { month: 'short' });
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}-${month}-${year}`;
-};
 
 const escapeHtml = (val: unknown): string => {
   const s = val === null || val === undefined ? '' : String(val);
@@ -256,7 +245,7 @@ export default function SalesOrder() {
   const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const mobileMenuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  const { theme, formatDate, getApiDateFormat } = useAdminTheme();
+  const { theme, formatDate, } = useAdminTheme();
 
   const [filterText, setFilterText] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
@@ -299,9 +288,6 @@ export default function SalesOrder() {
     return formatDate(dateString);
   };
 
-  const toApiDateFormat = (date: Date) => {
-    return getApiDateFormat(date);
-  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1616,6 +1602,18 @@ export default function SalesOrder() {
       setProformaLoadingId(null);
     }
   };
+
+      // ─── Loading Screen ─────────────────────────────────────────────────────
+      if (loading) {
+        return (
+          <div className={`p-6 max-w-7xl mx-auto ${theme}`}>
+            <PageLoader 
+              message="Loading Sales & Sales Order List..." 
+              //subtitle="Calculating bill of materials, operations rates, and component structures"
+            />
+          </div>
+        );
+      }
 
   return (
     <div className={`sales-order-page ${theme}-theme`}>
