@@ -5,11 +5,13 @@ import {
   FaFilter, 
   FaChartLine, FaTimes, FaSpinner, FaBoxOpen, FaEnvelope,
   FaCalendarAlt,
-  FaChevronLeft, FaChevronRight, FaAngleDoubleLeft, FaAngleDoubleRight
+  FaChevronLeft, FaChevronRight, FaAngleDoubleLeft, FaAngleDoubleRight,
+  FaChevronDown
 } from 'react-icons/fa';
 import { useAdminTheme } from '../../admin-theme/AdminThemeContext';
 import toast from 'react-hot-toast';
 import './ProformaInvoice.css';
+import './SalesMobileTable.css';
 import api from '../../services/api';
 import { PageLoader } from "../components/PageLoader.tsx";
 
@@ -304,6 +306,19 @@ export default function ProformaInvoice() {
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pdfModalLoading] = useState(false);
+
+  // Mobile expanded rows state
+  const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
+
+  const toggleRowExpand = (id: string | number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // Debounced search term
   const debouncedFilterText = useDebounce(filterText, 500);
@@ -2284,73 +2299,218 @@ export default function ProformaInvoice() {
 
       {/* Table */}
       {!loading && !error && (
-        <div className="pq-table-wrap">
-          {salesOrders.length === 0 ? (
-            <div className="pq-empty-state">
-              <div className="pq-empty-content">
-                <FaBoxOpen size={48} />
-                <p>No proforma invoices found</p>
-                <span>Try adjusting your search criteria, or create your first proforma</span>
+        <>
+          <div className="pq-table-wrap sales-desktop-table-wrap">
+            {salesOrders.length === 0 ? (
+              <div className="pq-empty-state">
+                <div className="pq-empty-content">
+                  <FaBoxOpen size={48} />
+                  <p>No proforma invoices found</p>
+                  <span>Try adjusting your search criteria, or create your first proforma</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <table className="pq-table">
+                  <thead>
+                    <tr>
+                      <th className="pq-th">Proforma #</th>
+                      <th className="pq-th">Customer</th>
+                      <th className="pq-th">Date</th>
+                      <th className="pq-th">Order Type</th>
+                      <th className="pq-th pq-text-right">Amount</th>
+                      <th className="pq-th pq-th-meta">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {salesOrders.map((order, index) => (
+                      <tr key={order.id || `so-${index}`} className="pq-tr">
+                        <td className="pq-td pq-td-id">
+                          {order.salesOrderNumber}
+                        </td>
+                        <td className="pq-td">
+                          <div>
+                            <div className="pq-td-link">{order.customerName}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{order.customer}</div>
+                          </div>
+                        </td>
+                        <td className="pq-td">
+                          <div>{order.date ? formatDisplayDate(order.date) : '-'}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                            Valid Until: {order.deliveryDate ? formatDisplayDate(order.deliveryDate) : '-'}
+                          </div>
+                        </td>
+                        <td className="pq-td">{order.orderType}</td>
+                        <td className="pq-td pq-text-right pq-amount-cell">
+                          <span className="pq-currency">{order.currency}</span>
+                          {order.totalAmount.toLocaleString()}
+                        </td>
+                        <td className="pq-td pq-td-meta">
+                          <div className="pq-action-buttons">
+                            <button className="pq-action-btn pq-action-view" onClick={() => handleView(order)} title="View Proforma">
+                              <FaEye size={12} />
+                            </button>
+                            <button
+                              className="pq-action-btn pq-action-print"
+                              onClick={() => handlePrintOrder(order)}
+                              title="Print Proforma Invoice"
+                              disabled={printLoadingId === order.id}
+                            >
+                              {printLoadingId === order.id ? <FaSpinner className="spinning" size={12} /> : <FaPrint size={12} />}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Table Section (Proforma #, Customer + Dropdown Button -> Date, Order Type, Amount, Actions) */}
+          <div className="sales-mobile-list-wrap">
+            <div className="sales-mobile-list-header">
+              <div className="sales-mobile-th-primary">
+                <span className="sales-mobile-th-cell">Proforma #</span>
+                <span className="sales-mobile-th-sep">•</span>
+                <span className="sales-mobile-th-cell">Customer</span>
+              </div>
+              <div className="sales-mobile-th-right">
+                <span className="sales-count-label">
+                  {totalRecords > 0 ? `${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, totalRecords)} of ${totalRecords}` : `0 of ${totalRecords}`}
+                </span>
               </div>
             </div>
-          ) : (
-            <>
-              <table className="pq-table">
-                <thead>
-                  <tr>
-                    <th className="pq-th">Proforma #</th>
-                    <th className="pq-th">Customer</th>
-                    <th className="pq-th">Date</th>
-                    <th className="pq-th">Order Type</th>
-                    <th className="pq-th pq-text-right">Amount</th>
-                    <th className="pq-th pq-th-meta">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {salesOrders.map((order, index) => (
-                    <tr key={order.id || `so-${index}`} className="pq-tr">
-                      <td className="pq-td pq-td-id">
-                        {order.salesOrderNumber}
-                      </td>
-                      <td className="pq-td">
-                        <div>
-                          <div className="pq-td-link">{order.customerName}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{order.customer}</div>
-                        </div>
-                      </td>
-                      <td className="pq-td">
-                        <div>{order.date ? formatDisplayDate(order.date) : '-'}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          Valid Until: {order.deliveryDate ? formatDisplayDate(order.deliveryDate) : '-'}
-                        </div>
-                      </td>
-                      <td className="pq-td">{order.orderType}</td>
-                      <td className="pq-td pq-text-right pq-amount-cell">
-                        <span className="pq-currency">{order.currency}</span>
-                        {order.totalAmount.toLocaleString()}
-                      </td>
-                      <td className="pq-td pq-td-meta">
-                        <div className="pq-action-buttons">
-                          <button className="pq-action-btn pq-action-view" onClick={() => handleView(order)} title="View Proforma">
-                            <FaEye size={12} />
-                          </button>
-                          <button
-                            className="pq-action-btn pq-action-print"
-                            onClick={() => handlePrintOrder(order)}
-                            title="Print Proforma Invoice"
-                            disabled={printLoadingId === order.id}
+
+            {salesOrders.length === 0 ? (
+              <div className="pq-empty-state">
+                <div className="pq-empty-content">
+                  <p>No proforma invoices found</p>
+                  <span>Try adjusting your search criteria</span>
+                </div>
+              </div>
+            ) : (
+              <div className="sales-mobile-cards">
+                {salesOrders.map((order, idx) => {
+                  const orderId = order.id || `so-${idx}`;
+                  const isExpanded = expandedRows.has(orderId);
+                  const rowNumber = (currentPage - 1) * pageSize + idx + 1;
+                  return (
+                    <div
+                      key={orderId}
+                      className={`sales-mobile-card ${isExpanded ? "sales-mobile-card-expanded" : ""}`}
+                    >
+                      {/* Card Header: Proforma #, Customer and Dropdown Button */}
+                      <div
+                        className="sales-mobile-card-header"
+                        onClick={() => toggleRowExpand(orderId)}
+                      >
+                        <div className="sales-mobile-card-primary">
+                          <span
+                            className="sales-mobile-item-code"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleView(order);
+                            }}
+                            title="View Proforma"
                           >
-                            {printLoadingId === order.id ? <FaSpinner className="spinning" size={12} /> : <FaPrint size={12} />}
-                          </button>
+                            {order.salesOrderNumber}
+                          </span>
+                          <span
+                            className="sales-mobile-item-name"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleView(order);
+                            }}
+                            title={order.customerName}
+                          >
+                            {order.customerName || "—"}
+                          </span>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
-        </div>
+
+                        {/* Dropdown Button */}
+                        <button
+                          type="button"
+                          className={`sales-mobile-dropdown-btn ${isExpanded ? "expanded" : ""}`}
+                          onClick={(e) => toggleRowExpand(orderId, e)}
+                          aria-label={isExpanded ? "Collapse proforma details" : "Expand proforma details"}
+                          title={isExpanded ? "Collapse" : "Expand"}
+                        >
+                          <FaChevronDown size={13} className="sales-mobile-chevron" />
+                        </button>
+                      </div>
+
+                      {/* Dropdown Section: Date, Order Type, Amount, Actions */}
+                      {isExpanded && (
+                        <div className="sales-mobile-card-details">
+                          <div className="sales-mobile-detail-row">
+                            <span className="sales-mobile-detail-label">Date</span>
+                            <span className="sales-mobile-detail-value">
+                              {order.date ? formatDisplayDate(order.date) : "—"}
+                              {order.deliveryDate && (
+                                <span style={{ fontSize: "11px", color: "var(--text-secondary)", marginLeft: 6 }}>
+                                  (Valid: {formatDisplayDate(order.deliveryDate)})
+                                </span>
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="sales-mobile-detail-row">
+                            <span className="sales-mobile-detail-label">Order Type</span>
+                            <span className="sales-mobile-detail-value font-medium">
+                              {order.orderType || "—"}
+                            </span>
+                          </div>
+
+                          <div className="sales-mobile-detail-row">
+                            <span className="sales-mobile-detail-label">Amount</span>
+                            <span className="sales-mobile-detail-value sales-amount-highlight">
+                              {order.currency} {order.totalAmount.toLocaleString()}
+                            </span>
+                          </div>
+
+                          <div className="sales-mobile-detail-footer">
+                            <span className="sales-mobile-card-meta-text">
+                              #{rowNumber} of {totalRecords}
+                            </span>
+                            <div className="sales-mobile-action-buttons">
+                              <button
+                                className="pq-action-btn pq-action-view"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleView(order);
+                                }}
+                                title="View Proforma"
+                              >
+                                <FaEye size={12} />
+                              </button>
+                              <button
+                                className="pq-action-btn pq-action-print"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePrintOrder(order);
+                                }}
+                                title="Print Proforma Invoice"
+                                disabled={printLoadingId === order.id}
+                              >
+                                {printLoadingId === order.id ? (
+                                  <FaSpinner className="spinning" size={12} />
+                                ) : (
+                                  <FaPrint size={12} />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* ✅ Pagination Section - SEPARATE FROM TABLE */}

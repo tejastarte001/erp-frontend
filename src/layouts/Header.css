@@ -437,7 +437,7 @@
 
 
 /* Responsive */
-@media (max-width: 168px) {
+@media (max-width: 768px) {
     .header-right {
     gap: 0;
   }

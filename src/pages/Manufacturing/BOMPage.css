@@ -425,6 +425,12 @@
   white-space: nowrap;
 }
 
+.bom-date-toggle-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .bom-date-toggle-btn:hover {
   background: var(--bg-hover, #e5e7eb);
   border-color: var(--primary-color, #3b82f6);
@@ -1517,8 +1523,13 @@
   flex-shrink: 0;
 }
 
-.bom-mobile-th-type {
+.bom-mobile-th-type,
+.bom-mobile-th-item {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bom-mobile-th-right {
@@ -1588,6 +1599,17 @@
 
 .bom-mobile-id:hover {
   text-decoration: underline;
+}
+
+.bom-mobile-item-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Dropdown Accordion Button */
@@ -1760,20 +1782,7 @@
     font-size: 12px;
   }
 
-  .bom-tabs {
-    overflow-x: auto;
-    width: 100%;
-    flex-wrap: nowrap;
-    padding: 3px;
-    gap: 2px;
-  }
-
-  .bom-tab {
-    flex: 1 0 auto;
-    padding: 8px 12px;
-    font-size: 12px;
-    white-space: nowrap;
-  }
+ .bom-tabs { overflow-x: auto; width: 100%; flex-wrap: nowrap; padding: 1px; gap: 0px; } .bom-tab { flex: 1 0 auto; padding: 8px 8px; font-size: 12px; white-space: nowrap; }
 
   .bom-filter-bar {
     flex-direction: column;
@@ -1797,19 +1806,73 @@
   }
 
   .bom-filter-right {
-    width: 100%;
-    justify-content: flex-start;
-    gap: 6px;
-    flex-wrap: wrap;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 8px !important;
+    width: 100% !important;
   }
 
-  .bom-filter-select,
-  .bom-filter-btn,
-  .bom-sort-btn,
-  .bom-date-toggle-btn {
-    height: 34px;
-    padding: 0 10px;
-    font-size: 12px;
+  /* Row 1 (Filters): Left = Active status (bom-filter-select), Right = Date Filter (bom-date-range-wrapper) */
+  .bom-filter-right .bom-filter-select {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    height: 36px !important;
+    padding: 0 10px !important;
+    font-size: 12.5px !important;
+    box-sizing: border-box !important;
+  }
+
+  .bom-filter-right .bom-date-range-wrapper {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    display: flex !important;
+  }
+
+  .bom-filter-right .bom-date-toggle-btn {
+    width: 100% !important;
+    height: 36px !important;
+    padding: 0 10px !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-size: 12.5px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Row 2 (Actions): Left = Sort (bom-sort-btn), Right = Add BOM (bom-btn-primary) */
+  .bom-filter-right .bom-sort-btn {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    height: 36px !important;
+    padding: 0 10px !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-size: 12.5px !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+  }
+
+  .bom-filter-right .bom-btn-primary {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    height: 36px !important;
+    padding: 0 10px !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-size: 12.5px !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+  }
+
+  .bom-filter-right .bom-sort-btn .bom-menu {
+    top: calc(100% + 6px);
+    left: 0;
+    right: auto;
+    min-width: 140px;
   }
 
   .bom-date-input {
@@ -1822,11 +1885,14 @@
   }
 
   .bom-date-picker-popup {
-    min-width: 270px;
-    right: 0;
-    left: auto;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 320px;
+    z-index: 2000;
     padding: 12px;
-    max-width: calc(100vw - 24px);
   }
 
   .bom-pagination {
@@ -1864,23 +1930,8 @@
     flex: 1 1 auto;
   }
 
-  .bom-btn-primary {
+  .bom-header .bom-btn-primary {
     flex: 1 1 100%;
-    justify-content: center;
-  }
-
-  .bom-filter-right {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .bom-filter-right > * {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .bom-date-toggle-btn {
-    width: 100%;
     justify-content: center;
   }
 
@@ -1903,6 +1954,7 @@
 .dark-theme .bom-filter-btn,
 .dark-theme .bom-sort-btn,
 .dark-theme .bom-filter-select,
+.dark-theme .bom-date-toggle-btn,
 .dark-theme .bom-page-btn,
 .dark-theme .bom-page-size-select,
 .dark-theme .bom-menu {
@@ -2092,6 +2144,10 @@
 }
 
 .dark-theme .bom-mobile-detail-value {
+  color: var(--text-primary, #f8fafc);
+}
+
+.dark-theme .bom-mobile-item-name {
   color: var(--text-primary, #f8fafc);
 }
 

@@ -14,8 +14,10 @@ import {
   FaPlus,
   FaBuilding,
   FaCalendarAlt,
+  FaChevronDown,
 } from "react-icons/fa";
 import "./LeadManagement.css";
+import "./SalesMobileTable.css";
 import { useAdminTheme } from "../../admin-theme/AdminThemeContext";
 import api from "../../services/api";
 import toast from 'react-hot-toast';
@@ -150,6 +152,18 @@ export default function LeadManagement() {
   const [selectedItem, setSelectedItem] = useState<LeadDisplay | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+
+  const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
+
+  const toggleRowExpand = (id: string | number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // ─── date range filter state ─────────────────────────────────────────
   const [showDateFilter, setShowDateFilter] = useState(false);
@@ -770,7 +784,7 @@ export default function LeadManagement() {
       {/* Table */}
       {!loading && !error && (
         <>
-          <div className="jc-table-wrap">
+          <div className="jc-table-wrap sales-desktop-table-wrap">
             <table className="jc-table">
               <thead>
                 <tr>
@@ -841,6 +855,155 @@ export default function LeadManagement() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Table Section (Lead ID, Name + Dropdown Button -> Organization, Email, Mobile No, Status, Actions) */}
+          <div className="sales-mobile-list-wrap">
+            <div className="sales-mobile-list-header">
+              <div className="sales-mobile-th-primary">
+                <span className="sales-mobile-th-cell">Lead ID</span>
+                <span className="sales-mobile-th-sep">•</span>
+                <span className="sales-mobile-th-cell">Name</span>
+              </div>
+              <div className="sales-mobile-th-right">
+                <span className="sales-count-label">
+                  {totalItems > 0 ? `${getStartIndex()}–${getEndIndex()} of ${totalItems}` : `0 of ${totalItems}`}
+                </span>
+              </div>
+            </div>
+
+            {leads.length === 0 ? (
+              <div className="jc-empty-state">
+                <div className="jc-empty-content">
+                  <p>No leads found</p>
+                  <span>Try adjusting your search criteria</span>
+                </div>
+              </div>
+            ) : (
+              <div className="sales-mobile-cards">
+                {leads.map((row, idx) => {
+                  const isExpanded = expandedRows.has(row.id);
+                  const rowNumber = getStartIndex() + idx;
+                  return (
+                    <div
+                      key={row.id}
+                      className={`sales-mobile-card ${isExpanded ? "sales-mobile-card-expanded" : ""}`}
+                    >
+                      {/* Card Header: Lead ID, Name and Dropdown Button */}
+                      <div
+                        className="sales-mobile-card-header"
+                        onClick={() => toggleRowExpand(row.id)}
+                      >
+                        <div className="sales-mobile-card-primary">
+                          <span
+                            className="sales-mobile-item-code"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              goToLead(row);
+                            }}
+                            title="View Lead"
+                          >
+                            {row.id}
+                          </span>
+                          <span
+                            className="sales-mobile-item-name"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              goToLead(row);
+                            }}
+                            title={row.leadName}
+                          >
+                            {row.leadName || "—"}
+                          </span>
+                        </div>
+
+                        {/* Dropdown Button */}
+                        <button
+                          type="button"
+                          className={`sales-mobile-dropdown-btn ${isExpanded ? "expanded" : ""}`}
+                          onClick={(e) => toggleRowExpand(row.id, e)}
+                          aria-label={isExpanded ? "Collapse lead details" : "Expand lead details"}
+                          title={isExpanded ? "Collapse" : "Expand"}
+                        >
+                          <FaChevronDown size={13} className="sales-mobile-chevron" />
+                        </button>
+                      </div>
+
+                      {/* Dropdown Section: Organization, Email, Mobile No, Status, Actions */}
+                      {isExpanded && (
+                        <div className="sales-mobile-card-details">
+                          <div className="sales-mobile-detail-row">
+                            <span className="sales-mobile-detail-label">Organization</span>
+                            <span className="sales-mobile-detail-value">
+                              {row.organizationName || "—"}
+                            </span>
+                          </div>
+
+                          <div className="sales-mobile-detail-row">
+                            <span className="sales-mobile-detail-label">Email</span>
+                            <span className="sales-mobile-detail-value">
+                              {row.email || "—"}
+                            </span>
+                          </div>
+
+                          <div className="sales-mobile-detail-row">
+                            <span className="sales-mobile-detail-label">Mobile No</span>
+                            <span className="sales-mobile-detail-value">
+                              {row.mobileNo || "—"}
+                            </span>
+                          </div>
+
+                          <div className="sales-mobile-detail-row">
+                            <span className="sales-mobile-detail-label">Status</span>
+                            <span className={`jc-status-badge ${STATUS_CLASS[row.status]}`}>
+                              {STATUS_LABELS[row.status]}
+                            </span>
+                          </div>
+
+                          <div className="sales-mobile-detail-footer">
+                            <span className="sales-mobile-card-meta-text">
+                              #{rowNumber} of {totalItems}
+                            </span>
+                            <div className="sales-mobile-action-buttons">
+                              <button
+                                className="jc-action-btn jc-action-view"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  goToLead(row);
+                                }}
+                                title="View"
+                              >
+                                <FaEye size={12} />
+                              </button>
+                              <button
+                                className="jc-action-btn jc-action-edit"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  goToLead(row);
+                                }}
+                                title="Edit"
+                              >
+                                <FaEdit size={12} />
+                              </button>
+                              <button
+                                className="jc-action-btn jc-action-delete"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(row);
+                                }}
+                                title="Delete"
+                              >
+                                <FaTrash size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Pagination */}
