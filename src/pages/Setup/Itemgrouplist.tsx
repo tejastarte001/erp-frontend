@@ -1153,7 +1153,7 @@ export default function ItemGroupList() {
           
                                               <div className="sales-mobile-detail-footer">
                                                 <span className="sales-mobile-card-meta-text">
-                                                  {rowNumber} of {totalFilteredItems}
+                                                  {/*rowNumber} of {totalFilteredItems*/}
                                                 </span>
                                                 <div className="sales-mobile-action-buttons">
                                                   <button
